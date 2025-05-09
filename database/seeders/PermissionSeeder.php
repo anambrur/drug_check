@@ -2,15 +2,18 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
-use App\Models\User;
 
 class PermissionSeeder extends Seeder
 {
+
+    // php artisan db:seed --class=PermissionSeeder
     /**
      * Run the database seeds.
      */
@@ -19,6 +22,25 @@ class PermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
+
+        // Clear all permission-related data and demo users
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('role_has_permissions')->truncate();
+        DB::table('model_has_roles')->truncate();
+        DB::table('model_has_permissions')->truncate();
+        Permission::truncate();
+        Role::truncate();
+
+        // Delete the demo users if they exist
+        User::whereIn('email', [
+            'superadmin@gmail.com',
+            'admin@gmail.com',
+            'company@gmail.com',
+            'employee@gmail.com'
+        ])->delete();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         // Define the modules
         $modules = [
             'upload',
@@ -26,6 +48,9 @@ class PermissionSeeder extends Seeder
             'menu',
             'blog',
             'client profile',
+            'result recording',
+            'random selection',
+            'lab admin',
             'section',
             'service',
             'background',

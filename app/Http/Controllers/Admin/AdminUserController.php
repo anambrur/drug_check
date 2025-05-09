@@ -26,9 +26,9 @@ class AdminUserController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $admin_users = User::all();
+        // dd($admin_users);
 
-        return view('admin.admin_user.index', compact('favicon', 'panel_image','admin_users'));
-
+        return view('admin.admin_user.index', compact('favicon', 'panel_image', 'admin_users'));
     }
 
     /**
@@ -43,8 +43,7 @@ class AdminUserController extends Controller
         $panel_image = PanelImage::first();
         $admin_roles = Role::where('id', '!=', 1)->get();
 
-        return view('admin.admin_user.create', compact('favicon', 'panel_image','admin_roles'));
-
+        return view('admin.admin_user.create', compact('favicon', 'panel_image', 'admin_roles'));
     }
 
     /**
@@ -65,7 +64,7 @@ class AdminUserController extends Controller
         ]);
 
         // Any error checking
-        if ($validator->fails()){
+        if ($validator->fails()) {
             toastr()->error($validator->errors()->first(), 'content.error');
             return back();
         }
@@ -80,7 +79,6 @@ class AdminUserController extends Controller
             toastr()->warning('content.you_do_not_have_permission_to_access', 'content.warning');
 
             return redirect()->route('admin-user.create');
-
         }
 
         $role = Role::findOrFail($input['role_id']);
@@ -101,7 +99,6 @@ class AdminUserController extends Controller
 
             // Set input
             $input['profile_photo_path'] = $profile_photo_path_name;
-
         } else {
             // Set input
             $input['profile_photo_path'] = null;
@@ -121,7 +118,6 @@ class AdminUserController extends Controller
         toastr()->success('content.created_successfully', 'content.success');
 
         return redirect()->route('admin-user.index');
-
     }
 
     /**
@@ -138,7 +134,7 @@ class AdminUserController extends Controller
         $admin_user = User::findOrFail($id);
         $admin_roles = Role::where('id', '!=', 1)->get();
 
-        return view('admin.admin_user.edit', compact('favicon', 'panel_image','admin_user', 'admin_roles'));
+        return view('admin.admin_user.edit', compact('favicon', 'panel_image', 'admin_user', 'admin_roles'));
     }
 
     /**
@@ -165,7 +161,7 @@ class AdminUserController extends Controller
         ]);
 
         // Any error checking
-        if ($validator->fails()){
+        if ($validator->fails()) {
             toastr()->error($validator->errors()->first(), 'content.error');
             return back();
         }
@@ -183,7 +179,6 @@ class AdminUserController extends Controller
             toastr()->warning('content.you_do_not_have_permission_to_access', 'content.warning');
 
             return redirect()->route('admin-user.edit', $id);
-
         }
 
         $role = Role::findOrFail($input['role_id']);
@@ -197,17 +192,16 @@ class AdminUserController extends Controller
             $folder = 'uploads/img/profile/admin/';
 
             // Make image name
-            $profile_photo_path_name = time().'-'.$profile_photo_path_file->getClientOriginalName();
+            $profile_photo_path_name = time() . '-' . $profile_photo_path_file->getClientOriginalName();
 
             // Delete Image
-            File::delete(public_path($folder.$admin_user->profile_photo_path));
+            File::delete(public_path($folder . $admin_user->profile_photo_path));
 
             // Original size upload file
             $profile_photo_path_file->move($folder, $profile_photo_path_name);
 
             // Set input
             $input['profile_photo_path'] = $profile_photo_path_name;
-
         }
 
         // Password hashed
@@ -227,14 +221,11 @@ class AdminUserController extends Controller
 
                 // New role assing
                 $admin_user->assignRole($role->name);
-
             }
-
         } else {
 
             // New role assing
             $admin_user->assignRole($role->name);
-
         }
 
         // Set a success toast, with a title
@@ -258,7 +249,7 @@ class AdminUserController extends Controller
         $folder = 'uploads/img/profile/admin/';
 
         // Delete Image
-        File::delete(public_path($folder.$admin_user->profile_photo_path));
+        File::delete(public_path($folder . $admin_user->profile_photo_path));
 
         if ($admin_user->getRoleNames()->first() != null) {
             // Remove role
@@ -272,5 +263,30 @@ class AdminUserController extends Controller
         toastr()->success('content.deleted_successfully', 'content.success');
 
         return redirect()->route('admin-user.index');
+    }
+
+    public function updateStatus(User $user, Request $request)
+    {
+        // Add validation if needed
+        $request->validate([
+            'status' => 'required|in:1,2,3'
+        ]);
+
+        // Check if demo mode is on
+        if (config('app.demo_mode') == 'on') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This is not allowed in demo mode'
+            ]);
+        }
+
+        // Update the status
+        $user->status = $request->status;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated successfully'
+        ]);
     }
 }

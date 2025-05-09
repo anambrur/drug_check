@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\MapController;
+use App\Http\Controllers\Admin\MROController;
 use App\Http\Controllers\Admin\SeoController;
 use App\Http\Controllers\Admin\BlogController;
 use App\Http\Controllers\Admin\FontController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\TeamController;
+use App\Http\Controllers\Admin\PanelController;
 use App\Http\Controllers\Admin\PhotoController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CareerController;
@@ -36,21 +38,26 @@ use App\Http\Controllers\Admin\SubmenuController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DemoModeController;
+use App\Http\Controllers\admin\EmployeeController;
+use App\Http\Controllers\Admin\LabAdminController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\PageNameController;
 use App\Http\Controllers\Admin\SiteInfoController;
 use App\Http\Controllers\Admin\AdminRoleController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DotAgencyController;
 use App\Http\Controllers\Admin\DraftViewController;
 use App\Http\Controllers\Admin\ErrorPageController;
 use App\Http\Controllers\Admin\PortfolioController;
 use App\Http\Controllers\Admin\PreloaderController;
 use App\Http\Controllers\Admin\SubscribeController;
+use App\Http\Controllers\Admin\TestAdminController;
 use App\Http\Controllers\Admin\WhyChooseController;
 use App\Http\Controllers\Admin\BackgroundController;
 use App\Http\Controllers\Admin\FaqSectionController;
 use App\Http\Controllers\Admin\HeaderInfoController;
+use App\Http\Controllers\Admin\LaboratoryController;
 use App\Http\Controllers\Admin\PanelImageController;
 use App\Http\Controllers\Frontend\ContactController;
 use App\Http\Controllers\Admin\BlogSectionController;
@@ -74,6 +81,7 @@ use App\Http\Controllers\Admin\VideoSectionController;
 use App\Http\Controllers\Frontend\ZipSearchController;
 use App\Http\Controllers\Admin\CareerContentController;
 use App\Http\Controllers\Admin\CareerSectionController;
+use App\Http\Controllers\Admin\ClientProfileController;
 use App\Http\Controllers\Admin\CareerCategoryController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CounterSectionController;
@@ -82,6 +90,7 @@ use App\Http\Controllers\Admin\FooterCategoryController;
 use App\Http\Controllers\Admin\GoogleAnalyticController;
 use App\Http\Controllers\Admin\HistorySectionController;
 use App\Http\Controllers\Admin\PortfolioImageController;
+use App\Http\Controllers\Admin\ResultRecodingController;
 use App\Http\Controllers\Admin\ServiceContentController;
 use App\Http\Controllers\Admin\ServiceFeatureController;
 use App\Http\Controllers\Admin\ServiceSectionController;
@@ -89,6 +98,8 @@ use App\Http\Controllers\Admin\BreadcrumbImageController;
 use App\Http\Controllers\Admin\LanguageKeywordController;
 use App\Http\Controllers\Admin\PackageCategoryController;
 use App\Http\Controllers\Admin\PortfolioDetailController;
+use App\Http\Controllers\Admin\RandomSelectionController;
+use App\Http\Controllers\Admin\ResultRecordingController;
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\PortfolioContentController;
 use App\Http\Controllers\Admin\PortfolioSectionController;
@@ -238,7 +249,6 @@ Route::post('/send-mail', [ContactController::class, 'sendMail'])->name('send.ma
 Route::post('/send-mail-dot', [ContactController::class, 'sendMailDot'])->name('send.mail_dot');
 Route::post('/send-mail-form', [ContactController::class, 'sendMailForm'])->name('send.mail_form');
 
-
 // End Site Frontend Route
 
 // Start Site Admin Panel Route
@@ -258,9 +268,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('admin-user/{id}/edit', [AdminUserController::class, 'edit'])->name('admin-user.edit');
     Route::put('admin-user/{id}', [AdminUserController::class, 'update'])->name('admin-user.update');
     Route::delete('admin-user/{id}', [AdminUserController::class, 'destroy'])->name('admin-user.destroy');
+
+    Route::post('admin-user/{user}/status', [AdminUserController::class, 'updateStatus'])->name('admin-user.status');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:upload check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:upload view'])->prefix('admin')->group(function () {
     Route::get('photo/create', [PhotoController::class, 'create'])->name('photo.create');
     Route::post('photo', [PhotoController::class, 'store'])->name('photo.store');
     Route::get('photo/{id}/edit', [PhotoController::class, 'edit'])->name('photo.edit');
@@ -268,7 +280,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('photo/{id}', [PhotoController::class, 'destroy'])->name('photo.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:page builder check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:page builder view'])->prefix('admin')->group(function () {
     Route::get('page-name/create', [PageNameController::class, 'create'])->name('page-name.create');
     Route::post('page-name', [PageNameController::class, 'store'])->name('page-name.store');
     Route::get('page-name/{id}/edit', [PageNameController::class, 'edit'])->name('page-name.edit');
@@ -277,7 +289,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('page-name-checked', [PageNameController::class, 'destroy_checked'])->name('page-name.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:page builder check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:page builder view'])->prefix('admin')->group(function () {
     Route::get('page-builder/create', [PageBuilderController::class, 'create'])->name('page-builder.create');
     Route::post('page-builder', [PageBuilderController::class, 'store'])->name('page-builder.store');
     Route::get('page-builder/{id}/edit', [PageBuilderController::class, 'edit'])->name('page-builder.edit');
@@ -287,7 +299,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::patch('social/default-page-update/{id}', [PageBuilderController::class, 'default_page_update'])->name('page-builder.default_page_update');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:menu check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:menu view'])->prefix('admin')->group(function () {
     Route::get('menu/create', [MenuController::class, 'create'])->name('menu.create');
     Route::post('menu', [MenuController::class, 'store'])->name('menu.store');
     Route::get('menu/{id}/edit', [MenuController::class, 'edit'])->name('menu.edit');
@@ -296,7 +308,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('menu-checked', [MenuController::class, 'destroy_checked'])->name('menu.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:menu check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:menu view'])->prefix('admin')->group(function () {
     Route::get('submenu/create', [SubmenuController::class, 'create'])->name('submenu.create');
     Route::post('submenu', [SubmenuController::class, 'store'])->name('submenu.store');
     Route::get('submenu/{id}/edit', [SubmenuController::class, 'edit'])->name('submenu.edit');
@@ -305,13 +317,13 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('submenu-checked', [SubmenuController::class, 'destroy_checked'])->name('submenu.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:subscribe check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:subscribe view'])->prefix('admin')->group(function () {
     Route::get('subscribe/create', [SubscribeController::class, 'create'])->name('subscribe.create');
     Route::post('subscribe', [SubscribeController::class, 'store'])->name('subscribe.store');
     Route::delete('subscribe/{id}', [SubscribeController::class, 'destroy'])->name('subscribe.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('favicon/create', [FaviconController::class, 'create'])->name('favicon.create');
     Route::post('favicon', [FaviconController::class, 'store'])->name('favicon.store');
     Route::put('favicon/{id}', [FaviconController::class, 'update'])->name('favicon.update');
@@ -319,7 +331,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('favicon/{id}', [FaviconController::class, 'destroy'])->name('favicon.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('header-image/create/{style?}', [HeaderImageController::class, 'create'])->name('header-image.create');
     Route::post('header-image', [HeaderImageController::class, 'store'])->name('header-image.store');
     Route::put('header-image/{id}', [HeaderImageController::class, 'update'])->name('header-image.update');
@@ -328,7 +340,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('header-image/{id}', [HeaderImageController::class, 'destroy'])->name('header-image.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('footer-image/create/{style?}', [FooterImageController::class, 'create'])->name('footer-image.create');
     Route::post('footer-image', [FooterImageController::class, 'store'])->name('footer-image.store');
     Route::put('footer-image/{id}', [FooterImageController::class, 'update'])->name('footer-image.update');
@@ -336,7 +348,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('footer-image/{id}', [FooterImageController::class, 'destroy'])->name('footer-image.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('panel-image/create', [PanelImageController::class, 'create'])->name('panel-image.create');
     Route::post('panel-image', [PanelImageController::class, 'store'])->name('panel-image.store');
     Route::put('panel-image/{id}', [PanelImageController::class, 'update'])->name('panel-image.update');
@@ -345,21 +357,21 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('panel-image/{id}', [PanelImageController::class, 'destroy'])->name('panel-image.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('external-url/create', [ExternalUrlController::class, 'create'])->name('external-url.create');
     Route::post('external-url', [ExternalUrlController::class, 'store'])->name('external-url.store');
     Route::put('external-url/{id}', [ExternalUrlController::class, 'update'])->name('external-url.update');
     Route::delete('external-url/{id}', [ExternalUrlController::class, 'destroy'])->name('external-url.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('contact-info-widget/create/{style?}', [ContactInfoWidgetController::class, 'create'])->name('contact-info-widget.create');
     Route::post('contact-info-widget', [ContactInfoWidgetController::class, 'store'])->name('contact-info-widget.store');
     Route::put('contact-info-widget/{id}', [ContactInfoWidgetController::class, 'update'])->name('contact-info-widget.update');
     Route::delete('contact-info-widget/{id}', [ContactInfoWidgetController::class, 'destroy'])->name('contact-info-widget.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('breadcrumb-image/create', [BreadcrumbImageController::class, 'create'])->name('breadcrumb-image.create');
     Route::post('breadcrumb-image', [BreadcrumbImageController::class, 'store'])->name('breadcrumb-image.store');
     Route::put('breadcrumb-image/{id}', [BreadcrumbImageController::class, 'update'])->name('breadcrumb-image.update');
@@ -367,21 +379,21 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('breadcrumb-image/{id}', [BreadcrumbImageController::class, 'destroy'])->name('breadcrumb-image.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('header-info/create/{style?}', [HeaderInfoController::class, 'create'])->name('header-info.create');
     Route::post('header-info', [HeaderInfoController::class, 'store'])->name('header-info.store');
     Route::put('header-info/{id}', [HeaderInfoController::class, 'update'])->name('header-info.update');
     Route::delete('header-info/{id}', [HeaderInfoController::class, 'destroy'])->name('header-info.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('site-info/create', [SiteInfoController::class, 'create'])->name('site-info.create');
     Route::post('site-info', [SiteInfoController::class, 'store'])->name('site-info.store');
     Route::put('site-info/{id}', [SiteInfoController::class, 'update'])->name('site-info.update');
     Route::delete('site-info/{id}', [SiteInfoController::class, 'destroy'])->name('site-info.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('social/create', [SocialController::class, 'create'])->name('social.create');
     Route::post('social', [SocialController::class, 'store'])->name('social.store');
     Route::get('social/{id}/edit', [SocialController::class, 'edit'])->name('social.edit');
@@ -390,35 +402,35 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('social/{id}', [SocialController::class, 'destroy'])->name('social.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('seo/create', [SeoController::class, 'create'])->name('seo.create');
     Route::post('seo', [SeoController::class, 'store'])->name('seo.store');
     Route::put('seo/{id}', [SeoController::class, 'update'])->name('seo.update');
     Route::delete('seo/{id}', [SeoController::class, 'destroy'])->name('seo.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('preloader/create', [PreloaderController::class, 'create'])->name('preloader.create');
     Route::post('preloader', [PreloaderController::class, 'store'])->name('preloader.store');
     Route::put('preloader/{id}', [PreloaderController::class, 'update'])->name('preloader.update');
     Route::delete('preloader/{id}', [PreloaderController::class, 'destroy'])->name('preloader.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('google-analytic/create', [GoogleAnalyticController::class, 'create'])->name('google-analytic.create');
     Route::post('google-analytic', [GoogleAnalyticController::class, 'store'])->name('google-analytic.store');
     Route::put('google-analytic/{id}', [GoogleAnalyticController::class, 'update'])->name('google-analytic.update');
     Route::delete('google-analytic/{id}', [GoogleAnalyticController::class, 'destroy'])->name('google-analytic.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('tawk-to/create', [TawkToController::class, 'create'])->name('tawk-to.create');
     Route::post('tawk-to', [TawkToController::class, 'store'])->name('tawk-to.store');
     Route::put('tawk-to/{id}', [TawkToController::class, 'update'])->name('tawk-to.update');
     Route::delete('tawk-to/{id}', [TawkToController::class, 'destroy'])->name('tawk-to.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('quick-access/create', [QuickAccessButtonController::class, 'create'])->name('quick-access.create');
     Route::post('quick-access', [QuickAccessButtonController::class, 'store'])->name('quick-access.store');
     Route::put('quick-access/{id}', [QuickAccessButtonController::class, 'update'])->name('quick-access.update');
@@ -427,7 +439,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::put('quick-access-bottom/{id}', [QuickAccessButtonController::class, 'update_bottom'])->name('quick-access-bottom.update');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('color-option/create', [ColorOptionController::class, 'create'])->name('color-option.create');
     Route::post('color-option', [ColorOptionController::class, 'store'])->name('color-option.store');
     Route::put('color-option/{id}', [ColorOptionController::class, 'update'])->name('color-option.update');
@@ -436,21 +448,21 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::put('customize-color-option/{id}', [ColorOptionController::class, 'customize-update'])->name('customize-color-option.update');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('font/create', [FontController::class, 'create'])->name('font.create');
     Route::post('font', [FontController::class, 'store'])->name('font.store');
     Route::put('font/{id}', [FontController::class, 'update'])->name('font.update');
     Route::delete('font/{id}', [FontController::class, 'destroy'])->name('font.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
     Route::get('draft-view/create', [DraftViewController::class, 'create'])->name('draft-view.create');
     Route::post('draft-view', [DraftViewController::class, 'store'])->name('draft-view.store');
     Route::put('draft-view/{id}', [DraftViewController::class, 'update'])->name('draft-view.update');
     Route::delete('draft-view/{id}', [DraftViewController::class, 'destroy'])->name('draft-view.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section view'])->prefix('admin')->group(function () {
     Route::get('banner/create/{style?}', [BannerController::class, 'create'])->name('banner.create');
     Route::post('banner', [BannerController::class, 'store'])->name('banner.store');
     Route::put('banner/{id}', [BannerController::class, 'update'])->name('banner.update');
@@ -460,7 +472,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('banner/{id}', [BannerController::class, 'destroy'])->name('banner.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section view'])->prefix('admin')->group(function () {
     Route::get('about/create/{style?}', [AboutSectionController::class, 'create'])->name('about.create');
     Route::post('about', [AboutSectionController::class, 'store'])->name('about.store');
     Route::put('about/{id}', [AboutSectionController::class, 'update'])->name('about.update');
@@ -475,7 +487,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('about-feature-checked', [AboutSectionController::class, 'destroy_feature_checked'])->name('about.destroy_feature_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('history/create/{style?}', [HistoryController::class, 'create'])->name('history.create');
     Route::post('history', [HistoryController::class, 'store'])->name('history.store');
     Route::get('history/{id}/edit', [HistoryController::class, 'edit'])->name('history.edit');
@@ -489,7 +501,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('history-section/{id}', [HistorySectionController::class, 'destroy'])->name('history-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('feature/create/{style?}', [FeatureController::class, 'create'])->name('feature.create');
     Route::post('feature', [FeatureController::class, 'store'])->name('feature.store');
     Route::get('feature/{id}/edit', [FeatureController::class, 'edit'])->name('feature.edit');
@@ -504,7 +516,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('feature-section/{id}', [FeatureSectionController::class, 'destroy'])->name('feature-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:service check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:service view'])->prefix('admin')->group(function () {
     Route::get('service-category/create', [ServiceCategoryController::class, 'create'])->name('service-category.create');
     Route::post('service-category', [ServiceCategoryController::class, 'store'])->name('service-category.store');
     Route::get('service-category/{id}/edit', [ServiceCategoryController::class, 'edit'])->name('service-category.edit');
@@ -513,7 +525,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('service-category-checked', [ServiceCategoryController::class, 'destroy_checked'])->name('service-category.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:service check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:service view'])->prefix('admin')->group(function () {
     Route::get('service/{style?}', [ServiceController::class, 'index'])->name('service.index');
     Route::get('service/create/{style?}', [ServiceController::class, 'create'])->name('service.create');
     Route::post('service', [ServiceController::class, 'store'])->name('service.store');
@@ -559,7 +571,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
 
 
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:background check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:background view'])->prefix('admin')->group(function () {
     Route::get('background-category/create', [BackgroundCategoryController::class, 'create'])->name('background-category.create');
     Route::post('background-category', [BackgroundCategoryController::class, 'store'])->name('background-category.store');
     Route::get('background-category/{id}/edit', [BackgroundCategoryController::class, 'edit'])->name('background-category.edit');
@@ -568,7 +580,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('background-category-checked', [BackgroundCategoryController::class, 'destroy_checked'])->name('background-category.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:background check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:background view'])->prefix('admin')->group(function () {
     Route::get('package-category/create', [PackageCategoryController::class, 'create'])->name('package-category.create');
     Route::post('package-category', [PackageCategoryController::class, 'store'])->name('package-category.store');
     Route::get('package-category/{id}/edit', [PackageCategoryController::class, 'edit'])->name('package-category.edit');
@@ -579,7 +591,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
 
 
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:background check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:background view'])->prefix('admin')->group(function () {
     // Route::get('background/{style?}', [BackgroundController::class, 'index'])->name('background.index');
     Route::get('background/create/{style?}', [BackgroundController::class, 'create'])->name('background.create');
     Route::post('background', [BackgroundController::class, 'store'])->name('background.store');
@@ -592,7 +604,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('background-checked', [BackgroundController::class, 'destroy_checked'])->name('background.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:background check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:background view'])->prefix('admin')->group(function () {
     Route::get('package', [PackageController::class, 'index'])->name('package.index');
     Route::get('package/create', [PackageController::class, 'create'])->name('package.create');
     Route::post('package', [PackageController::class, 'store'])->name('package.store');
@@ -609,7 +621,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
 
 
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('counter/create/{style?}', [CounterController::class, 'create'])->name('counter.create');
     Route::post('counter', [CounterController::class, 'store'])->name('counter.store');
     Route::get('counter/{id}/edit', [CounterController::class, 'edit'])->name('counter.edit');
@@ -622,7 +634,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('counter-section/{id}', [CounterSectionController::class, 'destroy'])->name('counter-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('work-process/create/{style?}', [WorkProcessController::class, 'create'])->name('work-process.create');
     Route::post('work-process', [WorkProcessController::class, 'store'])->name('work-process.store');
     Route::get('work-process/{id}/edit', [WorkProcessController::class, 'edit'])->name('work-process.edit');
@@ -637,7 +649,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('work-process-section/{id}', [WorkProcessSectionController::class, 'destroy'])->name('work-process-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('why-choose/create/{style?}', [WhyChooseController::class, 'create'])->name('why-choose.create');
     Route::post('why-choose', [WhyChooseController::class, 'store'])->name('why-choose.store');
     Route::get('why-choose/{id}/edit', [WhyChooseController::class, 'edit'])->name('why-choose.edit');
@@ -651,14 +663,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('why-choose-section/{id}', [WhyChooseSectionController::class, 'destroy'])->name('why-choose-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section view'])->prefix('admin')->group(function () {
     Route::get('call-to-action/create/{style?}', [CallToActionController::class, 'create'])->name('call-to-action.create');
     Route::post('call-to-action', [CallToActionController::class, 'store'])->name('call-to-action.store');
     Route::put('call-to-action/{id}', [CallToActionController::class, 'update'])->name('call-to-action.update');
     Route::delete('call-to-action/{id}', [CallToActionController::class, 'destroy'])->name('call-to-action.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:portfolio check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:portfolio view'])->prefix('admin')->group(function () {
     Route::get('portfolio-category/create', [PortfolioCategoryController::class, 'create'])->name('portfolio-category.create');
     Route::post('portfolio-category', [PortfolioCategoryController::class, 'store'])->name('portfolio-category.store');
     Route::get('portfolio-category/{id}/edit', [PortfolioCategoryController::class, 'edit'])->name('portfolio-category.edit');
@@ -667,7 +679,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('portfolio-category-checked', [PortfolioCategoryController::class, 'destroy_checked'])->name('portfolio-category.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:portfolio check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:portfolio view'])->prefix('admin')->group(function () {
     Route::get('portfolio/{style?}', [PortfolioController::class, 'index'])->name('portfolio.index');
     Route::get('portfolio/create/{style?}', [PortfolioController::class, 'create'])->name('portfolio.create');
     Route::post('portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
@@ -707,7 +719,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('portfolio-image-checked/{id}', [PortfolioImageController::class, 'destroy_checked'])->name('portfolio-image.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:team check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:team view'])->prefix('admin')->group(function () {
     Route::get('team-category/create', [TeamCategoryController::class, 'create'])->name('team-category.create');
     Route::post('team-category', [TeamCategoryController::class, 'store'])->name('team-category.store');
     Route::get('team-category/{id}/edit', [TeamCategoryController::class, 'edit'])->name('team-category.edit');
@@ -716,7 +728,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('team-category-checked', [TeamCategoryController::class, 'destroy_checked'])->name('team-category.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:team check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:team view'])->prefix('admin')->group(function () {
     Route::get('team/{style?}', [TeamController::class, 'index'])->name('team.index');
     Route::get('team/create/{style?}', [TeamController::class, 'create'])->name('team.create');
     Route::post('team', [TeamController::class, 'store'])->name('team.store');
@@ -732,7 +744,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('team-section/{id}', [TeamSectionController::class, 'destroy'])->name('team-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:career check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:career view'])->prefix('admin')->group(function () {
     Route::get('career-category/create', [CareerCategoryController::class, 'create'])->name('career-category.create');
     Route::post('career-category', [CareerCategoryController::class, 'store'])->name('career-category.store');
     Route::get('career-category/{id}/edit', [CareerCategoryController::class, 'edit'])->name('career-category.edit');
@@ -741,7 +753,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('career-category-checked', [CareerCategoryController::class, 'destroy_checked'])->name('career-category.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:career check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:career view'])->prefix('admin')->group(function () {
     Route::get('career/{style?}', [CareerController::class, 'index'])->name('career.index');
     Route::get('career/create/{style?}', [CareerController::class, 'create'])->name('career.create');
     Route::post('career', [CareerController::class, 'store'])->name('career.store');
@@ -763,7 +775,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('career-content/{id}', [CareerContentController::class, 'destroy'])->name('career-content.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:page check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:page view'])->prefix('admin')->group(function () {
     Route::get('page', [PageController::class, 'index'])->name('page.index');
     Route::get('page/create', [PageController::class, 'create'])->name('page.create');
     Route::post('page', [PageController::class, 'store'])->name('page.store');
@@ -774,7 +786,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('page/image/{id}', [PageController::class, 'destroy_image'])->name('page.destroy_image');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('testimonial/create/{style?}', [TestimonialController::class, 'create'])->name('testimonial.create');
     Route::post('testimonial', [TestimonialController::class, 'store'])->name('testimonial.store');
     Route::get('testimonial/{id}/edit', [TestimonialController::class, 'edit'])->name('testimonial.edit');
@@ -788,7 +800,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('testimonial-section/{id}', [TestimonialSectionController::class, 'destroy'])->name('testimonial-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('sponsor/create/{style?}', [SponsorController::class, 'create'])->name('sponsor.create');
     Route::post('sponsor', [SponsorController::class, 'store'])->name('sponsor.store');
     Route::get('sponsor/{id}/edit', [SponsorController::class, 'edit'])->name('sponsor.edit');
@@ -798,7 +810,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('sponsor/image/{id}', [SponsorController::class, 'destroy_image'])->name('sponsor.destroy_image');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section view'])->prefix('admin')->group(function () {
     Route::get('video/create/{style?}', [VideoSectionController::class, 'create'])->name('video.create');
     Route::post('video', [VideoSectionController::class, 'store'])->name('video.store');
     Route::put('video/{id}', [VideoSectionController::class, 'update'])->name('video.update');
@@ -806,7 +818,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('video/{id}', [VideoSectionController::class, 'destroy'])->name('video.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('faq/create/{style?}', [FaqController::class, 'create'])->name('faq.create');
     Route::post('faq', [FaqController::class, 'store'])->name('faq.store');
     Route::get('faq/{id}/edit', [FaqController::class, 'edit'])->name('faq.edit');
@@ -820,7 +832,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('faq-section/{id}', [FaqSectionController::class, 'destroy'])->name('faq-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:blog check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:blog view'])->prefix('admin')->group(function () {
     Route::get('category/create', [CategoryController::class, 'create'])->name('blog-category.create');
     Route::post('category', [CategoryController::class, 'store'])->name('blog-category.store');
     Route::get('category/{id}/edit', [CategoryController::class, 'edit'])->name('blog-category.edit');
@@ -829,7 +841,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('category-checked', [CategoryController::class, 'destroy_checked'])->name('blog-category.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:blog check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:blog view'])->prefix('admin')->group(function () {
     Route::get('blog', [BlogController::class, 'index'])->name('blog.index');
     Route::get('blog/create', [BlogController::class, 'create'])->name('blog.create');
     Route::post('blog', [BlogController::class, 'store'])->name('blog.store');
@@ -845,7 +857,106 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('blog-section/{id}', [BlogSectionController::class, 'destroy'])->name('blog-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:client profile view'])->prefix('admin')->group(function () {
+    Route::get('client-profile', [ClientProfileController::class, 'index'])->name('client-profile.index');
+    Route::get('client-profile/create', [ClientProfileController::class, 'create'])->name('client-profile.create');
+    Route::post('client-profile', [ClientProfileController::class, 'store'])->name('client-profile.store');
+    Route::get('client-profile/{id}/edit', [ClientProfileController::class, 'edit'])->name('client-profile.edit');
+    Route::get('client-profile/{id}/show', [ClientProfileController::class, 'show'])->name('client-profile.show');
+    Route::put('client-profile/{id}', [ClientProfileController::class, 'update'])->name('client-profile.update');
+    Route::delete('client-profile/{id}', [ClientProfileController::class, 'destroy'])->name('client-profile.destroy');
+    Route::delete('client-profile', [ClientProfileController::class, 'destroy_checked'])->name('client-profile.destroy_checked');
+
+    Route::post('add-employee', [EmployeeController::class, 'store'])->name('client-profile.employee_store');
+    Route::get('employee/{id}/edit', [EmployeeController::class, 'edit'])->name('client-profile.employee_edit');
+    Route::put('employee/{id}', [EmployeeController::class, 'update'])->name('client-profile.employee_update');
+    Route::delete('employee/{id}', [EmployeeController::class, 'destroy'])->name('client-profile.employee_destroy');
+});
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:lab admin view'])->prefix('admin')->group(function () {
+    Route::get('laboratory-list', [LaboratoryController::class, 'index'])->name('laboratory-list.index');
+    Route::get('laboratory-list/create', [LaboratoryController::class, 'create'])->name('laboratory-list.create');
+    Route::post('laboratory-list', [LaboratoryController::class, 'store'])->name('laboratory-list.store');
+    Route::get('laboratory-list/{id}/edit', [LaboratoryController::class, 'edit'])->name('laboratory-list.edit');
+    Route::put('laboratory-list/{id}', [LaboratoryController::class, 'update'])->name('laboratory-list.update');
+    Route::delete('laboratory-list/{id}', [LaboratoryController::class, 'destroy'])->name('laboratory-list.destroy');
+    Route::delete('laboratory-list', [LaboratoryController::class, 'destroy_checked'])->name('laboratory-list.destroy_checked');
+
+    // MRO List
+    Route::get('mro-list', [MROController::class, 'index'])->name('mro-list.index');
+    Route::get('mro-list/create', [MROController::class, 'create'])->name('mro-list.create');
+    Route::post('mro-list', [MROController::class, 'store'])->name('mro-list.store');
+    Route::get('mro-list/{id}/edit', [MROController::class, 'edit'])->name('mro-list.edit');
+    Route::put('mro-list/{id}', [MROController::class, 'update'])->name('mro-list.update');
+    Route::delete('mro-list/{id}', [MROController::class, 'destroy'])->name('mro-list.destroy');
+    Route::delete('mro-list', [MROController::class, 'destroy_checked'])->name('mro-list.destroy_checked');
+
+    // Panel List
+    Route::get('panel-list', [PanelController::class, 'index'])->name('panel-list.index');
+    Route::get('panel-list/create', [PanelController::class, 'create'])->name('panel-list.create');
+    Route::post('panel-list', [PanelController::class, 'store'])->name('panel-list.store');
+    Route::get('panel-list/{id}/edit', [PanelController::class, 'edit'])->name('panel-list.edit');
+    Route::put('panel-list/{id}', [PanelController::class, 'update'])->name('panel-list.update');
+    Route::delete('panel-list/{id}', [PanelController::class, 'destroy'])->name('panel-list.destroy');
+    Route::delete('panel-list', [PanelController::class, 'destroy_checked'])->name('panel-list.destroy_checked');
+
+    // Test Admin List
+    Route::get('test-admin', [TestAdminController::class, 'index'])->name('test-admin.index');
+    Route::get('test-admin/create', [TestAdminController::class, 'create'])->name('test-admin.create');
+    Route::post('test-admin', [TestAdminController::class, 'store'])->name('test-admin.store');
+    Route::get('test-admin/{id}/edit', [TestAdminController::class, 'edit'])->name('test-admin.edit');
+    Route::put('test-admin/{id}', [TestAdminController::class, 'update'])->name('test-admin.update');
+    Route::delete('test-admin/{id}', [TestAdminController::class, 'destroy'])->name('test-admin.destroy');
+    Route::delete('test-admin', [TestAdminController::class, 'destroy_checked'])->name('test-admin.destroy_checked');
+
+    // Dot Agency List
+    Route::get('dot-agency-list', [DotAgencyController::class, 'index'])->name('dot-agency-list.index');
+    Route::get('dot-agency-list/create', [DotAgencyController::class, 'create'])->name('dot-agency-list.create');
+    Route::post('dot-agency-list', [DotAgencyController::class, 'store'])->name('dot-agency-list.store');
+    Route::get('dot-agency-list/{id}/edit', [DotAgencyController::class, 'edit'])->name('dot-agency-list.edit');
+    Route::put('dot-agency-list/{id}', [DotAgencyController::class, 'update'])->name('dot-agency-list.update');
+    Route::delete('dot-agency-list/{id}', [DotAgencyController::class, 'destroy'])->name('dot-agency-list.destroy');
+    Route::delete('dot-agency-list', [DotAgencyController::class, 'destroy_checked'])->name('dot-agency-list.destroy_checked');
+});
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:result recording view'])->prefix('admin')->group(function () {
+    Route::get('result-recording', [ResultRecordingController::class, 'index'])->name('result-recording.index');
+    Route::get('result-recording/create', [ResultRecordingController::class, 'create'])->name('result-recording.create');
+    Route::post('result-recording', [ResultRecordingController::class, 'store'])->name('result-recording.store');
+    Route::get('result-recording/{id}/edit', [ResultRecordingController::class, 'edit'])->name('result-recording.edit');
+    Route::get('result-recording/{id}/show', [ResultRecordingController::class, 'show'])->name('result-recording.show');
+    Route::put('result-recording/{id}', [ResultRecordingController::class, 'update'])->name('result-recording.update');
+    Route::delete('result-recording/{id}', [ResultRecordingController::class, 'destroy'])->name('result-recording.destroy');
+    Route::delete('result-recording', [ResultRecordingController::class, 'destroy_checked'])->name('result-recording.destroy_checked');
+
+
+    Route::get('get-empoyees', [ResultRecordingController::class, 'get_empoyees'])
+        ->name('result-recording.get-empoyees');
+    Route::get('get-panel-test', [ResultRecordingController::class, 'get_panel_test'])
+        ->name('result-recording.get-panel-test');
+    Route::post('result-recording/send-notification/{id}', [ResultRecordingController::class, 'sendNotification'])->name('result-recording.send-notification');
+});
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:random selection view'])->prefix('admin')->group(function () {
+    Route::get('random-selection', [RandomSelectionController::class, 'index'])->name('random-selection.index');
+    Route::get('random-selection/create', [RandomSelectionController::class, 'create'])->name('random-selection.create');
+    Route::post('random-selection', [RandomSelectionController::class, 'store'])->name('random-selection.store');
+    Route::get('random-selection/{id}', [RandomSelectionController::class, 'show'])->name('random-selection.show');
+    Route::get('random-selection/{id}/edit', [RandomSelectionController::class, 'edit'])->name('random-selection.edit');
+    Route::put('random-selection/{id}', [RandomSelectionController::class, 'update'])->name('random-selection.update');
+    Route::delete('random-selection/{id}', [RandomSelectionController::class, 'destroy'])->name('random-selection.destroy');
+    Route::delete('random-selection', [RandomSelectionController::class, 'destroy_checked'])->name('random-selection.destroy_checked');
+
+
+    Route::post('random-selection/execute/{protocol}', [RandomSelectionController::class, 'execute'])
+        ->name('random-selection.execute');
+    Route::get('random-selection/executions/{protocol}', [RandomSelectionController::class, 'executions'])
+        ->name('random-selection.executions');
+    Route::get('random-selection/results/{event}', [RandomSelectionController::class, 'viewResults'])
+        ->name('random-selection.results.view');
+});
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('footer-category/create', [FooterCategoryController::class, 'create'])->name('footer-category.create');
     Route::post('footer-category', [FooterCategoryController::class, 'store'])->name('footer-category.store');
     Route::get('footer-category/{id}/edit', [FooterCategoryController::class, 'edit'])->name('footer-category.edit');
@@ -854,7 +965,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('footer-category-checked', [FooterCategoryController::class, 'destroy_checked'])->name('footer-category.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('footer', [FooterController::class, 'index'])->name('footer.index');
     Route::get('footer/create', [FooterController::class, 'create'])->name('footer.create');
     Route::post('footer', [FooterController::class, 'store'])->name('footer.store');
@@ -864,7 +975,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('footer-checked', [FooterController::class, 'destroy_checked'])->name('footer.destroy_checked');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:plan check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:plan view'])->prefix('admin')->group(function () {
     Route::get('plan/create', [PlanController::class, 'create'])->name('plan.create');
     Route::post('plan', [PlanController::class, 'store'])->name('plan.store');
     Route::get('plan/{id}/edit', [PlanController::class, 'edit'])->name('plan.edit');
@@ -877,14 +988,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('plan-section/{id}', [PlanSectionController::class, 'destroy'])->name('plan-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section view'])->prefix('admin')->group(function () {
     Route::get('subscribe-section/create/{style?}', [SubscribeSectionController::class, 'create'])->name('subscribe-section.create');
     Route::post('subscribe-section', [SubscribeSectionController::class, 'store'])->name('subscribe-section.store');
     Route::put('subscribe-section/{id}', [SubscribeSectionController::class, 'update'])->name('subscribe-section.update');
     Route::delete('subscribe-section/{id}', [SubscribeSectionController::class, 'destroy'])->name('subscribe-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:gallery check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:gallery view'])->prefix('admin')->group(function () {
     Route::get('gallery', [GalleryImageController::class, 'index'])->name('gallery.index');
     Route::get('gallery/create', [GalleryImageController::class, 'create'])->name('gallery.create');
     Route::post('gallery', [GalleryImageController::class, 'store'])->name('gallery.store');
@@ -899,7 +1010,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('gallery-section/{id}', [GalleryImageSectionController::class, 'destroy'])->name('gallery-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:section view'])->prefix('admin')->group(function () {
     Route::get('contact-info/create/{style?}', [ContactInfoController::class, 'create'])->name('contact-info.create');
     Route::post('contact-info', [ContactInfoController::class, 'store'])->name('contact-info.store');
     Route::get('contact-info/{id}/edit', [ContactInfoController::class, 'edit'])->name('contact-info.edit');
@@ -913,13 +1024,13 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('contact-info-section/{id}', [ContactInfoSectionController::class, 'destroy'])->name('contact-info-section.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:section view'])->prefix('admin')->group(function () {
     Route::get('map/create', [MapController::class, 'create'])->name('map.create');
     Route::post('map', [MapController::class, 'store'])->name('map.store');
     Route::put('map/{id}', [MapController::class, 'update'])->name('map.update');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:contact message check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:contact message view'])->prefix('admin')->group(function () {
     Route::get('contact-message', [ContactMessageController::class, 'index'])->name('contact-message.index');
     Route::put('contact-message/{id}', [ContactMessageController::class, 'update'])->name('contact-message.update');
     Route::patch('contact-message/mark_all', [ContactMessageController::class, 'mark_all_read_update'])->name('contact-message.mark_all_read_update');
@@ -987,7 +1098,7 @@ Route::get('go-to-site-url/{site_url?}/{segment2?}/{slug?}', [GoToSiteUrlControl
 
 
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:clear cache check'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:clear cache view'])->prefix('admin')->group(function () {
     Route::get('clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('route:clear');

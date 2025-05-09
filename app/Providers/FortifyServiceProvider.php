@@ -12,6 +12,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -45,18 +46,50 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         // ✅ Add this authentication logic
+        // Fortify::authenticateUsing(function (Request $request) {
+        //     $user = User::where('email', $request->email)->first();
+
+        //     if ($user && Hash::check($request->password, $user->password)) {
+        //         // Check if user status is Active (1)
+        //         if ($user->status !== 1) {
+        //             return null; // Prevent login for inactive users
+        //         }
+        //         return $user;
+        //     }
+        //     return null;
+        // });
+
         Fortify::authenticateUsing(function (Request $request) {
             $user = User::where('email', $request->email)->first();
 
-            if ($user && Hash::check($request->password, $user->password)) {
-                // Check if user status is Active (1)
-                if ($user->status !== 1) {
-                    return null; // Prevent login for inactive users
-                }
-                return $user;
+            // 1. First check if user exists
+            if (!$user) {
+                throw ValidationException::withMessages([
+                    'email' => __('These credentials do not match our records.'),
+                ]);
             }
 
-            return null;
+            // 2. Then verify password
+            if (!Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'email' => __('The provided password is incorrect.'),
+                ]);
+            }
+
+            // 3. Finally check account status
+            if ($user->status !== 1) { // 1 = Active
+                $message = match ($user->status) {
+                    2 => 'Your account is pending approval. Please contact support.',
+                    3 => 'Your account has been deactivated.',
+                    default => 'Your account is not active.',
+                };
+
+                throw ValidationException::withMessages([
+                    'email' => __($message),
+                ]);
+            }
+
+            return $user;
         });
     }
 }

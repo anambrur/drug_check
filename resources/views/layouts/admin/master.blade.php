@@ -36,10 +36,15 @@
     <link href="{{ asset('assets/admin/side_menu/vendor/fontawesome-free/css/fontawesome-iconpicker.min.css') }}"
         rel="stylesheet">
 
+
     <!-- Datepicker CSS -->
     <link rel="stylesheet" href="{{ asset('assets/admin/side_menu/css/bootstrap-datepicker.min.css') }}">
+
+
     <link rel="stylesheet" href="{{ asset('assets/admin/side_menu/css/default-assets/color-picker-bootstrap.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/admin/side_menu/css/default-assets/form-picker.css') }}">
+
+    
 
     <!-- Tags Input CSS -->
     <link rel="stylesheet" href="{{ asset('assets/admin/side_menu/css/default-assets/jquery.tagsinput.min.css') }}">
@@ -82,6 +87,9 @@
 
     <!-- Draggable Css -->
     <link href="{{ asset('assets/admin/side_menu/css/draggable.css') }}" rel="stylesheet">
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 </head>
 <body @if (session()->has('language_direction_from_dropdown')) @if(session()->get('language_direction_from_dropdown') == 1)  class="rtl-version" @endif @elseif (isset($language)) @if ($language->direction == 1) class="rtl-version" @endif  @endif >
@@ -395,6 +403,7 @@
                         class="nav-item {{ request()->is('admin/client-profile') ||
                         request()->is('admin/client-profile/create') ||
                         request()->is('admin/client-profile/*/edit') ||
+                        request()->is('admin/client-profile/*/show') ||
                         request()->is('admin/client-profile-image/*/create') ||
                         request()->is('admin/client-profile-image/*/*/edit') ||
                         request()->is('admin/client-profile-detail/*/create') ||
@@ -403,13 +412,14 @@
                             : '' }}">
                         <a class="nav-link" data-toggle="collapse" href="#client-profiles" aria-expanded="false"
                             aria-controls="client-profiles">
-                            <i class="fab fa-blogger-b menu-icon"></i>
+                            <i class="fas fa-user menu-icon"></i>
                             <span class="menu-title">Client Profile</span>
                             <i class="ti-angle-right"></i>
                         </a>
                         <div class="collapse {{ request()->is('admin/client-profile') ||
                         request()->is('admin/client-profile/create') ||
                         request()->is('admin/client-profile/*/edit') ||
+                        request()->is('admin/client-profile/*/show') ||
                         request()->is('admin/client-profile-image/*/create') ||
                         request()->is('admin/client-profile-image/*/*/edit') ||
                         request()->is('admin/client-profile-detail/*/create') ||
@@ -432,6 +442,147 @@
                                             ? 'active'
                                             : '' }}"
                                         href="{{ url('admin/client-profile') }}">Client Profile</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
+                @can('result recording view')
+                    <li
+                        class="nav-item  {{ request()->is('admin/result-recording/create') ||
+                        request()->is('admin/result-recording') ||
+                        request()->is('admin/result-recording/*/edit') ||
+                        request()->is('admin/result-recording/*/show')
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" href="{{ url('admin/result-recording') }}">
+                            <i class="fas fa-clipboard-list menu-icon"></i>
+                            <span class="menu-title">Result Recording</span>
+                        </a>
+                    </li>
+                @endcan
+
+
+                @can('random selection view')
+                    <li
+                        class="nav-item {{ request()->is('admin/random-selection') ||
+                        request()->is('admin/random-selection/create') ||
+                        request()->is('admin/random-selection/*/edit') ||
+                        request()->is('admin/random-selection/*/show') ||
+                        request()->is('admin/random-selection/results/*') ||
+                        request()->is('admin/random-selection/executions/*') 
+                        
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#random-selections" aria-expanded="false"
+                            aria-controls="random-selections">
+                            <i class="fas fa-random menu-icon"></i>
+                            <span class="menu-title">Random Selection</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/random-selection') ||
+                        request()->is('admin/random-selection/create') ||
+                        request()->is('admin/random-selection/*/edit') ||
+                        request()->is('admin/random-selection/results/*') ||
+                        request()->is('admin/random-selection/executions/*') 
+                        
+                            ? 'show'
+                            : '' }}"
+                            id="random-selections">
+                            <ul class="nav flex-column sub-menu">
+                                
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/random-selection/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/random-selection/create') }}">Create Random Selection</a></li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/random-selection') ||
+                                        request()->is('admin/random-selection/*/edit') ||
+                                        request()->is('admin/random-selection-image/*/create') ||
+                                        request()->is('admin/random-selection-image/*/*/edit') ||
+                                        request()->is('admin/random-selection-detail/*/create') ||
+                                        request()->is('admin/random-selection-detail/*/*/edit')
+                                            ? 'active'
+                                            : '' }}"
+                                        href="{{ url('admin/random-selection') }}">Random Selection</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
+                
+                @can('lab admin view')
+                    <li
+                        class="nav-item {{ request()->is('admin/laboratory-list') ||
+                        request()->is('admin/laboratory-list/create') ||
+                        request()->is('admin/laboratory-list/*/edit') ||
+                        request()->is('admin/mro-list') ||
+                        request()->is('admin/mro-list/create') ||
+                        request()->is('admin/mro-list/*/edit') ||
+                        request()->is('admin/dot-agency-list') ||
+                        request()->is('admin/dot-agency-list/create') ||
+                        request()->is('admin/dot-agency-list/*/edit') ||
+                        request()->is('admin/panel-list') ||
+                        request()->is('admin/panel-list/create') ||
+                        request()->is('admin/panel-list/*/edit') ||
+                        request()->is('admin/test-admin') ||
+                        request()->is('admin/test-admin/create') ||
+                        request()->is('admin/test-admin/*/edit') 
+                        
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#laboratory-lists" aria-expanded="false"
+                            aria-controls="laboratory-lists">
+                            <i class="fas fa-flask menu-icon"></i>
+                            <span class="menu-title">Lab Admin</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/laboratory-list') ||
+                        request()->is('admin/laboratory-list/create') ||
+                        request()->is('admin/laboratory-list/*/edit') ||
+                        request()->is('admin/mro-list') ||
+                        request()->is('admin/mro-list/create') ||
+                        request()->is('admin/mro-list/*/edit') ||
+                        request()->is('admin/dot-agency-list') ||
+                        request()->is('admin/dot-agency-list/create') ||
+                        request()->is('admin/dot-agency-list/*/edit') ||
+                        request()->is('admin/panel-list') ||
+                        request()->is('admin/panel-list/create') ||
+                        request()->is('admin/panel-list/*/edit') ||
+                        request()->is('admin/test-admin') ||
+                        request()->is('admin/test-admin/create') ||
+                        request()->is('admin/test-admin/*/edit')
+                       
+                            ? 'show'
+                            : '' }}"
+                            id="laboratory-lists">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> <a
+                                    class="nav-link {{ request()->is('admin/laboratory-list') ||
+                                        request()->is('admin/laboratory-list/*/edit') ? 'active' : '' }}"
+                                    href="{{ url('admin/laboratory-list') }}">Laboratory List</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                    class="nav-link {{ request()->is('admin/mro-list') ||
+                                        request()->is('admin/mro-list/*/edit')  ? 'active' : '' }}"
+                                    href="{{ url('admin/mro-list') }}">MRO List</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                    class="nav-link {{ request()->is('admin/panel-list') ||
+                                        request()->is('admin/panel-list/*/edit')  ? 'active' : '' }}"
+                                    href="{{ url('admin/panel-list') }}">Panel List</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                    class="nav-link {{ request()->is('admin/test-admin') ||
+                                        request()->is('admin/test-admin/*/edit')  ? 'active' : '' }}"
+                                    href="{{ url('admin/test-admin') }}">Test Admin</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                    class="nav-link {{ request()->is('admin/dot-agency-list') ||
+                                        request()->is('admin/dot-agency-list/*/edit')  ? 'active' : '' }}"
+                                    href="{{ url('admin/dot-agency-list') }}">Dot Agency</a>
+                                </li>
+                                
+                                
                             </ul>
                         </div>
                     </li>
@@ -1265,6 +1416,9 @@
 <script src="{{ asset('assets/admin/side_menu/js/bootstrap.min.js') }}"></script>
 <script src="{{ asset('assets/admin/side_menu/js/bundle.js') }}"></script>
 <script src="{{ asset('assets/admin/side_menu/js/default-assets/fullscreen.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
 
 <!-- Active JS -->
 <script src="{{ asset('assets/admin/side_menu/js/canvas.js') }}" defer></script>
@@ -1299,12 +1453,15 @@
     <script src="{{ asset('assets/admin/side_menu/js/default-assets/jquey.tagsinput.min.js') }}"></script>
 
 
+
+
     <!-- Datepicker JS -->
     <script src="{{ asset('assets/admin/side_menu/js/default-assets/moment.js') }}"></script>
     <script src="{{ asset('assets/admin/side_menu/js/bootstrap-colorpicker.min.js') }}"></script>
     <script src="{{ asset('assets/admin/side_menu/js/default-assets/colorpicker-bootstrap.js') }}"></script>
     <script src="{{ asset('assets/admin/side_menu/js/bootstrap-datepicker.min.js') }}"></script>
     <script src="{{ asset('assets/admin/side_menu/js/default-assets/form-picker.js') }}"></script>
+
 
     <!-- Summer note scripts -->
     <script src="{{ asset('assets/admin/side_menu/js/summernote-bs4.min.js') }}"></script>
@@ -1314,6 +1471,9 @@
 
     <!-- Custom JS -->
     <script src="{{ asset('assets/admin/side_menu/js/custom.js') }}"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 
     <script>
@@ -1606,6 +1766,8 @@
 
         }(jQuery));
     </script>
+
+    @stack('script')
 
 
     </body>

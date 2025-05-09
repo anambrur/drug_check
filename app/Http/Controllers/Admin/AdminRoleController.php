@@ -27,7 +27,7 @@ class AdminRoleController extends Controller
         $panel_image = PanelImage::first();
         $roles = Role::all();
 
-        return view('admin.admin_role.index', compact('favicon','panel_image','roles'));
+        return view('admin.admin_role.index', compact('favicon', 'panel_image', 'roles'));
     }
 
     /**
@@ -46,7 +46,7 @@ class AdminRoleController extends Controller
 
         // dd($permissions);
 
-        return view('admin.admin_role.create', compact('panel_image','permissions'));
+        return view('admin.admin_role.create', compact('panel_image', 'permissions'));
     }
 
     /**
@@ -63,7 +63,7 @@ class AdminRoleController extends Controller
         ]);
 
         // Any error checking
-        if ($validator->fails()){
+        if ($validator->fails()) {
             toastr()->error($validator->errors()->first(), 'content.error');
             return back();
         }
@@ -77,7 +77,6 @@ class AdminRoleController extends Controller
             toastr()->warning('warning.please_select_a_permission', 'content.warning');
 
             return redirect()->route('admin-role.create');
-
         } else {
 
             // Reset cached roles and permissions
@@ -90,8 +89,7 @@ class AdminRoleController extends Controller
             ]);
 
             // Give permissions for role
-            for($i = 0; $i < count($is_ok_permissions); $i++)
-            {
+            for ($i = 0; $i < count($is_ok_permissions); $i++) {
                 $role->givePermissionTo($is_ok_permissions[$i]);
             }
 
@@ -99,10 +97,7 @@ class AdminRoleController extends Controller
             toastr()->success('content.created_successfully', 'content.success');
 
             return redirect()->route('admin-role.index');
-
         }
-
-
     }
 
     /**
@@ -121,19 +116,18 @@ class AdminRoleController extends Controller
 
             // Retrieving models
             $role = Role::findOrFail($id);
-            $permissions = Permission::all();
+            $permissions = Permission::all()->groupBy(function ($permission) {
+                return Str::before($permission->name, ' ');
+            });
 
-            return view('admin.admin_role.edit', compact( 'role', 'permissions'));
-
+            return view('admin.admin_role.edit', compact('role', 'permissions'));
         } else {
 
             // Set a warning toast, with a title
             toastr()->warning('warning.you_are_not_authorized', 'content.warning');
 
             return redirect()->route('admin-role.index');
-
         }
-
     }
 
     /**
@@ -155,7 +149,7 @@ class AdminRoleController extends Controller
         ]);
 
         // Any error checking
-        if ($validator->fails()){
+        if ($validator->fails()) {
             toastr()->error($validator->errors()->first(), 'content.error');
             return back();
         }
@@ -179,7 +173,6 @@ class AdminRoleController extends Controller
             toastr()->warning('warning.please_select_a_permission', 'content.warning');
 
             return redirect()->route('admin-role.edit', $id);
-
         } else {
 
             // Reset cached roles and permissions
@@ -192,14 +185,12 @@ class AdminRoleController extends Controller
             $role = Role::find($id);
 
             // Give permissions for role
-            for($i = 0; $i < count($is_ok_permissions); $i++)
-            {
+            for ($i = 0; $i < count($is_ok_permissions); $i++) {
                 $role->givePermissionTo($is_ok_permissions[$i]);
             }
 
             // Revoke permissions for role
-            for($i = 0; $i < count($arr_permissions); $i++)
-            {
+            for ($i = 0; $i < count($arr_permissions); $i++) {
                 if (!in_array($arr_permissions[$i], $is_ok_permissions)) {
                     $role->revokePermissionTo($arr_permissions[$i]);
                 }
@@ -209,9 +200,7 @@ class AdminRoleController extends Controller
             toastr()->success('success.created_successfully', 'content.success');
 
             return redirect()->route('admin-role.index');
-
         }
-
     }
 
     /**
@@ -234,15 +223,12 @@ class AdminRoleController extends Controller
             toastr()->success('success.deleted_successfully', 'content.success');
 
             return redirect()->route('admin-role.index');
-
         } else {
 
             // Set a warning toast, with a title
             toastr()->warning('warning.you_are_not_authorized', 'content.warning');
 
             return redirect()->route('admin-role.index');
-
         }
-
     }
 }
