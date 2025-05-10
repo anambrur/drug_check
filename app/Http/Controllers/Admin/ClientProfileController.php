@@ -130,7 +130,7 @@ class ClientProfileController extends Controller
             $this->sendClientRegistrationEmail($clientProfile, $companyUser, $random_password);
             DB::commit();
 
-            toastr()->success('content.created_successfully', 'content.success');
+            // toastr()->success('content.created_successfully', 'content.success');
             return redirect()->route('client-profile.index');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -150,7 +150,7 @@ class ClientProfileController extends Controller
                 )
             );
 
-            toastr()->success('Registration email sent successfully to ' . $companyUser->email, 'Email Sent');
+            toastr()->success('Company Create and Registration email sent successfully to ' . $companyUser->email, 'Email Sent');
         } catch (\Exception $e) {
             Log::error('Failed to send DER registration email: ' . $e->getMessage());
             

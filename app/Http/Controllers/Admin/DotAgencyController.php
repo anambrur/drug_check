@@ -40,7 +40,7 @@ class DotAgencyController extends Controller
     {
         // Form validation
         $validator = Validator::make($request->all(), [
-            'full_name'            => 'required|string|max:255',
+            'full_name'            => 'nullable|string|max:255',
             'dot_agency_name'       => 'required|string',
             'status'                  => 'required|in:active,inactive',
         ]);
@@ -95,7 +95,7 @@ class DotAgencyController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'full_name'            => 'required|string|max:255',
+            'full_name'            => 'nullable|string|max:255',
             'dot_agency_name'       => 'required|string',
             'status'                  => 'required|in:active,inactive',
         ]);

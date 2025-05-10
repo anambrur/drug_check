@@ -32,12 +32,13 @@ class PermissionSeeder extends Seeder
         Role::truncate();
 
         // Delete the demo users if they exist
-        User::whereIn('email', [
-            'superadmin@gmail.com',
-            'admin@gmail.com',
-            'company@gmail.com',
-            'employee@gmail.com'
-        ])->delete();
+        // User::whereIn('email', [
+        //     'superadmin@gmail.com',
+        //     'admin@gmail.com',
+        //     'company@gmail.com',
+        //     'employee@gmail.com'
+        // ])->delete();
+        User::truncate();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 

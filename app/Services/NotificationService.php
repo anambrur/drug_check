@@ -10,7 +10,7 @@ use App\Models\Admin\ContactInfoWidget;
 
 class NotificationService
 {
-    public function sendTestNotification($mailData, string $recipientType): bool
+    public function sendTestNotification($mailData, string $recipientType,$pdfContent = null): bool
     {
         try {
             if (!in_array($recipientType, ['company', 'employee'])) {
@@ -75,7 +75,7 @@ class NotificationService
                 : $mailData->employee->email;
 
             // Send email
-            Mail::to($recipient)->send(new TestResultNotification($emailData, $recipientType));
+            Mail::to($recipient)->send(new TestResultNotification($emailData, $recipientType,$pdfContent));
 
             Log::info("Successfully sent notification to {$recipientType}: {$recipient}");
             return true;

@@ -3,11 +3,12 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 class TestResultNotification extends Mailable
 {
@@ -15,14 +16,16 @@ class TestResultNotification extends Mailable
 
     public $emailData;
     public $recipientType;
+    public $pdfContent;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(array $emailData, string $recipientType)
+    public function __construct(array $emailData, string $recipientType, $pdfContent = null)
     {
         $this->emailData = $emailData;
         $this->recipientType = $recipientType;
+        $this->pdfContent = $pdfContent;
     }
 
     public function build()
@@ -67,6 +70,12 @@ class TestResultNotification extends Mailable
      */
     public function attachments(): array
     {
+        if ($this->pdfContent) {
+            return [
+                Attachment::fromData(fn() => $this->pdfContent, 'certificate.pdf')
+                    ->withMime('application/pdf'),
+            ];
+        }
         return [];
     }
 }

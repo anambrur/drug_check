@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Barryvdh\DomPDF\PDF;
 use App\Models\Admin\MRO;
 use App\Models\Admin\Panel;
 use Illuminate\Http\Request;
@@ -40,12 +41,13 @@ class ResultRecordingController extends Controller
         // Check if user is client
         if (auth()->user()->hasRole('company')) {
             $clientProfile = auth()->user()->clientProfile;
+            // dd(auth()->user());
             $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')
                 ->where('company_id', $clientProfile->id)
                 ->orderBy('id', 'desc')
                 ->get();
 
-            return view('admin.result_recording.index', compact('favicon', 'panel_image', 'laboratories',  'mros', 'clientProfiles', 'test_admins', 'recoding_results'));
+            return view('admin.result_recording.company-index', compact('favicon', 'panel_image', 'laboratories',  'mros', 'clientProfiles', 'test_admins', 'recoding_results'));
         }
 
         $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')->orderBy('id', 'desc')->get();
@@ -308,13 +310,17 @@ class ResultRecordingController extends Controller
 
             $mailData->additional_text = $validated['additional_text'] ?? null;
 
+            // Generate PDF certificate
+            $pdf = $this->generateCertificatePdf($mailData->clientProfile);
+
+
             $notificationService = new NotificationService();
 
-            if (!$notificationService->sendTestNotification($mailData, 'company')) {
+            if (!$notificationService->sendTestNotification($mailData, 'company', $pdf)) {
                 throw new \Exception("Failed to send company notification");
             }
 
-            if (!$notificationService->sendTestNotification($mailData, 'employee')) {
+            if (!$notificationService->sendTestNotification($mailData, 'employee', $pdf)) {
                 throw new \Exception("Failed to send employee notification");
             }
 
@@ -328,6 +334,20 @@ class ResultRecordingController extends Controller
             return redirect()->back()
                 ->with('error', $e->getMessage());
         }
+    }
+
+    protected function generateCertificatePdf($clientProfile)
+    {
+        $pdf = app(PDF::class);
+
+        $data = [
+            'companyName' => $clientProfile->company_name,
+            'startDate' => now()->format('F j, Y'),
+            'endDate' => now()->addYear()->format('F j, Y'),
+            'signature' => 'Harinder Garcia',
+        ];
+
+        return $pdf->loadView('pdf.certificate', $data)->output();
     }
 
 

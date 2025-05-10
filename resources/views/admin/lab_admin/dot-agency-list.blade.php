@@ -20,9 +20,9 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="full_name">Full Name <span class="text-red">*</span></label>
+                            <label for="full_name">Full Name </label>
                             <input id="full_name" name="full_name" type="text" class="form-control"
-                                placeholder="Enter Full Name" required>
+                                placeholder="Enter Full Name">
                         </div>
                     </div>
                     <div class="col-md-3">
