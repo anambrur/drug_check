@@ -66,10 +66,10 @@
             <div class="portfolio-single-inner custom-blog-img">
                 <h4>{{ $portfolio->title }}</h4>
                 <div class="author-meta">
-                    <a href="#"><span
+                    {{-- <a href="#"><span
                             class="far fa-calendar-alt"></span>{{ Carbon\Carbon::parse($portfolio->created_at)->isoFormat('DD') }}
                         {{ Carbon\Carbon::parse($portfolio->created_at)->isoFormat('MMMM') }}
-                        {{ Carbon\Carbon::parse($portfolio->created_at)->isoFormat('GGGG') }}</a>
+                        {{ Carbon\Carbon::parse($portfolio->created_at)->isoFormat('GGGG') }}</a> --}}
                     <a href="#"><span class="far fa-bookmark"></span>{{ $portfolio->category_name }}</a>
                 </div>
                 <p>@php echo html_entity_decode($portfolio_content->description); @endphp</p>
