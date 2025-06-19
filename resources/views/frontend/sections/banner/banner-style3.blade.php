@@ -44,7 +44,7 @@
                         @foreach ($menus as $menu)
                             @if ($menu->menu_name !== 'Home' && $menu->menu_name !== 'About' && $menu->menu_name !== 'Contact')
                                 <div class="mb-3">
-                                    <a href="{{ url($menu->uri) }}" class="primary-btn p-2">
+                                    <a href="{{ url($menu->uri) }}" class="primary-btn py-2">
                                         <span class="text">{{ $menu->menu_name }}</span>
                                     </a>
                                 </div>
@@ -75,7 +75,7 @@
             @endisset
         </div>
     </div>
-    @if (is_countable($socials) && count($socials) > 0)
+    {{-- @if (is_countable($socials) && count($socials) > 0)
         <ul class="hero-social-list">
             @foreach ($socials as $social)
                 @if ($social->social_media == 'fab fa-twitter')
@@ -99,7 +99,7 @@
                 <li><a href="javascript:void(0)"><i class="fab fa-instagram"></i></a></li>
             </ul>
         @endif
-    @endif
+    @endif --}}
 
     @isset($header_info_style1)
         <a href="mailto:{{ $header_info_style1->email }}" class="hero-email-link">{{ $header_info_style1->email }}</a>

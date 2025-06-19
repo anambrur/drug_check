@@ -25,7 +25,14 @@
                     @isset($about_section_style1)
                         <h6>@php echo html_entity_decode($about_section_style1->section_title); @endphp</h6>
                         <h2>@php echo html_entity_decode($about_section_style1->title); @endphp</h2>
-                        <p>@php echo html_entity_decode($about_section_style1->description); @endphp</p>
+
+                        <div class="mb-4">
+                            @if (request()->is('/'))
+                                <p class="mb-2">@php echo html_entity_decode(Str::words($about_section_style1->description, 50, '...')); @endphp</p>
+                            @else
+                                <p class="mb-2">@php echo html_entity_decode($about_section_style1->description); @endphp</p>
+                            @endif
+                        </div>
                     @else
                         @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
                             {{-- <h6>About Us</h6> --}}
@@ -38,7 +45,7 @@
                             </p>
                         @endif
                     @endisset
-                    
+
                     @isset($about_section_style1)
                         @if (!empty($about_section_style1->button_name))
                             <a href="{{ $about_section_style1->button_url }}" class="primary-btn me-3 mb-3">

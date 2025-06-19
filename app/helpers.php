@@ -205,7 +205,7 @@ function getModel ($data_object, $language) {
     $blog_limit = 6;
     $service_section_item = 6;
     $service_limit = 6;
-    $portfolio_section_item = 12;
+    $portfolio_section_item = 26;
     $portfolio_limit = 6;
     $team_section_item = 3;
     $team_limit = 6;

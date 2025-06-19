@@ -57,6 +57,8 @@ class HomeController extends Controller
 
         // URL detection when language changes
 
+        // dd($page_builder);
+
         if (!empty($page_builder->updated_item)) {
 
             // parse JSON data as object
