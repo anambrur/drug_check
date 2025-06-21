@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained('client_profiles')->onDelete('cascade');
             $table->foreignId('test_id')->constrained('test_admins')->onDelete('cascade');
             $table->enum('group', ['DOT', 'NON_DOT', 'DOT_AGENCY', 'ALL']);
-            $table->foreignId('dot_agency_id')->constrained('dot_agencies')->onDelete('cascade');
+            $table->foreignId('dot_agency_id')->constrained('dot_agencies')->onDelete('cascade')->nullable();
             $table->string('department_filter')->nullable();
             $table->string('shift_filter')->nullable();
             $table->boolean('exclude_previously_selected')->default(false);

@@ -82,6 +82,7 @@ use App\Http\Controllers\Frontend\ZipSearchController;
 use App\Http\Controllers\Admin\CareerContentController;
 use App\Http\Controllers\Admin\CareerSectionController;
 use App\Http\Controllers\Admin\ClientProfileController;
+use App\Http\Controllers\Admin\PrivacyPolicyController;
 use App\Http\Controllers\Admin\CareerCategoryController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\CounterSectionController;
@@ -108,6 +109,7 @@ use App\Http\Controllers\Admin\WhyChooseSectionController;
 use App\Http\Controllers\Admin\ContactInfoWidgetController;
 use App\Http\Controllers\Admin\PortfolioCategoryController;
 use App\Http\Controllers\Admin\QuickAccessButtonController;
+use App\Http\Controllers\Admin\TermsAndConditionController;
 use App\Http\Controllers\Admin\BackgroundCategoryController;
 use App\Http\Controllers\Admin\ContactInfoSectionController;
 use App\Http\Controllers\Admin\TestimonialSectionController;
@@ -186,7 +188,11 @@ Route::get('dot-supervisor-training', [\App\Http\Controllers\Frontend\HomeContro
 
 Route::get('background-checks-services', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks_services'])->name('frontend.background-check-services')->middleware('XSS');
 
+//terms and conditions
 Route::get('terms-and-conditions', [\App\Http\Controllers\Frontend\HomeController::class, 'terms_and_conditions'])->name('frontend.terms-and-conditions')->middleware('XSS');
+
+//privacy policy
+Route::get('privacy-policy', [\App\Http\Controllers\Frontend\HomeController::class, 'privacy_policy'])->name('frontend.privacy-policy')->middleware('XSS');
 
 
 
@@ -407,6 +413,19 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('seo', [SeoController::class, 'store'])->name('seo.store');
     Route::put('seo/{id}', [SeoController::class, 'update'])->name('seo.update');
     Route::delete('seo/{id}', [SeoController::class, 'destroy'])->name('seo.destroy');
+});
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
+    Route::get('terms-and-conditions/create', [TermsAndConditionController::class, 'create'])->name('terms-and-conditions.create');
+    Route::post('terms-and-conditions', [TermsAndConditionController::class, 'store'])->name('terms-and-conditions.store');
+    Route::put('terms-and-conditions/{id}', [TermsAndConditionController::class, 'update'])->name('terms-and-conditions.update');
+    Route::delete('terms-and-conditions/{id}', [TermsAndConditionController::class, 'destroy'])->name('terms-and-conditions.destroy');
+});
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {
+    Route::get('privacy-policy/create', [PrivacyPolicyController::class, 'create'])->name('privacy-policy.create');
+    Route::post('privacy-policy', [PrivacyPolicyController::class, 'store'])->name('privacy-policy.store');
+    Route::put('privacy-policy/{id}', [PrivacyPolicyController::class, 'update'])->name('privacy-policy.update');
+    Route::delete('privacy-policy/{id}', [PrivacyPolicyController::class, 'destroy'])->name('privacy-policy.destroy');
 });
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:setting view'])->prefix('admin')->group(function () {

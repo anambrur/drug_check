@@ -1129,6 +1129,8 @@
                         class="nav-item {{ request()->is('admin/preloader/create') ||
                         request()->is('admin/favicon/create') ||
                         request()->is('admin/seo/create') ||
+                        request()->is('admin/terms-and-conditions/create') ||
+                        request()->is('admin/privacy-policy/create') ||
                         request()->is('admin/header-image/create/*') ||
                         request()->is('admin/header-image/create') ||
                         request()->is('admin/external-url/create') ||
@@ -1162,6 +1164,8 @@
                         <div class="collapse {{ request()->is('admin/preloader/create') ||
                         request()->is('admin/favicon/create') ||
                         request()->is('admin/seo/create') ||
+                        request()->is('admin/terms-and-conditions/create') ||
+                        request()->is('admin/privacy-policy/create') ||
                         request()->is('admin/header-image/create/*') ||
                         request()->is('admin/header-image/create') ||
                         request()->is('admin/external-url/create') ||
@@ -1254,7 +1258,16 @@
                                 </li>
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/seo/create') ? 'active' : '' }}"
-                                        href="{{ url('admin/seo/create') }}">{{ __('content.seo') }}</a></li>
+                                        href="{{ url('admin/seo/create') }}">{{ __('content.seo') }}</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/terms-and-conditions/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/terms-and-conditions/create') }}">Terms & Conditions</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/privacy-policy/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/privacy-policy/create') }}">Privacy Policy</a>
+                                </li>
                             </ul>
                         </div>
                     </li>

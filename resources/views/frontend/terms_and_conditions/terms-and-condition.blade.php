@@ -4,8 +4,8 @@
 @section('content')
     <!--// Breadcrumb Section Start //-->
     <section class="breadcrumb-section section" data-scroll-index="1"
-        style="background-image: url('{{ !empty($backgrounds->custom_breadcrumb_image3) && $backgrounds->breadcrumb_status == 'yes'
-            ? asset('uploads/img/background/breadcrumb/' . $backgrounds->custom_breadcrumb_image3)
+        style="background-image: url('{{ !empty($TermsAndCondition->custom_breadcrumb_image) && $TermsAndCondition->breadcrumb_status == 'yes'
+            ? asset('uploads/img/background/breadcrumb/' . $TermsAndCondition->custom_breadcrumb_image)
             : (!empty($breadcrumb_image->section_image)
                 ? asset('uploads/img/background/breadcrumb/' . $breadcrumb_image->section_image)
                 : asset('uploads/img/default-breadcrumb.jpg')) }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
@@ -69,7 +69,7 @@
                     </div>
 
                     <p></p>
-                        @php echo html_entity_decode($backgrounds->description3); @endphp
+                        @php echo html_entity_decode($TermsAndCondition->content); @endphp
                     </p>
                 </div>
             </div>

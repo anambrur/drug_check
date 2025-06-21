@@ -78,8 +78,8 @@
                                             Employees</option>
                                         <option value="NON_DOT" {{ $protocol->group == 'NON_DOT' ? 'selected' : '' }}>
                                             Non-DOT Employees</option>
-                                        <option value="DOT_AGENCY"
-                                            {{ $protocol->group == 'DOT_AGENCY' ? 'selected' : '' }}>DOT Agency</option>
+                                        {{-- <option value="DOT_AGENCY"
+                                            {{ $protocol->group == 'DOT_AGENCY' ? 'selected' : '' }}>DOT Agency</option> --}}
                                     </select>
                                 </div>
                             </div>

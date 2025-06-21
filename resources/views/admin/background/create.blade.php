@@ -143,12 +143,12 @@
                             </div>
                         </div>
 
-                        <div class="col-md-12">
+                        {{-- <div class="col-md-12">
                             <div class="form-group">
                                 <label for="summernote3">Terms and Conditions</label>
                                 <textarea id="summernote3" name="description3" class="form-control">{{ $item_section->description3 }}</textarea>
                             </div>
-                        </div>
+                        </div> --}}
 
 
 
@@ -249,7 +249,7 @@
                         </div>
 
                         
-                        <div class="col-md-12">
+                        {{-- <div class="col-md-12">
                             <div class="form-group">
                                 <label for="custom_breadcrumb_image3">Terms & Conditions breadcrumb
                                     ({{ __('content.size') }} 1920 x 400) (.svg, .jpg, .jpeg, .png, .webp,
@@ -287,7 +287,7 @@
                                 <!--end card-->
                             </div>
                             <!--end col-->
-                        </div>
+                        </div> --}}
                     </div>
                     <!--end col-->
 
@@ -378,12 +378,12 @@
                     </div>
                 </div>
 
-                <div class="col-md-12">
+                {{-- <div class="col-md-12">
                     <div class="form-group">
                         <label for="summernote3">Terms and Conditions</label>
                         <textarea id="summernote3" name="description3" class="form-control"></textarea>
                     </div>
-                </div>
+                </div> --}}
 
 
                 <div class="col-md-12">
@@ -417,7 +417,7 @@
                             class="form-text text-muted">{{ __('content.please_use_recommended_sizes') }}</small>
                     </div>
                 </div>
-                <div class="col-md-12">
+                {{-- <div class="col-md-12">
                     <div class="form-group">
                         <label for="custom_breadcrumb_image3">Terms and Conditions breadcrumb
                             ({{ __('content.size') }} 1920 x 400) (.svg, .jpg, .jpeg, .png, .webp, .gif)</label>
@@ -426,7 +426,7 @@
                         <small id="custom_breadcrumb_image3"
                             class="form-text text-muted">{{ __('content.please_use_recommended_sizes') }}</small>
                     </div>
-                </div>
+                </div> --}}
 
 
                 <div class="col-md-12">

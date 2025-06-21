@@ -72,7 +72,7 @@
                                         <option value="ALL">All Employees</option>
                                         <option value="DOT">DOT Employees</option>
                                         <option value="NON_DOT">Non-DOT Employees</option>
-                                        <option value="DOT_AGENCY">DOT Agency</option>
+                                        {{-- <option value="DOT_AGENCY">DOT Agency</option> --}}
                                     </select>
                                 </div>
                             </div>

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use RuntimeException;
-use App\Models\admin\Employee;
+use App\Models\Admin\Employee;
 use App\Models\Admin\TestAdmin;
 use App\Models\Admin\ResultPanel;
 use Illuminate\Support\Facades\DB;
@@ -41,14 +41,15 @@ class RandomSelectionService
         return DB::transaction(function () use ($protocol) {
             // Get the employee pool
             $poolQuery = Employee::where('client_profile_id', $protocol->client_id)->where('status', 'active');
+            // dd($protocol);
 
             // Apply group filters
             if ($protocol->group === 'DOT') {
-                $poolQuery->where('is_dot', true);
+                $poolQuery->where('dot', 'yes');
             } elseif ($protocol->group === 'NON_DOT') {
-                $poolQuery->where('is_dot', false);
-            } elseif ($protocol->group === 'DOT_AGENCY') {
-                $poolQuery->where('dot_agency_id', $protocol->dot_agency_id);
+                $poolQuery->where('dot', 'no');
+            } elseif ($protocol->group === 'ALL') {
+                $poolQuery->whereIn('dot', ['yes', 'no']);
             }
 
             // Apply department/shift filters
