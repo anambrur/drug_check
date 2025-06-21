@@ -133,6 +133,7 @@ class RandomSelectionController extends Controller
         }
     }
 
+
     public function execute(SelectionProtocol $protocol, RandomSelectionService $service)
     {
         try {

@@ -19,6 +19,8 @@ use App\Models\Admin\PackageCategory;
 use App\Models\Admin\WhyChooseSection;
 use App\Models\Admin\ContactInfoWidget;
 use App\Models\Admin\BackgroundCategory;
+use App\Models\Admin\PrivacyPolicy;
+use App\Models\Admin\TermsAndCondition;
 
 class HomeController extends Controller
 {
@@ -245,11 +247,24 @@ class HomeController extends Controller
         $language = getSiteLanguage();
 
 
-        $backgrounds = Background::where('language_id', $language->id)->first();
+        $TermsAndCondition = TermsAndCondition::where('language_id', $language->id)->first();
 
-        return view('frontend.background.terms-and-condition', array_merge(
+        return view('frontend.terms_and_conditions.terms-and-condition', array_merge(
             getFrontendData(),
-            compact('backgrounds')
+            compact('TermsAndCondition')
+        ));
+    }
+
+    public function privacy_policy()
+    {
+        $language = getSiteLanguage();
+
+
+        $PrivacyPolicy = PrivacyPolicy::where('language_id', $language->id)->first();
+
+        return view('frontend.privacy_policy.privacy-policy', array_merge(
+            getFrontendData(),
+            compact('PrivacyPolicy')
         ));
     }
 
