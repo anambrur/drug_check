@@ -6,6 +6,7 @@ use Stripe\Stripe;
 use App\Models\Admin\Map;
 use Stripe\PaymentIntent;
 use App\Models\Admin\Menu;
+use Illuminate\Support\Str;
 use App\Models\Admin\Footer;
 use App\Models\Admin\Social;
 use Illuminate\Http\Request;
@@ -16,11 +17,17 @@ use App\Models\Admin\ExternalUrl;
 use App\Models\Admin\FooterImage;
 use App\Models\Admin\HeaderImage;
 use App\Models\Admin\PageBuilder;
+use Illuminate\Support\Facades\DB;
+use App\Mail\ContactFormSubmission;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Mail\DotApplicationReceived;
 use App\Models\Admin\FooterCategory;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Admin\ContactInfoWidget;
 use App\Models\Admin\ContactInfoSection;
+use App\Mail\RandomConsortiumApplication;
 
 class ContactController extends Controller
 {
@@ -76,7 +83,6 @@ class ContactController extends Controller
                 ->with('career_detail_show', $career_detail_show)
                 ->with($data)
                 ->with('data_object', $data_object);
-
         } else {
 
             // Retrieve models
@@ -111,20 +117,67 @@ class ContactController extends Controller
                 ->orderBy('order', 'asc')
                 ->get();
 
-            return view('frontend.contact.index', compact('preloader', 'favicon', 'seo', 'google_analytic',
-                'tawk_to', 'bottom_button_widget', 'side_button_widget', 'color_option', 'breadcrumb_image', 'font',
-                'draft_view', 'header_info_style1', 'header_image_style1', 'socials', 'external_url', 'contact_info_widget_style1',
-                'menus', 'contact_info_section_style1', 'contact_infos_style1', 'map_section_style1',
-                'footer_image_style1', 'site_info', 'footers',
-                'footer_categories', 'page_builder'));
-
+            return view('frontend.contact.index', compact(
+                'preloader',
+                'favicon',
+                'seo',
+                'google_analytic',
+                'tawk_to',
+                'bottom_button_widget',
+                'side_button_widget',
+                'color_option',
+                'breadcrumb_image',
+                'font',
+                'draft_view',
+                'header_info_style1',
+                'header_image_style1',
+                'socials',
+                'external_url',
+                'contact_info_widget_style1',
+                'menus',
+                'contact_info_section_style1',
+                'contact_infos_style1',
+                'map_section_style1',
+                'footer_image_style1',
+                'site_info',
+                'footers',
+                'footer_categories',
+                'page_builder'
+            ));
         }
-
     }
+
+    // public function sendMail(Request $request)
+    // {
+
+    //     // Validate the incoming form data
+    //     $validatedData = $request->validate([
+    //         'contact_name' => 'required|string|max:255',
+    //         'contact_email' => 'required|email',
+    //         'contact_phone' => 'required|string|max:15',
+    //         'contact_subject' => 'nullable|string|max:255',
+    //         'contact_message' => 'required|string',
+    //     ]);
+
+    //     try {
+    //         // Send the email
+
+    //         Mail::raw($validatedData['contact_message'], function ($message) use ($validatedData) {
+    //             $message->to('sales@skyrosdrugchecks.com')  // Recipient's email address
+    //                 ->subject($validatedData['contact_subject'] ?? $validatedData['contact_name'] . ' - ' . $validatedData['contact_phone'] . ' - ' . $validatedData['contact_email'])
+    //                 ->from('drug@mhanam.com', 'My Drug Check')  // Authorized sender email
+    //                 ->replyTo($validatedData['contact_email'], $validatedData['contact_name']);  // User's email for replies
+    //         });
+    //         // Return a success response
+    //         return redirect()->back()->with('success', 'Email sent successfully!');
+    //     } catch (\Exception $e) {
+    //         // Return error response if something goes wrong
+    //         return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessage());
+    //     }
+    // }
 
     public function sendMail(Request $request)
     {
-        
         // Validate the incoming form data
         $validatedData = $request->validate([
             'contact_name' => 'required|string|max:255',
@@ -135,24 +188,21 @@ class ContactController extends Controller
         ]);
 
         try {
-            // Send the email
-           
-             Mail::raw($validatedData['contact_message'], function ($message) use ($validatedData) {
-                $message->to('sales@skyrosdrugchecks.com')  // Recipient's email address
-                        ->subject($validatedData['contact_subject'] ?? $validatedData['contact_name'] . ' - ' . $validatedData['contact_phone'] . ' - ' . $validatedData['contact_email'])
-                        ->from('drug@mhanam.com', 'My Drug Check')  // Authorized sender email
-                        ->replyTo($validatedData['contact_email'], $validatedData['contact_name']);  // User's email for replies
-                });
-            // Return a success response
+            $emailTo = ContactInfoWidget::pluck('email')->first();
+            // Send the email using Mailable
+            Mail::to($emailTo)
+                ->send(new ContactFormSubmission($validatedData));
+
             return redirect()->back()->with('success', 'Email sent successfully!');
         } catch (\Exception $e) {
-            // Return error response if something goes wrong
             return redirect()->back()->with('error', 'Failed to send email: ' . $e->getMessage());
         }
     }
 
+
     public function sendMailDot(Request $request)
     {
+
         // Validate form data
         $validatedData = $request->validate([
             'first_name' => 'nullable|string|max:255',
@@ -169,7 +219,8 @@ class ContactController extends Controller
             'reason_for_testing' => 'nullable|string',
             'price' => 'nullable|string',
             'services' => 'nullable|array',
-            'payment_intent_id' => 'nullable|string', // Add this to ensure payment verification
+            'payment_intent_id' => 'nullable|string',
+            'test_name' => 'nullable|string',
         ]);
 
         try {
@@ -201,19 +252,17 @@ class ContactController extends Controller
                 'test_category' => $validatedData['reason_for_testing'] ?? null,
                 'services' => $services,
                 'price' => $price,
-                'read' => 0, // Default value
+                'read' => 0,
             ]);
 
-            // Send confirmation email
-            Mail::raw(
-                $validatedData['reason_for_testing'] ?? 'No message provided.',
-                function ($message) use ($validatedData) {
-                    $message->to('sales@skyrosdrugchecks.com')
-                        ->subject(($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? '') . ' - ' . ($validatedData['phone'] ?? '') . ' - ' . ($validatedData['email'] ?? ''))
-                        ->from('drug@mhanam.com', 'My Drug Check')
-                        ->replyTo($validatedData['email'] ?? 'no-reply@example.com', ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''));
-                }
-            );
+            $emailTo = ContactInfoWidget::pluck('email')->first();
+
+            // Send confirmation email - using Mail::to() instead of Mail::raw()
+            Mail::to('anambrur@gmail.com')
+                ->send(new DotApplicationReceived(
+                    $validatedData,
+                    $validatedData['reason_for_testing'] ?? 'No message provided.'
+                ));
 
             return redirect()->back()->with('success', 'Payment successful, and email sent!');
         } catch (\Exception $e) {
@@ -226,66 +275,102 @@ class ContactController extends Controller
     {
         // Validate form data
         $validatedData = $request->validate([
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string|max:15',
-            'address' => 'nullable|string',
-            'date' => 'nullable|string',
-            'gender' => 'nullable|string',
-            'preferred_location' => 'nullable|string',
-            'employee_name' => 'nullable|string',
-            'company_name' => 'nullable|string',
-            'accounting_email' => 'nullable|string',
-            'reason_for_testing' => 'nullable|string',
-            'price' => 'nullable|string',
-            'services' => 'nullable|array',
-            'payment_intent_id' => 'nullable|string', // Add this to ensure payment verification
+            'company_name' => 'required|string|max:255',
+            'company_address' => 'required|string',
+            'company_city' => 'required|string|max:255',
+            'company_state' => 'required|string|max:255',
+            'company_zip' => 'required|string|max:20',
+            'company_phone' => 'nullable|string|max:15',
+            'der_name' => 'required|string|max:255',
+            'der_email' => 'required|email',
+            'der_phone' => 'nullable|string|max:15',
+            'certificate_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
+            'certificate_start_date' => 'nullable|date',
+            'payment_intent_id' => 'nullable|string',
         ]);
 
-        try {
-            
+        // Start database transaction
+        DB::beginTransaction();
 
-            // Process form submission only if payment is successful
-            $services = isset($validatedData['services']) ? json_encode($validatedData['services']) : json_encode([]);
-            $price = isset($validatedData['price']) ? preg_replace('/[^0-9.]/', '', $validatedData['price']) : null;
+        try {
+            $certificatePath = null;
+
+            // Handle file upload
+            if ($request->hasFile('certificate_file')) {
+                $file = $request->file('certificate_file');
+                $folder = 'uploads/img/certificate/';
+
+                // Create directory if it doesn't exist
+                if (!File::exists(public_path($folder))) {
+                    File::makeDirectory(public_path($folder), 0755, true);
+                }
+
+                // Generate unique filename
+                $filename = time() . '-' . $file->getClientOriginalName();
+                $file->move(public_path($folder), $filename);
+                $certificatePath = $folder . $filename;
+            }
+
+
+
+            // if ($request->hasFile('section_image')) {
+
+            //     // Get image file
+            //     $image = $request->file('section_image');
+
+            //     // Folder path
+            //     $folder = 'uploads/img/blog/thumbnail/';
+
+            //     // Make image name
+            //     $image_name = time() . '-' . $image->getClientOriginalName();
+
+            //     // Original size upload file
+            //     $image->move($folder, $image_name);
+
+            //     // Set input
+            //     $input['section_image'] = $image_name;
+            // } else {
+            //     // Set input
+            //     $input['section_image'] = null;
+            // }
 
             // Store data in the database
             $contactMessage = \App\Models\Admin\ContactMessage::create([
-                'name' => ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''),
-                'email' => $validatedData['email'] ?? null,
-                'phone' => $validatedData['phone'] ?? null,
-                'address' => $validatedData['address'] ?? null,
-                'preferred_location' => $validatedData['preferred_location'] ?? null,
-                'employee_name' => $validatedData['employee_name'] ?? null,
-                'company_name' => $validatedData['company_name'] ?? null,
-                'accounting_email' => $validatedData['accounting_email'] ?? null,
-                'date' => $validatedData['date'] ?? null,
-                'gender' => $validatedData['gender'] ?? null,
-                'test_category' => $validatedData['reason_for_testing'] ?? null,
-                'services' => $services,
-                'price' => $price,
-                'read' => 0, // Default value
+                'name' => $validatedData['der_name'],
+                'email' => $validatedData['der_email'],
+                'phone' => $validatedData['der_phone'] ?? null,
+                'address' => $validatedData['company_address'],
+                'company_name' => $validatedData['company_name'],
+                'company_city' => $validatedData['company_city'],
+                'company_state' => $validatedData['company_state'],
+                'company_zip' => $validatedData['company_zip'],
+                'company_phone' => $validatedData['company_phone'] ?? null,
+                'certificate_path' => $certificatePath,
+                'certificate_start_date' => $validatedData['certificate_start_date'] ?? null,
+                'read' => 0,
             ]);
 
-            // Send confirmation email
-            Mail::raw(
-                $validatedData['reason_for_testing'] ?? 'No message provided.',
-                function ($message) use ($validatedData) {
-                    $message->to('sales@skyrosdrugchecks.com')
-                        ->subject(($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? '') . ' - ' . ($validatedData['phone'] ?? '') . ' - ' . ($validatedData['email'] ?? ''))
-                        ->from('drug@mhanam.com', 'My Drug Check')
-                        ->replyTo($validatedData['email'] ?? 'no-reply@example.com', ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''));
-                }
-            );
+            $email = ContactInfoWidget::pluck('email')->first();
 
-            return redirect()->back()->with('success', 'Form Submit successful, and email sent!');
+            // Send email using Mailable
+            Mail::to($email)
+                ->send(new RandomConsortiumApplication(
+                    $validatedData,
+                    $certificatePath
+                ));
+
+            // Commit transaction if everything succeeded
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Application submitted successfully!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed: ' . $e->getMessage());
+            // Rollback transaction on error
+            DB::rollBack();
+
+            // Log the error
+            Log::error('Random Consortium Application Error: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to submit application: ' . $e->getMessage());
         }
     }
-
-    
-
-
 }

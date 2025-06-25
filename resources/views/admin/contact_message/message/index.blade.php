@@ -30,9 +30,12 @@
                                 <th>{{ __('content.phone') }}</th>
                                 <th>{{ __('content.message') }}</th>
                                 <th>Address</th>
+                                <th>City</th>
+                                <th>State</th>
+                                <th>Zip</th>
                                 <th>P.Location</th>
                                 <th>Company</th>
-                                <th>A Email</th>
+                                <th>A.Email</th>
                                 <th>Category</th>
                                 <th>Services</th>
                                 <th>{{ __('content.read_status') }}</th>
@@ -51,6 +54,9 @@
                                     <td>{{ $message->phone }}</td>
                                     <td>{{ $message->message }}</td>
                                     <td>{{ $message->address }}</td>
+                                    <td>{{ $message->company_city }}</td>
+                                    <td>{{ $message->company_state }}</td>
+                                    <td>{{ $message->company_zip }}</td>
                                     <td>{{ $message->preferred_location }}</td>
                                     <td>{{ $message->company_name }}</td>
                                     <td>{{ $message->accounting_email }}</td>

@@ -31,5 +31,11 @@ class ContactMessage extends Model
         'services',
         'price',
         'read',
+        'company_city',
+        'company_state',
+        'company_zip',
+        'company_phone',
+        'certificate_path',
+        'certificate_start_date',
     ];
 }

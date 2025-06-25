@@ -63,7 +63,7 @@
                                     </li>
                                 @else
                                     <li class="nav-item">
-                                        <a class="nav-link menu-link text-dark" href="@if (!empty($menu->uri)) @if ((session()->has('language_name_from_dropdown') && $language->language_code == session()->get('language_code_from_dropdown')) || !session()->has('language_name_from_dropdown') ) {{ url($menu->uri) }} @elseif (session()->has('language_name_from_dropdown')) {{ url($menu->uri) }} @endif  @elseif (!empty($menu->url)) {{ $menu->url }} @else # @endif">{{ $menu->menu_name }}</a>
+                                        <a class="nav-link menu-link text-dark" href="@if (!empty($menu->uri)) @if ((session()->has('language_name_from_dropdown') && $language->language_code == session()->get('language_code_from_dropdown')) || !session()->has('language_name_from_dropdown') ) {{ url($menu->uri) }} @elseif (session()->has('language_name_from_dropdown')) {{ url($menu->uri) }} @endif  @elseif (!empty($menu->url)) {{ url('/'). '/'.$menu->url }} @else # @endif">{{ $menu->menu_name }}</a>
                                     </li>
                                 @endif
                             @endforeach

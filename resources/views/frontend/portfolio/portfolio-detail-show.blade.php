@@ -93,12 +93,10 @@
                     </p>
                     <div class="row">
                         <div class="col-md-6 col-sm-6 portfolio-grid-img">
-                            <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image"
-                                class="img-fluid">
+                            <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image" class="img-fluid">
                         </div>
                         <div class="col-md-6 col-sm-6 portfolio-grid-img">
-                            <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image"
-                                class="img-fluid">
+                            <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image" class="img-fluid">
                         </div>
                     </div>
                 </div>
@@ -186,6 +184,7 @@
             <form id="payment-form" action="{{ route('send.mail_dot') }}" method="POST">
                 @csrf
                 <input type="hidden" name="payment_intent_id" id="payment_intent_id">
+                <input type="hidden" name="test_name" id="test_name" value="{{ $portfolio->title }}">
                 <div class="row">
                     <div class="col-md-6">
                         <input type="text" class="form-control mb-2" name="first_name" placeholder="First name"

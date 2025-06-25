@@ -27,6 +27,12 @@ return new class extends Migration
             $table->string('gender')->nullable();
             $table->json('services')->nullable();
             $table->integer('read')->default(0);
+            $table->string('company_city')->nullable();
+            $table->string('company_state')->nullable();
+            $table->string('company_zip')->nullable();
+            $table->string('company_phone')->nullable();
+            $table->string('certificate_path')->nullable();
+            $table->date('certificate_start_date')->nullable();
             $table->timestamps();
         });
     }
