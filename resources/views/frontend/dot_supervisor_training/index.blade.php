@@ -31,7 +31,7 @@
 
                         The entire process is simple and efficient: watch the training, take the quiz, and download your
                         certificate—all in one place. Trusted by safety coordinators and fleet operators nationwide,
-                        <a href="https://www.dotsuptraining.com">DOTSUPTRAINING</a> is the go-to platform for accessible, affordable, and audit-ready compliance
+                        <a href="https://www.dotsuptraining.com" target="_blank">DOTSUPTRAINING</a> is the go-to platform for accessible, affordable, and audit-ready compliance
                         training.
                     </p>
                 </div>
