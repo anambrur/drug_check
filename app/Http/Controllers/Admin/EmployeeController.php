@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\admin;
+namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Models\Admin\Favicon;
 use App\Models\Admin\Category;
-use App\Models\admin\Employee;
+use App\Models\Admin\Employee;
 use App\Models\Admin\PanelImage;
 use App\Models\Admin\ClientProfile;
 use Mews\Purifier\Facades\Purifier;

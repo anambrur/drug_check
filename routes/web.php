@@ -38,7 +38,7 @@ use App\Http\Controllers\Admin\SubmenuController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DemoModeController;
-use App\Http\Controllers\admin\EmployeeController;
+use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LabAdminController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\PageNameController;

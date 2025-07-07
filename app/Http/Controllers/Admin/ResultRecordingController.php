@@ -233,6 +233,7 @@ class ResultRecordingController extends Controller
 
         $input = $request->all();
 
+
         DB::beginTransaction();
 
         try {
@@ -245,18 +246,18 @@ class ResultRecordingController extends Controller
 
             // Update the main result record
             $result->update([
-                'company_id' => $input['company_id'] ?? null,
-                'reason_for_test' => $input['reason_for_test'] ?? null,
-                'test_admin_id' => $input['test_admin_id'] ?? null,
-                'laboratory_id' => $input['laboratory_id'] ?? null,
-                'mro_id' => $input['mro_id'] ?? null,
-                'collection_location' => $input['collection_location'] ?? null,
-                'employee_id' => $input['employee_id'] ?? null,
+                'company_id' => $request->company_id,
+                'reason_for_test' => $request->reason_for_test,
+                'test_admin_id' => $request->test_admin_id,
+                'laboratory_id' => $request->laboratory_id ?: null,
+                'mro_id' => $request->mro_id ?: null,
+                'collection_location' => $request->collection_location,
+                'employee_id' => $request->employee_id,
                 'collection_datetime' => $collectionDateTime,
-                'date_of_collection' => $input['date_of_collection'],
-                'time_of_collection' => $input['time_of_collection'],
-                'note' => $input['note'] ?? null,
-                'status' => $input['status'] ?? null,
+                'date_of_collection' => $request->date_of_collection,
+                'time_of_collection' => $request->time_of_collection,
+                'note' => $request->note,
+                'status' => $request->status,
             ]);
 
             // First delete all existing panel results for this record
@@ -281,12 +282,12 @@ class ResultRecordingController extends Controller
 
             DB::commit();
 
-            // $mail_data = ResultRecording::with('clientProfile', 'employee')->findOrFail($result->id);
+            $mail_data = ResultRecording::with('clientProfile', 'employee')->findOrFail($result->id);
 
-            // // Send notifications
-            // $notificationService = new NotificationService();
-            // $notificationService->sendTestNotification($mail_data, 'company');
-            // $notificationService->sendTestNotification($mail_data, 'employee');
+            // Send notifications
+            $notificationService = new NotificationService();
+            $notificationService->sendTestNotification($mail_data, 'company');
+            $notificationService->sendTestNotification($mail_data, 'employee');
 
 
             toastr()->success('content.updated_successfully', 'content.success');
@@ -297,6 +298,10 @@ class ResultRecordingController extends Controller
                 ->with('error', 'An error occurred while updating the test result. Please try again.');
         }
     }
+
+
+
+
 
     public function sendNotification(Request $request, $id)
     {

@@ -212,21 +212,21 @@
                                 <td>{{ $result->testAdmin->test_name }}</td>
                                 <td>
                                     @if ($result->status == 'positive')
-                                        <span class="badge badge-pill badge-success">Positive</span>
+                                        <span class="badge badge-pill badge-danger">Positive</span>
                                     @elseif ($result->status == 'negative')
-                                        <span class="badge badge-pill badge-danger">Negative</span>
+                                        <span class="badge badge-pill badge-success">Negative</span>
                                     @elseif ($result->status == 'refused')
-                                        <span class="badge badge-pill badge-danger">Refused</span>
+                                        <span class="badge badge-pill badge-dark">Refused</span>
                                     @elseif ($result->status == 'excused')
-                                        <span class="badge badge-pill badge-danger">Excused</span>
+                                        <span class="badge badge-pill badge-warning">Excused</span>
                                     @elseif ($result->status == 'cancelled')
-                                        <span class="badge badge-pill badge-danger">Cancelled</span>
+                                        <span class="badge badge-pill badge-secondary">Cancelled</span>
                                     @elseif ($result->status == 'pending')
-                                        <span class="badge badge-pill badge-danger">Pending</span>
+                                        <span class="badge badge-pill badge-info">Pending</span>
                                     @elseif ($result->status == 'saved')
-                                        <span class="badge badge-pill badge-danger">Saved</span>
+                                        <span class="badge badge-pill badge-primary">Saved</span>
                                     @elseif ($result->status == 'collection_only')
-                                        <span class="badge badge-pill badge-danger">Collection Only</span>
+                                        <span class="badge badge-pill badge-light">Collection Only</span>
                                     @endif
                                 </td>
                                 <td>
