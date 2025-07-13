@@ -314,7 +314,7 @@
                                             </button>
                                         </div>
                                         <form method="POST"
-                                            action="{{ route('result-recording.send-notification', $result->id) }}">
+                                            action="{{ route('result-recording.send-notification', $result->id) }}" enctype="multipart/form-data">
                                             @csrf
                                             <div class="modal-body">
                                                 <p>The following email may be sent to the client:</p>
@@ -377,6 +377,20 @@
                                                         <strong>Email:</strong>
                                                         {{ $result->clientProfile->der_contact_email ?? 'N/A' }}
                                                     </p>
+                                                </div>
+
+                                                <!-- Add this new section for file upload -->
+                                                <div class="form-group">
+                                                    <label for="pdfAttachment{{ $result->id }}">Attach PDF File
+                                                        (optional)</label>
+                                                    <div class="custom-file">
+                                                        <input type="file" class="custom-file-input"
+                                                            id="pdfAttachment{{ $result->id }}" name="pdf_attachment"
+                                                            accept=".pdf">
+                                                        <label class="custom-file-label"
+                                                            for="pdfAttachment{{ $result->id }}">Choose file</label>
+                                                    </div>
+                                                    <small class="form-text text-muted">Maximum file size: 5MB</small>
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -578,6 +592,14 @@
                 });
             });
 
+        });
+
+        document.querySelectorAll('.custom-file-input').forEach(function(input) {
+            input.addEventListener('change', function(e) {
+                var fileName = e.target.files[0] ? e.target.files[0].name : "Choose file";
+                var nextSibling = e.target.nextElementSibling;
+                nextSibling.innerText = fileName;
+            });
         });
     </script>
 @endpush

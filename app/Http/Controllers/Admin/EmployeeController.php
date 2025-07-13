@@ -7,7 +7,9 @@ use App\Models\Admin\Favicon;
 use App\Models\Admin\Category;
 use App\Models\Admin\Employee;
 use App\Models\Admin\PanelImage;
+use Illuminate\Support\Facades\DB;
 use App\Models\Admin\ClientProfile;
+use Illuminate\Support\Facades\Log;
 use Mews\Purifier\Facades\Purifier;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -52,76 +54,91 @@ class EmployeeController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+
+
     public function store(Request $request)
     {
-        // Form validation
-        $validator = Validator::make($request->all(), [
-            'client_profile_id'     => 'required|exists:client_profiles,id',
-            'first_name'             => 'required|string|max:255',
-            'last_name'              => 'required|string|max:255',
-            'middle_name'           => 'nullable|string|max:255',
-            'department'            => 'nullable|string|max:255',
-            'shift'                 => 'nullable|string|max:255',
-            'date_of_birth'         => 'nullable|date',
-            'start_date'            => 'nullable|date',
-            'end_date'              => 'nullable|date',
-            'employee_id'           => 'nullable|string|max:255|unique:employees',
-            'background_check_date' => 'nullable|date',
-            'ssn'                   => 'nullable|string|max:255',
-            'email'                 => 'required|email|max:255',
-            'phone'                 => 'nullable|string|max:255',
-            'short_description'     => 'nullable|string',
-            'cdl_state'             => 'nullable|string|max:255',
-            'cdl_number'            => 'nullable|string|max:255',
-            'status'                => 'required|in:active,inactive',
-            'dot'                   => 'nullable|string|max:255',
-        ]);
+        try {
+            // Form validation
+            $validator = Validator::make($request->all(), [
+                'client_profile_id'     => 'required|exists:client_profiles,id',
+                'first_name'            => 'required|string|max:255',
+                'last_name'             => 'required|string|max:255',
+                'middle_name'           => 'nullable|string|max:255',
+                'department'            => 'nullable|string|max:255',
+                'shift'                 => 'nullable|string|max:255',
+                'date_of_birth'         => 'required|date',
+                'start_date'            => 'nullable|date',
+                'end_date'              => 'nullable|date',
+                'employee_id'           => 'nullable|string|max:255|unique:employees',
+                'background_check_date' => 'nullable|date',
+                'ssn'                   => 'nullable|string|max:255',
+                'email'                 => 'required|email|max:255',
+                'phone'                 => 'nullable|string|max:255',
+                'short_description'     => 'nullable|string',
+                'cdl_state'             => 'nullable|string|max:255',
+                'cdl_number'            => 'nullable|string|max:255',
+                'status'                => 'required|in:active,inactive',
+                'dot'                   => 'nullable|string|max:255',
+            ]);
 
-        // Any error checking
-        if ($validator->fails()) {
-            toastr()->error($validator->errors()->first(), 'content.error');
-            return back();
+            if ($validator->fails()) {
+                toastr()->error($validator->errors()->first(), 'content.error');
+                return back()->withInput();
+            }
+
+            DB::beginTransaction(); // Begin transaction
+
+            // Get All Request and convert empty strings to null for date fields
+            $input = $request->all();
+            $dateFields = ['start_date', 'end_date', 'background_check_date'];
+
+            foreach ($dateFields as $field) {
+                $input[$field] = $input[$field] === '' ? null : $input[$field];
+            }
+
+            // Generate employee ID if not provided
+            if (empty($input['employee_id'])) {
+                $maxId = Employee::max('id') ?? 0;
+                $nextId = $maxId + 1;
+                $input['employee_id'] = str_pad($nextId, 6, '0', STR_PAD_LEFT);
+            }
+
+            // Create the employee
+            Employee::create([
+                'client_profile_id'     => $input['client_profile_id'],
+                'first_name'            => $input['first_name'],
+                'last_name'             => $input['last_name'],
+                'middle_name'           => $input['middle_name'] ?? null,
+                'department'            => $input['department'] ?? null,
+                'shift'                 => $input['shift'] ?? null,
+                'date_of_birth'         => $input['date_of_birth'],
+                'start_date'            => $input['start_date'],
+                'end_date'              => $input['end_date'],
+                'employee_id'           => $input['employee_id'],
+                'background_check_date' => $input['background_check_date'],
+                'ssn'                   => $input['ssn'] ?? null,
+                'email'                 => $input['email'],
+                'phone'                 => $input['phone'] ?? null,
+                'short_description'     => isset($input['short_description']) ? Purifier::clean($input['short_description']) : null,
+                'cdl_state'             => $input['cdl_state'] ?? null,
+                'cdl_number'            => $input['cdl_number'] ?? null,
+                'status'                => $input['status'],
+                'dot'                   => $input['dot'] ?? null,
+            ]);
+
+            DB::commit(); // Commit transaction
+
+            toastr()->success('Employee created successfully', 'content.success');
+            return redirect()->back();
+        } catch (\Exception $e) {
+            DB::rollBack(); // Roll back on error
+            Log::error('Employee Store Error: ' . $e->getMessage());
+            toastr()->error('An error occurred while saving the employee. Please try again.', 'content.error');
+            return back()->withInput();
         }
-
-        // Get All Request
-        $input = $request->all();
-
-        // Generate employee ID if not provided
-        if (empty($input['employee_id'])) {
-            $maxId = Employee::max('id') ?? 0; // If no employees exist, start from 0
-            $nextId = $maxId + 1;
-            $input['employee_id'] = str_pad($nextId, 6, '0', STR_PAD_LEFT);
-        }
-
-        // Create the employee
-        Employee::create([
-            'client_profile_id'     => $input['client_profile_id'],
-            'first_name'             => $input['first_name'],
-            'last_name'              => $input['last_name'],
-            'middle_name'            => $input['middle_name'] ?? null,
-            'department'             => $input['department'] ?? null,
-            'shift'                  => $input['shift'] ?? null,
-            'date_of_birth'          => $input['date_of_birth'] ?? null,
-            'start_date'             => $input['start_date'] ?? null,
-            'end_date'               => $input['end_date'] ?? null,
-            'employee_id'            => $input['employee_id'],
-            'background_check_date'  => $input['background_check_date'] ?? null,
-            'ssn'                    => $input['ssn'] ?? null,
-            'email'                  => $input['email'],
-            'phone'                  => $input['phone'] ?? null,
-            'short_description'      => isset($input['short_description']) ? Purifier::clean($input['short_description']) : null,
-            'cdl_state'              => $input['cdl_state'] ?? null,
-            'cdl_number'             => $input['cdl_number'] ?? null,
-            'status'                 => $input['status'],
-            'dot'                    => $input['dot'] ?? null,
-        ]);
-
-
-        // Set a success toast, with a title
-        toastr()->success('content.created_successfully', 'content.success');
-
-        return redirect()->back();
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -148,59 +165,75 @@ class EmployeeController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+ 
     public function update(Request $request, $id)
     {
-        // First find the employee
-        $employee = Employee::find($id);
+        try {
+            // First find the employee
+            $employee = Employee::find($id);
 
-        if (!$employee) {
-            toastr()->error('Employee not found', 'content.error');
-            return back();
+            if (!$employee) {
+                toastr()->error('Employee not found', 'content.error');
+                return back();
+            }
+
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                'client_profile_id'     => 'required|exists:client_profiles,id',
+                'first_name'            => 'required|string|max:255',
+                'last_name'             => 'required|string|max:255',
+                'middle_name'           => 'nullable|string|max:255',
+                'department'            => 'nullable|string|max:255',
+                'shift'                 => 'nullable|string|max:255',
+                'date_of_birth'         => 'required|date',
+                'start_date'            => 'nullable|date',
+                'end_date'              => 'nullable|date',
+                'employee_id'           => 'required|string|max:20|unique:employees,employee_id,' . $id . ',id',
+                'background_check_date' => 'nullable|date',
+                'ssn'                   => 'nullable|string|max:255',
+                'email'                 => 'required|email|max:255',
+                'phone'                 => 'nullable|string|max:255',
+                'short_description'     => 'nullable|string',
+                'cdl_state'             => 'nullable|string|max:255',
+                'cdl_number'            => 'nullable|string|max:255',
+                'status'                => 'required|in:active,inactive',
+                'dot'                   => 'nullable|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                toastr()->error($validator->errors()->first(), 'content.error');
+                return back()->withInput();
+            }
+
+            DB::beginTransaction(); // Start transaction
+
+            // Get and process input
+            $input = $request->all();
+            $dateFields = ['start_date', 'end_date', 'background_check_date'];
+            foreach ($dateFields as $field) {
+                $input[$field] = $input[$field] === '' ? null : $input[$field];
+            }
+
+            // Clean short_description
+            if (isset($input['short_description'])) {
+                $input['short_description'] = Purifier::clean($input['short_description']);
+            }
+
+            // Update employee
+            $employee->update($input);
+
+            DB::commit(); // Commit changes
+
+            toastr()->success('content.updated_successfully', 'content.success');
+            return redirect()->back();
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback on failure
+            Log::error('Employee Update Error: ' . $e->getMessage());
+            toastr()->error('An error occurred while updating the employee. Please try again.', 'content.error');
+            return back()->withInput();
         }
-
-        $validator = Validator::make($request->all(), [
-            'client_profile_id'     => 'required|exists:client_profiles,id',
-            'first_name'             => 'required|string|max:255',
-            'last_name'              => 'required|string|max:255',
-            'middle_name'           => 'nullable|string|max:255',
-            'department'            => 'nullable|string|max:255',
-            'shift'                 => 'nullable|string|max:255',
-            'date_of_birth'         => 'nullable|date',
-            'start_date'            => 'nullable|date',
-            'end_date'              => 'nullable|date',
-            'employee_id'           => 'required|string|max:20|unique:employees,employee_id,' . $id . ',id',
-            'background_check_date' => 'nullable|date',
-            'ssn'                   => 'nullable|string|max:255',
-            'email'                 => 'required|email|max:255',
-            'phone'                 => 'nullable|string|max:255',
-            'short_description'     => 'nullable|string',
-            'cdl_state'             => 'nullable|string|max:255',
-            'cdl_number'            => 'nullable|string|max:255',
-            'status'                => 'required|in:active,inactive',
-            'dot'                   => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            toastr()->error($validator->errors()->first(), 'content.error');
-            return back();
-        }
-
-        // Get All Request
-        $input = $request->all();
-
-        // Clean the short_description if it exists
-        if (isset($input['short_description'])) {
-            $input['short_description'] = Purifier::clean($input['short_description']);
-        }
-
-        // Update the employee
-        $employee->update($input);
-
-        // Set a success toast, with a title
-        toastr()->success('content.updated_successfully', 'content.success');
-
-        return redirect()->back();
     }
+
 
     public function show($id)
     {

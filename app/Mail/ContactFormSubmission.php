@@ -31,7 +31,7 @@ class ContactFormSubmission extends Mailable
             $this->data['contact_email'];
 
         return $this->subject($subject)
-            ->from('drug@mhanam.com', 'My Drug Check')
+            ->from('drugcheck@skyroshop.com', 'My Drug Check')
             ->replyTo($this->data['contact_email'], $this->data['contact_name'])
             ->view('emails.contact_form', [
                 'data' => $this->data

@@ -15,23 +15,23 @@ return new class extends Migration
             $table->id();
             // Company Information
             $table->unsignedBigInteger('company_id');
-            $table->foreign('company_id')->references('id')->on('client_profiles');
+            $table->foreign('company_id')->references('id')->on('client_profiles')->onDelete('cascade');
 
             // Test Information
             $table->string('reason_for_test');
             $table->unsignedBigInteger('test_admin_id');
-            $table->foreign('test_admin_id')->references('id')->on('test_admins');
+            $table->foreign('test_admin_id')->references('id')->on('test_admins')->onDelete('cascade');
 
             // Service Providers
             $table->unsignedBigInteger('laboratory_id')->nullable();
-            $table->foreign('laboratory_id')->references('id')->on('laboratories');
+            $table->foreign('laboratory_id')->references('id')->on('laboratories')->onDelete('cascade');
             $table->unsignedBigInteger('mro_id')->nullable();
-            $table->foreign('mro_id')->references('id')->on('m_r_o_s');
+            $table->foreign('mro_id')->references('id')->on('m_r_o_s')->onDelete('cascade');
 
             // Collection Details
             $table->string('collection_location')->nullable();
             $table->unsignedBigInteger('employee_id')->nullable();
-            $table->foreign('employee_id')->references('id')->on('employees');
+            $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
             $table->dateTime('collection_datetime');
             $table->date('date_of_collection');
             $table->time('time_of_collection');
@@ -50,10 +50,10 @@ return new class extends Migration
         Schema::create('result_panels', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('result_id')->nullable();
-            $table->foreign('result_id')->references('id')->on('result_recordings')->onDelete('cascade');
+            $table->foreign('result_id')->references('id')->on('result_recordings')->onDelete('cascade')->onDelete('cascade');
 
             $table->unsignedBigInteger('panel_id')->nullable();
-            $table->foreign('panel_id')->references('id')->on('panels');
+            $table->foreign('panel_id')->references('id')->on('panels')->onDelete('cascade');
 
             $table->string('drug_name')->nullable();
             $table->string('drug_code')->nullable();

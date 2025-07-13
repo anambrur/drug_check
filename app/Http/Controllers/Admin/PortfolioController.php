@@ -90,6 +90,7 @@ class PortfolioController extends Controller
             'status'   =>  'in:published,draft',
             'order'   =>  'required|integer',
             'price'   =>  'required|integer',
+            'code'   =>  'nullable|string',
         ]);
 
         // Any error checking
@@ -136,6 +137,7 @@ class PortfolioController extends Controller
             'section_image' => $input['section_image'],
             'url' => $input['url'],
             'order' => $input['order'],
+            'code' => $input['code'],
             'price' => $input['price'],
             'status' => $input['status'],
         ]);
@@ -182,6 +184,7 @@ class PortfolioController extends Controller
             'status'   =>  'in:published,draft',
             'order'   =>  'required|integer',
             'price'   =>  'required|integer',
+            'code'   =>  'nullable|string',
         ]);
 
         // Any error checking

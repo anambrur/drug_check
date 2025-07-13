@@ -8,9 +8,11 @@ use App\Models\Admin\TestAdmin;
 use App\Models\Admin\ResultPanel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Admin\ResultRecording;
 use App\Models\Admin\SelectedEmployee;
 use App\Models\Admin\SelectionProtocol;
+use App\Mail\EmployeeSelectedNotification;
 
 class RandomSelectionService
 {
@@ -41,7 +43,8 @@ class RandomSelectionService
         return DB::transaction(function () use ($protocol) {
             // Get the employee pool
             $poolQuery = Employee::where('client_profile_id', $protocol->client_id)->where('status', 'active');
-            // dd($protocol);
+
+            // dd($protocol->group);
 
             // Apply group filters
             if ($protocol->group === 'DOT') {
@@ -49,8 +52,9 @@ class RandomSelectionService
             } elseif ($protocol->group === 'NON_DOT') {
                 $poolQuery->where('dot', 'no');
             } elseif ($protocol->group === 'ALL') {
-                $poolQuery->whereIn('dot', ['yes', 'no']);
+                $poolQuery->whereIn('dot', ['yes', 'no', '']);
             }
+            //  dd($poolQuery->get());
 
             // Apply department/shift filters
             if ($protocol->department_filter) {
@@ -71,6 +75,8 @@ class RandomSelectionService
 
             $employeePool = $poolQuery->get();
             $poolSize = $employeePool->count();
+
+            // dd($poolQuery->get());
 
 
             if ($poolSize === 0) {
@@ -183,6 +189,43 @@ class RandomSelectionService
 
             // Create initial result recording
             $this->createInitialResultRecording($selection, $employee, $testId, $event);
+
+
+            // Send notification email (only for primary selections)
+            if ($type === 'PRIMARY' && $employee->email) {
+                try {
+                    Mail::to($employee->email)
+                        ->queue(new EmployeeSelectedNotification($employee, $event->protocol));
+
+                    $selection->update(['notification_sent' => true, 'notification_sent_at' => now()]);
+                } catch (\Exception $e) {
+                    Log::error("Failed to send notification to {$employee->email}: " . $e->getMessage());
+                    $selection->update(['notification_sent' => false]);
+                }
+            }
+
+            // if ($type === 'PRIMARY' && $employee->email) {
+            //     try {
+            //         // Load any necessary relationships before sending
+            //         $employee->loadMissing(['clientProfile', 'clientProfile.client']);
+            //         $protocol = $event->protocol->loadMissing(['client']);
+
+            //         Mail::to($employee->email)
+            //             ->send(new EmployeeSelectedNotification($employee, $protocol));
+
+            //         $selection->update([
+            //             'notification_sent' => true,
+            //             'notification_sent_at' => now(),
+            //             'notification_error' => null
+            //         ]);
+            //     } catch (\Exception $e) {
+            //         Log::error("Failed to send notification to {$employee->email}: " . $e->getMessage());
+            //         $selection->update([
+            //             'notification_sent' => false,
+            //             'notification_error' => $e->getMessage()
+            //         ]);
+            //     }
+            // }
 
             $selections->push($selection);
         }

@@ -72,6 +72,14 @@
                             <input type="number" name="order" class="form-control" id="order" value="0">
                         </div>
                     </div>
+
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="code">Code</label>
+                            <input type="text" name="code" class="form-control" id="code"
+                                value="{{ old('code') }}" placeholder="Enter Code">
+                        </div>
+                    </div>
                     <div class="col-xl-12">
                         <div class="form-group">
                             <label for="status" class="col-form-label">{{ __('content.status') }} </label>

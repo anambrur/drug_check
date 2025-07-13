@@ -10,7 +10,7 @@ use App\Models\Admin\ContactInfoWidget;
 
 class NotificationService
 {
-    public function sendTestNotification($mailData, string $recipientType,$pdfContent = null): bool
+    public function sendTestNotification($mailData, string $recipientType, $pdfContent = null, $uploadedPdf = null): bool
     {
         try {
             if (!in_array($recipientType, ['company', 'employee'])) {
@@ -32,6 +32,8 @@ class NotificationService
 
             // Prepare email data
             $emailData = [
+                'has_attachments' => $pdfContent || $uploadedPdf,
+                'has_custom_attachment' => (bool)$uploadedPdf,
                 'company_name' => $mailData->clientProfile->company_name ?? 'Company',
                 'address' => $mailData->clientProfile->address ?? '',
                 'city' => $mailData->clientProfile->city ?? '',
@@ -75,7 +77,23 @@ class NotificationService
                 : $mailData->employee->email;
 
             // Send email
-            Mail::to($recipient)->send(new TestResultNotification($emailData, $recipientType,$pdfContent));
+            // Mail::to($recipient)->send(new TestResultNotification($emailData, $recipientType,$pdfContent));
+
+            // dd($pdfContent , $uploadedPdf);
+
+            // Ensure we have valid PDF content or null
+            $pdfContent = $pdfContent ?: null;
+            $uploadedPdf = $uploadedPdf ?: null;
+
+
+            Mail::to($recipient)->send(new TestResultNotification(
+                $emailData,
+                $recipientType,
+                $pdfContent,
+                $uploadedPdf
+            ));
+
+
 
             Log::info("Successfully sent notification to {$recipientType}: {$recipient}");
             return true;

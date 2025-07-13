@@ -50,7 +50,8 @@ class Portfolio extends Model
         'url',
         'status',
         'order',
-        'price'
+        'price',
+        'code',
     ];
 
     public function portfolio_category()

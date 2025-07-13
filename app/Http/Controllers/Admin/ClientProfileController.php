@@ -153,7 +153,7 @@ class ClientProfileController extends Controller
             toastr()->success('Company Create and Registration email sent successfully to ' . $companyUser->email, 'Email Sent');
         } catch (\Exception $e) {
             Log::error('Failed to send DER registration email: ' . $e->getMessage());
-            
+
             toastr()->error('Failed to send registration email', 'Email Error');
         }
     }
@@ -172,8 +172,9 @@ class ClientProfileController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $clientProfile = ClientProfile::findOrFail($id);
+        $dotAgencies = DotAgency::where('status', 'active')->get();
 
-        return view('admin.client_profile.edit', compact('favicon', 'panel_image', 'clientProfile'));
+        return view('admin.client_profile.edit', compact('favicon', 'panel_image', 'clientProfile', 'dotAgencies'));
     }
 
     /**
@@ -183,46 +184,66 @@ class ClientProfileController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'company_name'            => 'required|string|max:255',
-            'short_description'       => 'required|string',
-            'address'                 => 'required|string',
-            'city'                    => 'required|string',
-            'state'                   => 'required|string',
-            'zip'                     => 'required|string',
-            'phone'                   => 'required|string',
-            'fax'                     => 'required|string',
-            'shipping_address'        => 'required|string',
-            'billing_contact_name'    => 'required|string',
-            'billing_contact_email'   => 'required|email',
-            'billing_contact_phone'   => 'required|string',
-            'der_contact_name'        => 'required|string',
-            'der_contact_email'       => 'required|email',
-            'der_contact_phone'       => 'required|string',
-            'status'                  => 'required|in:active,inactive',
-        ]);
+        try {
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                'company_name'            => 'required|string|max:255',
+                'short_description'       => 'nullable|string',
+                'address'                 => 'required|string',
+                'city'                    => 'required|string',
+                'state'                   => 'required|string',
+                'zip'                     => 'required|string',
+                'phone'                   => 'nullable|string',
+                'fax'                     => 'nullable|string',
+                'dot_agency_id'           => 'nullable|string',
+                'shipping_address'        => 'nullable|string',
+                'billing_contact_name'    => 'nullable|string',
+                'billing_contact_email'   => 'nullable|email',
+                'billing_contact_phone'   => 'nullable|string',
+                'der_contact_name'        => 'required|string',
+                'der_contact_email'       => 'required|email',
+                'der_contact_phone'       => 'nullable|string',
+                'status'                  => 'required|in:active,inactive',
+            ]);
 
-        // Any error checking
-        if ($validator->fails()) {
-            toastr()->error($validator->errors()->first(), 'content.error');
-            return back();
+            if ($validator->fails()) {
+                toastr()->error($validator->errors()->first(), 'content.error');
+                return back()->withInput();
+            }
+
+            $clientProfile = ClientProfile::find($id);
+
+            if (!$clientProfile) {
+                toastr()->error('Client profile not found', 'content.error');
+                return back();
+            }
+
+            DB::beginTransaction(); // Start transaction
+
+            // Prepare input
+            $input = $request->all();
+
+            // Update record
+            $clientProfile->update($input);
+
+            DB::commit(); // Commit changes
+
+            toastr()->success('content.updated_successfully', 'content.success');
+            return redirect()->route('client-profile.index');
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback on error
+            Log::error('ClientProfile Update Error: ' . $e->getMessage());
+            toastr()->error('An error occurred while updating the client profile. Please try again.', 'content.error');
+            return back()->withInput();
         }
-
-        $clientProfile = ClientProfile::find($id);
-
-        // Get All Request
-        $input = $request->all();
-
-        // Update to database
-        ClientProfile::find($id)->update($input);
-
-        // Set a success toast, with a title
-        toastr()->success('content.updated_successfully', 'content.success');
-
-        return redirect()->route('client-profile.index');
     }
+
+
+
+
     public function show($id)
     {
         $clientProfile = ClientProfile::with('employees')->where('id', $id)->first();

@@ -29,8 +29,8 @@ class RandomSelectionController extends Controller
     {
         $clients = ClientProfile::orderBy('id', 'desc')->get();
         $tests = TestAdmin::orderBy('id', 'desc')->get();
-        $dotAgencies = DotAgency::orderBy('id','desc')->get();
-        return view('admin.random_selection.create', compact('clients', 'tests','dotAgencies'));
+        $dotAgencies = DotAgency::orderBy('id', 'desc')->get();
+        return view('admin.random_selection.create', compact('clients', 'tests', 'dotAgencies'));
     }
 
     public function store(Request $request)
@@ -154,7 +154,6 @@ class RandomSelectionController extends Controller
 
     public function executions(SelectionProtocol $protocol)
     {
-
         $executions = $protocol->selectionEvents()
             ->with(['selectedEmployees.employee', 'selectedEmployees.test'])
             ->orderBy('selection_date', 'desc')

@@ -231,7 +231,8 @@
                     <div style="flex: 2;">
                         <div class="view_results">
                             <strong>
-                                <span class="badge badge-{{ $data['overall_result'] === 'Negative' ? 'success' : 'danger' }}">
+                                <span
+                                    class="badge badge-{{ $data['overall_result'] === 'Negative' ? 'success' : 'danger' }}">
                                     {{ strtoupper($data['overall_result'] ?? 'N/A') }}
                                 </span>
                             </strong>
@@ -241,7 +242,7 @@
                         </div>
                         <div class="view_results">
                             <strong>{{ $data['employee_name'] ?? 'N/A' }}
-                                </strong>
+                            </strong>
                         </div>
                         <div class="view_results">
                             <strong>{{ $data['reason_for_test'] ?? 'N/A' }} -
@@ -267,34 +268,44 @@
         <hr>
 
 
-        @if(isset($data['test_panels']) && count($data['test_panels']) > 0)
-        <h3>Test Panel Results</h3>
-        <table class="result-table">
-            <thead>
-                <tr>
-                    <th>Drug Name</th>
-                    <th>Drug Code</th>
-                    <th>Result</th>
-                    <th>Cut-Off Level</th>
-                    <th>Conf. Level</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($data['test_panels'] as $panel)
-                <tr>
-                    <td>{{ $panel['drug_name'] ?? 'N/A' }}</td>
-                    <td>{{ $panel['drug_code'] ?? 'N/A' }}</td>
-                    <td>{{ ucfirst($panel['result'] ?? 'N/A') }}</td>
-                    <td>{{ $panel['cut_off_level'] ?? 'N/A' }} ng/mL</td>
-                    <td>{{ $panel['conf_level'] ?? 'N/A' }} ng/mL</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+        @if (isset($data['test_panels']) && count($data['test_panels']) > 0)
+            <h3>Test Panel Results</h3>
+            <table class="result-table">
+                <thead>
+                    <tr>
+                        <th>Drug Name</th>
+                        <th>Drug Code</th>
+                        <th>Result</th>
+                        <th>Cut-Off Level</th>
+                        <th>Conf. Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($data['test_panels'] as $panel)
+                        <tr>
+                            <td>{{ $panel['drug_name'] ?? 'N/A' }}</td>
+                            <td>{{ $panel['drug_code'] ?? 'N/A' }}</td>
+                            <td>{{ ucfirst($panel['result'] ?? 'N/A') }}</td>
+                            <td>{{ $panel['cut_off_level'] ?? 'N/A' }} ng/mL</td>
+                            <td>{{ $panel['conf_level'] ?? 'N/A' }} ng/mL</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         @endif
 
 
-
+        {{-- @if (isset($data['has_attachments']) && $data['has_attachments'])
+            <div class="attachments mt-3">
+                <h4>Attachments:</h4>
+                <ul>
+                    <li>Test Results Certificate (PDF)</li>
+                    @if (isset($data['has_custom_attachment']) && $data['has_custom_attachment'])
+                        <li>Additional Document (PDF)</li>
+                    @endif
+                </ul>
+            </div>
+        @endif --}}
 
 
 

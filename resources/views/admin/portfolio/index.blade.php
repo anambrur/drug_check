@@ -77,6 +77,7 @@
                                     <th>{{ __('content.title') }}</th>
                                     <th>{{ __('content.category_name') }}</th>
                                     <th>{{ __('content.price') }}(<span>$</span>)</th>
+                                    <th>Code</th>
                                     <th>{{ __('content.order') }}</th>
                                     <th class="custom-width-action">{{ __('content.action') }}</th>
                                 </tr>
@@ -102,6 +103,7 @@
                                         <td>{{ $portfolio->title }}</td>
                                         <td>{{ $portfolio->category_name }}</td>
                                         <td><span>$</span> {{ $portfolio->price }}</td>
+                                        <td>{{ $portfolio->code }}</td>
                                         <td>{{ $portfolio->order }}</td>
                                         <td>
                                             <div>

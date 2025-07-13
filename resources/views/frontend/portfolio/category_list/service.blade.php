@@ -7,7 +7,7 @@
 
     <!--// My Works Start //-->
     <section class="section bg-primary-light " id="porfolio">
-        <div class="container pt-5" >
+        <div class="container pt-5">
             @if (Auth::user())
                 @can('portfolio view')
                     <!-- hover effect for mobile devices  -->
@@ -23,7 +23,7 @@
                     <div class="col-md-6">
                         <div class="section-heading-left">
                             <span>Tests</span>
-                            <h2>Our {{$portfolios_style1[0]->portfolio_category->category_name}} </h2>
+                            <h2>Our {{ $portfolios_style1[0]->portfolio_category->category_name }} </h2>
                         </div>
                     </div>
                 @endif
@@ -71,10 +71,13 @@
                                 @endif
                                 <a href="{{ !empty($item->url) ? $item->url : route('default-portfolio-detail-show', ['portfolio_slug' => $item->portfolio_slug]) }}"
                                     class="portfolio-link">
-                                    <div class="body">
+                                    <div class="body d-block">
                                         <div class="portfolio-details">
-                                            <span>{{ $item->portfolio_category->category_name }}</span>
                                             <h6>{{ $item->title }}</h6>
+                                            <div class="d-flex justify-content-between mt-2">
+                                                <span class="text-start">{{ $item->code }}</span>
+                                                <span class="text-end">${{ $item->price }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </a>

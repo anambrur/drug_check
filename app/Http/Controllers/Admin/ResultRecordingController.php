@@ -52,6 +52,7 @@ class ResultRecordingController extends Controller
 
         $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')->orderBy('id', 'desc')->get();
 
+
         return view('admin.result_recording.index', compact('favicon', 'panel_image', 'laboratories',  'mros', 'clientProfiles', 'test_admins', 'recoding_results'));
     }
 
@@ -309,23 +310,34 @@ class ResultRecordingController extends Controller
             // Validate input
             $validated = $request->validate([
                 'additional_text' => 'nullable|string|max:1000',
+                'pdf_attachment' => 'nullable|file|mimes:pdf|max:5120',
             ]);
 
             $mailData = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')->where('id', $id)->first();
 
             $mailData->additional_text = $validated['additional_text'] ?? null;
 
-            // Generate PDF certificate
+            // Generate PDF certificate - ensure this returns binary content or null
             $pdf = $this->generateCertificatePdf($mailData->clientProfile);
+            if (!$pdf) {
+                throw new \Exception("Failed to generate PDF certificate");
+            }
+
+            // Handle uploaded PDF if exists
+            $uploadedPdf = null;
+            if ($request->hasFile('pdf_attachment')) {
+                $uploadedPdf = $request->file('pdf_attachment');
+            }
+
 
 
             $notificationService = new NotificationService();
 
-            if (!$notificationService->sendTestNotification($mailData, 'company', $pdf)) {
+            if (!$notificationService->sendTestNotification($mailData, 'company', $pdf, $uploadedPdf)) {
                 throw new \Exception("Failed to send company notification");
             }
 
-            if (!$notificationService->sendTestNotification($mailData, 'employee', $pdf)) {
+            if (!$notificationService->sendTestNotification($mailData, 'employee', $pdf, $uploadedPdf)) {
                 throw new \Exception("Failed to send employee notification");
             }
 

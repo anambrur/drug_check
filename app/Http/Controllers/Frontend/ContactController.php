@@ -165,7 +165,7 @@ class ContactController extends Controller
     //         Mail::raw($validatedData['contact_message'], function ($message) use ($validatedData) {
     //             $message->to('sales@skyrosdrugchecks.com')  // Recipient's email address
     //                 ->subject($validatedData['contact_subject'] ?? $validatedData['contact_name'] . ' - ' . $validatedData['contact_phone'] . ' - ' . $validatedData['contact_email'])
-    //                 ->from('drug@mhanam.com', 'My Drug Check')  // Authorized sender email
+    //                 ->from('drugcheck@skyroshop.com', 'My Drug Check')  // Authorized sender email
     //                 ->replyTo($validatedData['contact_email'], $validatedData['contact_name']);  // User's email for replies
     //         });
     //         // Return a success response

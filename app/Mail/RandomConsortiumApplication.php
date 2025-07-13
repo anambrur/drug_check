@@ -35,7 +35,7 @@ class RandomConsortiumApplication extends Mailable
     {
         return $this->subject('New Random Consortium Application - ' . $this->data['company_name'])
             ->view('emails.random_consortium_application')
-            ->from('drug@mhanam.com', 'My Drug Check')
+            ->from('drugcheck@skyroshop.com', 'My Drug Check')
             ->replyTo($this->data['der_email'], $this->data['der_name'])
             ->with([
                 'company' => [

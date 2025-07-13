@@ -114,9 +114,7 @@
     <div class="row">
         <div class="col-xl-12 box-margin height-card">
             <div class="card card-body">
-                <h4 class="card-title">Add Employee
-
-                </h4>
+                <h4 class="card-title">Add Employee</h4>
                 @if ($demo_mode == 'on')
                     <!-- Include Alert Blade -->
                     @include('admin.demo_mode.demo-mode')
@@ -133,26 +131,42 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="first_name">First Name <span class="text-red">*</span></label>
-                                    <input id="first_name" name="first_name" type="text" class="form-control"
-                                        placeholder="Enter First Name" required>
+                                    <input id="first_name" name="first_name" type="text"
+                                        class="form-control @error('first_name') is-invalid @enderror"
+                                        placeholder="Enter First Name" value="{{ old('first_name') }}" required>
+                                    @error('first_name')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="department">Department</label>
-                                    <input id="department" name="department" type="text" class="form-control"
-                                        placeholder="Enter Department">
+                                    <input id="department" name="department" type="text"
+                                        class="form-control @error('department') is-invalid @enderror"
+                                        placeholder="Enter Department" value="{{ old('department') }}">
+                                    @error('department')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label for="date_of_birth">Date of Birth</label>
-                                    <input id="date_of_birth" name="date_of_birth" type="date" class="form-control">
+                                    <label for="date_of_birth">Date of Birth <span class="text-red">*</span></label>
+                                    <input id="date_of_birth" name="date_of_birth" type="date"
+                                        class="form-control @error('date_of_birth') is-invalid @enderror"
+                                        value="{{ old('date_of_birth') }}" required>
+                                    @error('date_of_birth')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
-
-
-
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -160,25 +174,42 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="last_name">Last Name <span class="text-red">*</span></label>
-                                    <input id="last_name" name="last_name" type="text" class="form-control"
-                                        placeholder="Enter Last Name" required>
+                                    <input id="last_name" name="last_name" type="text"
+                                        class="form-control @error('last_name') is-invalid @enderror"
+                                        placeholder="Enter Last Name" value="{{ old('last_name') }}" required>
+                                    @error('last_name')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="shift">Shift</label>
-                                    <input id="shift" name="shift" type="text" class="form-control"
-                                        placeholder="Enter Shift">
+                                    <input id="shift" name="shift" type="text"
+                                        class="form-control @error('shift') is-invalid @enderror"
+                                        placeholder="Enter Shift" value="{{ old('shift') }}">
+                                    @error('shift')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="start_date">Start Date</label>
-                                    <input id="start_date" name="start_date" type="date" class="form-control">
+                                    <input id="start_date" name="start_date" type="date"
+                                        class="form-control @error('start_date') is-invalid @enderror"
+                                        value="{{ old('start_date') }}">
+                                    @error('start_date')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
-
-
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -186,35 +217,51 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="middle_name">Middle Name / Initial</label>
-                                    <input id="middle_name" name="middle_name" type="text" class="form-control"
-                                        placeholder="Enter Middle Name">
+                                    <input id="middle_name" name="middle_name" type="text"
+                                        class="form-control @error('middle_name') is-invalid @enderror"
+                                        placeholder="Enter Middle Name" value="{{ old('middle_name') }}">
+                                    @error('middle_name')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
-
                             <div class="col-xl-12">
                                 <div class="form-group">
                                     <label for="dot" class="col-form-label">DOT</label>
-                                    <select class="form-control" name="dot" id="dot">
-                                        <option value="published" selected>{{ __('content.select_your_option') }}</option>
-                                        <option value="yes">YES</option>
-                                        <option value="no">FMCSA</option>
-                                        <option value="no">FRA</option>
-                                        <option value="no">FTA</option>
-                                        <option value="no">FAA</option>
-                                        <option value="no">PHMSA</option>
-                                        <option value="no">RSPA</option>
-                                        <option value="no">USCG</option>
+                                    <select class="form-control @error('dot') is-invalid @enderror" name="dot"
+                                        id="dot">
+                                        <option value="">{{ __('content.select_your_option') }}</option>
+                                        <option value="yes" {{ old('dot') == 'yes' ? 'selected' : '' }}>YES</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>FMCSA</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>FRA</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>FTA</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>FAA</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>PHMSA</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>RSPA</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>USCG</option>
                                     </select>
+                                    @error('dot')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="end_date">End Date</label>
-                                    <input id="end_date" name="end_date" type="date" class="form-control">
+                                    <input id="end_date" name="end_date" type="date"
+                                        class="form-control @error('end_date') is-invalid @enderror"
+                                        value="{{ old('end_date') }}">
+                                    @error('end_date')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
-
-
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -222,24 +269,40 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="employee_id">Employee ID <span class="text-red">*</span></label>
-                                    <input id="employee_id" name="employee_id" type="text" class="form-control"
-                                        placeholder="Enter Employee ID">
+                                    <input id="employee_id" name="employee_id" type="text"
+                                        class="form-control @error('employee_id') is-invalid @enderror"
+                                        placeholder="Enter Employee ID" value="{{ old('employee_id') }}" required>
+                                    @error('employee_id')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
-
-
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="background_check_date">Background Check Date</label>
                                     <input id="background_check_date" name="background_check_date" type="date"
-                                        class="form-control">
+                                        class="form-control @error('background_check_date') is-invalid @enderror"
+                                        value="{{ old('background_check_date') }}">
+                                    @error('background_check_date')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="ssn">SSN / SIN (reference only)</label>
-                                    <input id="ssn" name="ssn" type="text" class="form-control"
-                                        placeholder="Enter SSN">
+                                    <input id="ssn" name="ssn" type="text"
+                                        class="form-control @error('ssn') is-invalid @enderror" placeholder="Enter SSN"
+                                        value="{{ old('ssn') }}">
+                                    @error('ssn')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -249,21 +312,40 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="email">Email <span class="text-red">*</span></label>
-                            <input id="email" name="email" type="email" class="form-control"
-                                placeholder="Enter Email">
+                            <input id="email" name="email" type="email"
+                                class="form-control @error('email') is-invalid @enderror" placeholder="Enter Email"
+                                value="{{ old('email') }}" required>
+                            @error('email')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="phone">Phone</label>
-                            <input id="phone" name="phone" type="text" class="form-control"
-                                placeholder="Enter Phone">
+                            <input id="phone" name="phone" type="text"
+                                class="form-control @error('phone') is-invalid @enderror" placeholder="Enter Phone"
+                                value="{{ old('phone') }}">
+                            @error('phone')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="short_description">{{ __('content.short_description') }}</label>
-                            <textarea id="short_description" name="short_description" class="form-control" rows="3"></textarea>
+                            <textarea id="short_description" name="short_description"
+                                class="form-control @error('short_description') is-invalid @enderror" rows="3"
+                                placeholder="Enter short description">{{ old('short_description') }}</textarea>
+                            @error('short_description')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -271,19 +353,83 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="cdl_state">CDL State/Province</label>
-                            <select class="form-control" name="cdl_state" id="cdl_state">
-                                <option selected>{{ __('content.select_your_option') }}</option>
-                                @foreach(['AL'=>'Alabama','AK'=>'Alaska','AZ'=>'Arizona','AR'=>'Arkansas','CA'=>'California','CO'=>'Colorado','CT'=>'Connecticut','DE'=>'Delaware','FL'=>'Florida','GA'=>'Georgia','HI'=>'Hawaii','ID'=>'Idaho','IL'=>'Illinois','IN'=>'Indiana','IA'=>'Iowa','KS'=>'Kansas','KY'=>'Kentucky','LA'=>'Louisiana','ME'=>'Maine','MD'=>'Maryland','MA'=>'Massachusetts','MI'=>'Michigan','MN'=>'Minnesota','MS'=>'Mississippi','MO'=>'Missouri','MT'=>'Montana','NE'=>'Nebraska','NV'=>'Nevada','NH'=>'New Hampshire','NJ'=>'New Jersey','NM'=>'New Mexico','NY'=>'New York','NC'=>'North Carolina','ND'=>'North Dakota','OH'=>'Ohio','OK'=>'Oklahoma','OR'=>'Oregon','PA'=>'Pennsylvania','RI'=>'Rhode Island','SC'=>'South Carolina','SD'=>'South Dakota','TN'=>'Tennessee','TX'=>'Texas','UT'=>'Utah','VT'=>'Vermont','VA'=>'Virginia','WA'=>'Washington','WV'=>'West Virginia','WI'=>'Wisconsin','WY'=>'Wyoming'] as $abbr => $state)
-                                    <option value="{{ $abbr }}">{{ $state }}</option>
+                            <select class="form-control @error('cdl_state') is-invalid @enderror" name="cdl_state"
+                                id="cdl_state">
+                                <option value="">{{ __('content.select_your_option') }}</option>
+                                @foreach ([
+            'AL' => 'Alabama',
+            'AK' => 'Alaska',
+            'AZ' => 'Arizona',
+            'AR' => 'Arkansas',
+            'CA' => 'California',
+            'CO' => 'Colorado',
+            'CT' => 'Connecticut',
+            'DE' => 'Delaware',
+            'FL' => 'Florida',
+            'GA' => 'Georgia',
+            'HI' => 'Hawaii',
+            'ID' => 'Idaho',
+            'IL' => 'Illinois',
+            'IN' => 'Indiana',
+            'IA' => 'Iowa',
+            'KS' => 'Kansas',
+            'KY' => 'Kentucky',
+            'LA' => 'Louisiana',
+            'ME' => 'Maine',
+            'MD' => 'Maryland',
+            'MA' => 'Massachusetts',
+            'MI' => 'Michigan',
+            'MN' => 'Minnesota',
+            'MS' => 'Mississippi',
+            'MO' => 'Missouri',
+            'MT' => 'Montana',
+            'NE' => 'Nebraska',
+            'NV' => 'Nevada',
+            'NH' => 'New Hampshire',
+            'NJ' => 'New Jersey',
+            'NM' => 'New Mexico',
+            'NY' => 'New York',
+            'NC' => 'North Carolina',
+            'ND' => 'North Dakota',
+            'OH' => 'Ohio',
+            'OK' => 'Oklahoma',
+            'OR' => 'Oregon',
+            'PA' => 'Pennsylvania',
+            'RI' => 'Rhode Island',
+            'SC' => 'South Carolina',
+            'SD' => 'South Dakota',
+            'TN' => 'Tennessee',
+            'TX' => 'Texas',
+            'UT' => 'Utah',
+            'VT' => 'Vermont',
+            'VA' => 'Virginia',
+            'WA' => 'Washington',
+            'WV' => 'West Virginia',
+            'WI' => 'Wisconsin',
+            'WY' => 'Wyoming',
+        ] as $abbr => $state)
+                                    <option value="{{ $abbr }}"
+                                        {{ old('cdl_state') == $abbr ? 'selected' : '' }}>{{ $state }}</option>
                                 @endforeach
                             </select>
+                            @error('cdl_state')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="cdl_number">CDL Number</label>
-                            <input id="cdl_number" name="cdl_number" type="text" class="form-control"
-                                placeholder="Enter CDL Number">
+                            <input id="cdl_number" name="cdl_number" type="text"
+                                class="form-control @error('cdl_number') is-invalid @enderror"
+                                placeholder="Enter CDL Number" value="{{ old('cdl_number') }}">
+                            @error('cdl_number')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -313,103 +459,112 @@
             <div class="card card-body">
                 <table id="basic-datatable" class="table table-striped dt-responsive w-100">
                     <thead>
-                    <tr>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Middle Name</th>
-                        <th>Department</th>
-                        <th>Shift</th>
-                        <th>Date Of Birth</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Employee ID</th>
-                        <th>Background Check Date</th>
-                        <th>SSN</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Description</th>
-                        <th>CDL State</th>
-                        <th>CDL Number</th>
-                        <th>{{ __('content.status') }}</th>
-                        <th class="custom-width-action">{{ __('content.action') }}</th>
-                    </tr>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Middle Name</th>
+                            <th>Department</th>
+                            <th>Shift</th>
+                            <th>Date Of Birth</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Employee ID</th>
+                            <th>Background Check Date</th>
+                            <th>SSN</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Description</th>
+                            <th>CDL State</th>
+                            <th>CDL Number</th>
+                            <th>{{ __('content.status') }}</th>
+                            <th class="custom-width-action">{{ __('content.action') }}</th>
+                        </tr>
                     </thead>
 
                     <tbody>
-                        
-                    @foreach ($clientProfile->employees as $employee)
-                        <tr>
-                            <td>{{ $employee->first_name }}</td>
-                            <td>{{ $employee->last_name }}</td>
-                            <td>{{ $employee->middle_name }}</td>
-                            <td>{{ $employee->department }}</td>
-                            <td>{{ $employee->shift }}</td>
-                            <td>{{ $employee->date_of_birth }}</td>
-                            <td>{{ $employee->start_date }}</td>
-                            <td>{{ $employee->end_date }}</td>
-                            <td>{{ $employee->employee_id }}</td>
-                            <td>{{ $employee->background_check_date }}</td>
-                            <td>{{ $employee->ssn }}</td>
-                            <td>{{ $employee->email }}</td>
-                            <td>{{ $employee->phone }}</td>
-                            <td>{{ $employee->short_description }}</td>
-                            <td>{{ $employee->cdl_state }}</td>
-                            <td>{{ $employee->cdl_number }}</td>
-                            
-                            <td>
-                                @if ($employee->status == "active")
-                                    <span class="badge badge-pill badge-success">Active</span>
-                                @else
-                                    <span class="badge badge-pill badge-danger">Inactive</span>
-                                @endif
-                            </td>
-                            <td>
-                                <div>
-                                    <a href="{{ route('client-profile.employee_edit', $employee->id) }}" class="mr-2">
-                                        <i class="fa fa-edit text-info font-18"></i>
-                                    </a>
-                                    
-                                    <a href="#" data-toggle="modal" data-target="#deleteModal{{ $employee->id }}">
-                                        <i class="fa fa-trash text-danger font-18"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
 
-                        <!-- Modal -->
-                        <div class="modal fade" id="deleteModal{{ $employee->id }}" tabindex="-1" role="dialog" aria-labelledby="employeeModalCenterTitle" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="employeeModalCenterTitle">{{ __('content.delete') }}</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="{{ __('content.close') }}">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center">
-                                        {{ __('content.you_wont_be_able_to_revert_this') }}
-                                    </div>
-                                    <div class="modal-footer">
-                                        @if ($demo_mode == "on")
-                                            <!-- Include Alert Blade -->
-                                            @include('admin.demo_mode.demo-mode')
-                                        @else
-                                            <form class="d-inline-block" action="{{ route('client-profile.employee_destroy', $employee->id) }}" method="POST">
-                                                @method('DELETE')
-                                                @csrf
-                                                @endif
+                        @foreach ($clientProfile->employees as $employee)
+                            <tr>
+                                <td>{{ $employee->first_name }}</td>
+                                <td>{{ $employee->last_name }}</td>
+                                <td>{{ $employee->middle_name }}</td>
+                                <td>{{ $employee->department }}</td>
+                                <td>{{ $employee->shift }}</td>
+                                <td>{{ $employee->date_of_birth }}</td>
+                                <td>{{ $employee->start_date }}</td>
+                                <td>{{ $employee->end_date }}</td>
+                                <td>{{ $employee->employee_id }}</td>
+                                <td>{{ $employee->background_check_date }}</td>
+                                <td>{{ $employee->ssn }}</td>
+                                <td>{{ $employee->email }}</td>
+                                <td>{{ $employee->phone }}</td>
+                                <td>{{ $employee->short_description }}</td>
+                                <td>{{ $employee->cdl_state }}</td>
+                                <td>{{ $employee->cdl_number }}</td>
 
-                                                <button type="button" class="btn btn-danger" data-dismiss="modal">{{ __('content.cancel') }}</button>
-                                                <button type="submit" class="btn btn-success">{{ __('content.yes_delete_it') }}</button>
+                                <td>
+                                    @if ($employee->status == 'active')
+                                        <span class="badge badge-pill badge-success">Active</span>
+                                    @else
+                                        <span class="badge badge-pill badge-danger">Inactive</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div>
+                                        <a href="{{ route('client-profile.employee_edit', $employee->id) }}"
+                                            class="mr-2">
+                                            <i class="fa fa-edit text-info font-18"></i>
+                                        </a>
+
+                                        <a href="#" data-toggle="modal"
+                                            data-target="#deleteModal{{ $employee->id }}">
+                                            <i class="fa fa-trash text-danger font-18"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Modal -->
+                            <div class="modal fade" id="deleteModal{{ $employee->id }}" tabindex="-1" role="dialog"
+                                aria-labelledby="employeeModalCenterTitle" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="employeeModalCenterTitle">
+                                                {{ __('content.delete') }}</h5>
+                                            <button type="button" class="close" data-dismiss="modal"
+                                                aria-label="{{ __('content.close') }}">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body text-center">
+                                            {{ __('content.you_wont_be_able_to_revert_this') }}
+                                        </div>
+                                        <div class="modal-footer">
+                                            @if ($demo_mode == 'on')
+                                                <!-- Include Alert Blade -->
+                                                @include('admin.demo_mode.demo-mode')
+                                            @else
+                                                <form class="d-inline-block"
+                                                    action="{{ route('client-profile.employee_destroy', $employee->id) }}"
+                                                    method="POST">
+                                                    @method('DELETE')
+                                                    @csrf
+                                            @endif
+
+                                            <button type="button" class="btn btn-danger"
+                                                data-dismiss="modal">{{ __('content.cancel') }}</button>
+                                            <button type="submit"
+                                                class="btn btn-success">{{ __('content.yes_delete_it') }}</button>
                                             </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
                     </tbody>
                 </table>
-               
+
             </div>
         </div>
     </div>

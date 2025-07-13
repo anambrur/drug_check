@@ -3,31 +3,35 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Admin\Employee;
+use App\Models\Admin\SelectionProtocol;
 
-class ClientRegistrationNotification extends Mailable
+class EmployeeSelectedNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $client;
-    public $email;
-    public $password;
+    public $employee;
+    public $protocol;
 
-    public function __construct($client, $email, $password)
+    public function __construct(Employee $employee, SelectionProtocol $protocol)
     {
-        $this->client = $client;
-        $this->email = $email;
-        $this->password = $password;
+        $this->employee = $employee;
+        $this->protocol = $protocol;
     }
 
     public function envelope(): Envelope
     {
+        $companyName = $this->employee->clientProfile->company_name ??
+            $this->protocol->client->company_name ??
+            config('app.name');
+
         return new Envelope(
-            subject: $this->getFormattedSubject(),
             from: new Address(
                 config('mail.from.address'),
                 config('mail.from.name')
@@ -37,18 +41,19 @@ class ClientRegistrationNotification extends Mailable
                     config('mail.reply_to.address', config('mail.from.address')),
                     config('mail.reply_to.name', config('mail.from.name'))
                 ),
-            ]
+            ],
+            subject: 'Random Drug Test Selection Notification - ' . $companyName,
         );
     }
 
     public function content(): Content
     {
+        
         return new Content(
-            view: 'emails.client-registration',
+            view: 'emails.employee-selected',
             with: [
-                'client' => $this->client,
-                'email' => $this->email,
-                'password' => $this->password,
+                'employee' => $this->employee,
+                'protocol' => $this->protocol,
             ],
         );
     }
@@ -56,10 +61,5 @@ class ClientRegistrationNotification extends Mailable
     public function attachments(): array
     {
         return [];
-    }
-
-    protected function getFormattedSubject(): string
-    {
-        return 'Your ' . $this->client->company_name . ' Account Access';
     }
 }

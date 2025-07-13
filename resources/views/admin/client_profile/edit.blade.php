@@ -10,10 +10,10 @@
                         <!-- Button -->
                         <a id="hoverButton" class="iyzi-btn"><i class="fas fa-camera"></i> {{ __('content.view_draft') }}</a>
                         <!-- Modal -->
-                        <div id="imageModal" class="border border-success iyzi-modal">
+                        {{-- <div id="imageModal" class="border border-success iyzi-modal">
                             <img class="img-fluid " src="{{ asset('uploads/img/dummy/style/clientProfile-style1.jpg') }}"
                                 alt="draft image">
-                        </div>
+                        </div> --}}
                     </h4>
                     <div>
                         <a href="{{ url()->previous() }}" class="btn btn-primary"><i class="fas fa-angle-left"></i>
@@ -36,61 +36,111 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="company_name">Company Name <span class="text-red">*</span></label>
-                                    <input id="company_name" name="company_name" value="{{ $clientProfile->company_name }}"
-                                        type="text" class="form-control" required>
+                                    <input id="company_name" name="company_name" type="text"
+                                        class="form-control @error('company_name') is-invalid @enderror"
+                                        placeholder="Enter company name"
+                                        value="{{ old('company_name', $clientProfile->company_name) }}" required>
+                                    @error('company_name')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
-
 
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="short_description">{{ __('content.short_description') }}</label>
-                                    <textarea id="short_description" name="short_description" class="form-control" rows="3">{{ $clientProfile->short_description }}</textarea>
+                                    <textarea id="short_description" name="short_description"
+                                        class="form-control @error('short_description') is-invalid @enderror" rows="3"
+                                        placeholder="Enter short description">{{ old('short_description', $clientProfile->short_description) }}</textarea>
+                                    @error('short_description')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="address">Address <span class="text-red">*</span></label>
-                                    <input id="address" name="address" value="{{ $clientProfile->address }}"
-                                        type="text" class="form-control" required>
+                                    <input id="address" name="address" type="text"
+                                        class="form-control @error('address') is-invalid @enderror"
+                                        placeholder="Enter address" value="{{ old('address', $clientProfile->address) }}"
+                                        required>
+                                    @error('address')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="city">City <span class="text-red">*</span></label>
-                                    <input id="city" name="city" value="{{ $clientProfile->city }}" type="text"
-                                        class="form-control" required>
+                                    <input id="city" name="city" type="text"
+                                        class="form-control @error('city') is-invalid @enderror" placeholder="Enter city"
+                                        value="{{ old('city', $clientProfile->city) }}" required>
+                                    @error('city')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="state">State <span class="text-red">*</span></label>
-                                    <input id="state" name="state" value="{{ $clientProfile->state }}" type="text"
-                                        class="form-control" required>
+                                    <input id="state" name="state" type="text"
+                                        class="form-control @error('state') is-invalid @enderror" placeholder="Enter state"
+                                        value="{{ old('state', $clientProfile->state) }}" required>
+                                    @error('state')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="zip">Zip <span class="text-red">*</span></label>
-                                    <input id="zip" name="zip" value="{{ $clientProfile->zip }}" type="text"
-                                        class="form-control" required>
+                                    <input id="zip" name="zip" type="text"
+                                        class="form-control @error('zip') is-invalid @enderror" placeholder="Enter zip code"
+                                        value="{{ old('zip', $clientProfile->zip) }}" required>
+                                    @error('zip')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="phone">Phone</label>
-                                    <input id="phone" name="phone" value="{{ $clientProfile->phone }}" type="text"
-                                        class="form-control" required>
+                                    <input id="phone" name="phone" type="text"
+                                        class="form-control @error('phone') is-invalid @enderror"
+                                        placeholder="Enter phone number"
+                                        value="{{ old('phone', $clientProfile->phone) }}">
+                                    @error('phone')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="fax">Fax</label>
-                                    <input id="fax" name="fax" value="{{ $clientProfile->fax }}" type="text"
-                                        class="form-control" required>
+                                    <input id="fax" name="fax" type="text"
+                                        class="form-control @error('fax') is-invalid @enderror"
+                                        placeholder="Enter fax number" value="{{ old('fax', $clientProfile->fax) }}">
+                                    @error('fax')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
-
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -98,40 +148,90 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="shipping_address">Shipping Address</label>
-                                    <input id="shipping_address" name="shipping_address"
-                                        value="{{ $clientProfile->shipping_address }}" type="text" class="form-control"
-                                        required>
+                                    <input id="shipping_address" name="shipping_address" type="text"
+                                        class="form-control @error('shipping_address') is-invalid @enderror"
+                                        placeholder="Enter shipping address"
+                                        value="{{ old('shipping_address', $clientProfile->shipping_address) }}">
+                                    @error('shipping_address')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="billing_contact_name">Billing Contact Name</label>
-                                    <input id="billing_contact_name" name="billing_contact_name"
-                                        value="{{ $clientProfile->billing_contact_name }}" type="text"
-                                        class="form-control" required>
+                                    <input id="billing_contact_name" name="billing_contact_name" type="text"
+                                        class="form-control @error('billing_contact_name') is-invalid @enderror"
+                                        placeholder="Enter billing contact name"
+                                        value="{{ old('billing_contact_name', $clientProfile->billing_contact_name) }}">
+                                    @error('billing_contact_name')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="billing_contact_email">Billing Contact Email</label>
-                                    <input id="billing_contact_email" name="billing_contact_email"
-                                        value="{{ $clientProfile->billing_contact_email }}" type="text"
-                                        class="form-control" required>
+                                    <input id="billing_contact_email" name="billing_contact_email" type="text"
+                                        class="form-control @error('billing_contact_email') is-invalid @enderror"
+                                        placeholder="Enter billing contact email"
+                                        value="{{ old('billing_contact_email', $clientProfile->billing_contact_email) }}">
+                                    @error('billing_contact_email')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="billing_contact_phone">Billing Contact Phone</label>
-                                    <input id="billing_contact_phone" name="billing_contact_phone"
-                                        value="{{ $clientProfile->billing_contact_phone }}" type="text"
-                                        class="form-control" required>
+                                    <input id="billing_contact_phone" name="billing_contact_phone" type="text"
+                                        class="form-control @error('billing_contact_phone') is-invalid @enderror"
+                                        placeholder="Enter billing contact phone"
+                                        value="{{ old('billing_contact_phone', $clientProfile->billing_contact_phone) }}">
+                                    @error('billing_contact_phone')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group" id="dot-agency-group">
+                                    <label for="dot_agency_id">DOT Agency</label>
+                                    <select class="form-control @error('dot_agency_id') is-invalid @enderror"
+                                        id="dot_agency_id" name="dot_agency_id">
+                                        @foreach ($dotAgencies as $agency)
+                                            <option value="{{ $agency->id }}"
+                                                {{ old('dot_agency_id', $clientProfile->dot_agency_id) == $agency->id ? 'selected' : '' }}>
+                                                {{ $agency->dot_agency_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('dot_agency_id')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="der_contact_name">DER Contact Name<span class="text-red">*</span></label>
                                     <input id="der_contact_name" name="der_contact_name" type="text"
-                                        value="{{ $clientProfile->der_contact_name }}" class="form-control" required>
+                                        class="form-control @error('der_contact_name') is-invalid @enderror"
+                                        placeholder="Enter DER contact name"
+                                        value="{{ old('der_contact_name', $clientProfile->der_contact_name) }}" required>
+                                    @error('der_contact_name')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -140,14 +240,29 @@
                                     <label for="der_contact_email">DER Contact Email<span
                                             class="text-red">*</span></label>
                                     <input id="der_contact_email" name="der_contact_email" type="text"
-                                        value="{{ $clientProfile->der_contact_email }}" class="form-control" required>
+                                        class="form-control @error('der_contact_email') is-invalid @enderror"
+                                        placeholder="Enter DER contact email"
+                                        value="{{ old('der_contact_email', $clientProfile->der_contact_email) }}"
+                                        required>
+                                    @error('der_contact_email')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="der_contact_phone">DER Contact Phone</label>
                                     <input id="der_contact_phone" name="der_contact_phone" type="text"
-                                        value="{{ $clientProfile->der_contact_phone }}" class="form-control" required>
+                                        class="form-control @error('der_contact_phone') is-invalid @enderror"
+                                        placeholder="Enter DER contact phone"
+                                        value="{{ old('der_contact_phone', $clientProfile->der_contact_phone) }}">
+                                    @error('der_contact_phone')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -155,10 +270,10 @@
                                     <label for="status" class="col-form-label">{{ __('content.status') }}</label>
                                     <select class="form-control" name="status" id="status">
                                         <option value="active" selected>{{ __('content.select_your_option') }}</option>
-                                        <option value="active"
-                                            {{ $clientProfile->status == 'active' ? 'selected' : '' }}>
+                                        <option value="active" {{ $clientProfile->status == 'active' ? 'selected' : '' }}>
                                             Active</option>
-                                        <option value="inactive" {{ $clientProfile->status == 'inactive"' ? 'selected' : '' }}>
+                                        <option value="inactive"
+                                            {{ $clientProfile->status == 'inactive"' ? 'selected' : '' }}>
                                             Inactive</option>
                                     </select>
                                 </div>

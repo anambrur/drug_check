@@ -5,6 +5,7 @@ use Livewire\Livewire;
 use Stripe\PaymentIntent;
 use Illuminate\Http\Request;
 use App\Models\Admin\PageBuilder;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
@@ -128,6 +129,17 @@ use App\Http\Controllers\Admin\PortfolioDetailSectionController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+// Route::get('/test-email', function() {
+//     try {
+//         Mail::raw('This is a test email', function($message) {
+//             $message->to('anambrur@gmail.com')
+//                     ->subject('Simple Test Email');
+//         });
+//         return "Test email sent!";
+//     } catch (\Exception $e) {
+//         return "Error: " . $e->getMessage();
+//     }
+// });
 
 Route::post('/create-payment-intent', function (Request $request) {
     Stripe::setApiKey(env('STRIPE_SECRET'));
@@ -955,6 +967,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         ->name('result-recording.get-panel-test');
     Route::post('result-recording/send-notification/{id}', [ResultRecordingController::class, 'sendNotification'])->name('result-recording.send-notification');
 });
+
+
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:random selection view'])->prefix('admin')->group(function () {
     Route::get('random-selection', [RandomSelectionController::class, 'index'])->name('random-selection.index');
