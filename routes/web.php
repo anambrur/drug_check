@@ -966,6 +966,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('get-panel-test', [ResultRecordingController::class, 'get_panel_test'])
         ->name('result-recording.get-panel-test');
     Route::post('result-recording/send-notification/{id}', [ResultRecordingController::class, 'sendNotification'])->name('result-recording.send-notification');
+    Route::get('result-recording/{id}/result-by-employee', [ResultRecordingController::class, 'resultByEmployee'])->name('result-recording.resultByEmployee');
 });
 
 

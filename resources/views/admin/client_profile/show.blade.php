@@ -357,57 +357,57 @@
                                 id="cdl_state">
                                 <option value="">{{ __('content.select_your_option') }}</option>
                                 @foreach ([
-            'AL' => 'Alabama',
-            'AK' => 'Alaska',
-            'AZ' => 'Arizona',
-            'AR' => 'Arkansas',
-            'CA' => 'California',
-            'CO' => 'Colorado',
-            'CT' => 'Connecticut',
-            'DE' => 'Delaware',
-            'FL' => 'Florida',
-            'GA' => 'Georgia',
-            'HI' => 'Hawaii',
-            'ID' => 'Idaho',
-            'IL' => 'Illinois',
-            'IN' => 'Indiana',
-            'IA' => 'Iowa',
-            'KS' => 'Kansas',
-            'KY' => 'Kentucky',
-            'LA' => 'Louisiana',
-            'ME' => 'Maine',
-            'MD' => 'Maryland',
-            'MA' => 'Massachusetts',
-            'MI' => 'Michigan',
-            'MN' => 'Minnesota',
-            'MS' => 'Mississippi',
-            'MO' => 'Missouri',
-            'MT' => 'Montana',
-            'NE' => 'Nebraska',
-            'NV' => 'Nevada',
-            'NH' => 'New Hampshire',
-            'NJ' => 'New Jersey',
-            'NM' => 'New Mexico',
-            'NY' => 'New York',
-            'NC' => 'North Carolina',
-            'ND' => 'North Dakota',
-            'OH' => 'Ohio',
-            'OK' => 'Oklahoma',
-            'OR' => 'Oregon',
-            'PA' => 'Pennsylvania',
-            'RI' => 'Rhode Island',
-            'SC' => 'South Carolina',
-            'SD' => 'South Dakota',
-            'TN' => 'Tennessee',
-            'TX' => 'Texas',
-            'UT' => 'Utah',
-            'VT' => 'Vermont',
-            'VA' => 'Virginia',
-            'WA' => 'Washington',
-            'WV' => 'West Virginia',
-            'WI' => 'Wisconsin',
-            'WY' => 'Wyoming',
-        ] as $abbr => $state)
+                                    'AL' => 'Alabama',
+                                    'AK' => 'Alaska',
+                                    'AZ' => 'Arizona',
+                                    'AR' => 'Arkansas',
+                                    'CA' => 'California',
+                                    'CO' => 'Colorado',
+                                    'CT' => 'Connecticut',
+                                    'DE' => 'Delaware',
+                                    'FL' => 'Florida',
+                                    'GA' => 'Georgia',
+                                    'HI' => 'Hawaii',
+                                    'ID' => 'Idaho',
+                                    'IL' => 'Illinois',
+                                    'IN' => 'Indiana',
+                                    'IA' => 'Iowa',
+                                    'KS' => 'Kansas',
+                                    'KY' => 'Kentucky',
+                                    'LA' => 'Louisiana',
+                                    'ME' => 'Maine',
+                                    'MD' => 'Maryland',
+                                    'MA' => 'Massachusetts',
+                                    'MI' => 'Michigan',
+                                    'MN' => 'Minnesota',
+                                    'MS' => 'Mississippi',
+                                    'MO' => 'Missouri',
+                                    'MT' => 'Montana',
+                                    'NE' => 'Nebraska',
+                                    'NV' => 'Nevada',
+                                    'NH' => 'New Hampshire',
+                                    'NJ' => 'New Jersey',
+                                    'NM' => 'New Mexico',
+                                    'NY' => 'New York',
+                                    'NC' => 'North Carolina',
+                                    'ND' => 'North Dakota',
+                                    'OH' => 'Ohio',
+                                    'OK' => 'Oklahoma',
+                                    'OR' => 'Oregon',
+                                    'PA' => 'Pennsylvania',
+                                    'RI' => 'Rhode Island',
+                                    'SC' => 'South Carolina',
+                                    'SD' => 'South Dakota',
+                                    'TN' => 'Tennessee',
+                                    'TX' => 'Texas',
+                                    'UT' => 'Utah',
+                                    'VT' => 'Vermont',
+                                    'VA' => 'Virginia',
+                                    'WA' => 'Washington',
+                                    'WV' => 'West Virginia',
+                                    'WI' => 'Wisconsin',
+                                    'WY' => 'Wyoming',
+                                ] as $abbr => $state)
                                     <option value="{{ $abbr }}"
                                         {{ old('cdl_state') == $abbr ? 'selected' : '' }}>{{ $state }}</option>
                                 @endforeach
@@ -510,7 +510,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <div>
+                                    <div class="d-flex justify-content-left align-items-center">
                                         <a href="{{ route('client-profile.employee_edit', $employee->id) }}"
                                             class="mr-2">
                                             <i class="fa fa-edit text-info font-18"></i>
@@ -519,6 +519,11 @@
                                         <a href="#" data-toggle="modal"
                                             data-target="#deleteModal{{ $employee->id }}">
                                             <i class="fa fa-trash text-danger font-18"></i>
+                                        </a>
+
+                                        <a href="{{ route('result-recording.resultByEmployee', $employee->id) }}"
+                                            class="ml-2">
+                                           <span class="badge badge-pill badge-info">Result</span>
                                         </a>
                                     </div>
                                 </td>

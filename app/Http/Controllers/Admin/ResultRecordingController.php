@@ -56,6 +56,16 @@ class ResultRecordingController extends Controller
         return view('admin.result_recording.index', compact('favicon', 'panel_image', 'laboratories',  'mros', 'clientProfiles', 'test_admins', 'recoding_results'));
     }
 
+    public function resultByEmployee($id)
+    {
+        $language = getLanguage();
+        $favicon = Favicon::first();
+        $panel_image = PanelImage::first();
+        $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')->orderBy('id', 'desc')->where('employee_id', $id)->get();
+
+        return view('admin.result_recording.result_by_employee', compact('favicon', 'panel_image', 'recoding_results'));
+    }
+
     public function get_empoyees(Request $request)
     {
         $clientProfile = ClientProfile::with('employees')->orderBy('id', 'desc')->where('id', $request->company_id)->first();
