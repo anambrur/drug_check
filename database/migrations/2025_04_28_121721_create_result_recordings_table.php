@@ -50,7 +50,7 @@ return new class extends Migration
         Schema::create('result_panels', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('result_id')->nullable();
-            $table->foreign('result_id')->references('id')->on('result_recordings')->onDelete('cascade')->onDelete('cascade');
+            $table->foreign('result_id')->references('id')->on('result_recordings')->onDelete('cascade');
 
             $table->unsignedBigInteger('panel_id')->nullable();
             $table->foreign('panel_id')->references('id')->on('panels')->onDelete('cascade');
