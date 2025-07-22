@@ -124,6 +124,19 @@
                                     @enderror
                                 </div>
                             </div>
+
+                            <div class="col-md-12">
+                                <label for="send_email">Send Welcome Email</label>
+                                <div class="form-group d-flex align-items-center">
+                                    <label class="switch me-3">
+                                        <input type="checkbox" id="send_email" name="send_email" value="1">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <label for="send_email" class="mb-0 ml-2">Enable to send welcome email
+                                        to the client</label>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -247,7 +260,7 @@
                                     @enderror
                                 </div>
                             </div>
-                            
+
                             <div class="col-xl-12">
                                 <div class="form-group">
                                     <label for="status" class="col-form-label">{{ __('content.status') }} </label>
@@ -258,9 +271,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-12">
-                                <small class="form-text text-muted">{{ __('content.required_fields') }}</small>
-                            </div>
+                            
                             <div class="col-md-12">
                                 <button type="submit" class="btn btn-primary mr-2">{{ __('content.submit') }}</button>
                             </div>
@@ -271,5 +282,64 @@
             </div>
         </div>
     </div>
+
+    <style>
+        /* Custom Switch Styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 19px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 11px;
+            width: 11px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(17px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+    </style>
     <!-- end row -->
 @endsection

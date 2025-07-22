@@ -13,14 +13,17 @@ use App\Models\Admin\ExternalUrl;
 use App\Models\Admin\HeaderImage;
 use App\Models\Admin\PageBuilder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Admin\ClearingHouse;
+use App\Models\Admin\PrivacyPolicy;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
 use App\Models\Admin\PackageCategory;
+use App\Models\Admin\RandomConsortium;
 use App\Models\Admin\WhyChooseSection;
 use App\Models\Admin\ContactInfoWidget;
-use App\Models\Admin\BackgroundCategory;
-use App\Models\Admin\PrivacyPolicy;
 use App\Models\Admin\TermsAndCondition;
+use App\Models\Admin\BackgroundCategory;
+use App\Models\Admin\DotSupervisorTraining;
 
 class HomeController extends Controller
 {
@@ -270,11 +273,19 @@ class HomeController extends Controller
 
     public function random_consortium()
     {
-        return view('frontend.random_consortium.index', array_merge(getFrontendData()));
+        $random_consortium = RandomConsortium::first();
+        return view('frontend.random_consortium.index', array_merge(getFrontendData(), compact('random_consortium')));
     }
-    
-     public function dot_supervisor_training()
+
+    public function clearing_house()
     {
-        return view('frontend.dot_supervisor_training.index', array_merge(getFrontendData()));
+        $clearing_house = ClearingHouse::first();
+        return view('frontend.clearing_house.index', array_merge(getFrontendData(), compact('clearing_house')));
+    }
+
+    public function dot_supervisor_training()
+    {
+        $dot_supervisor_training = DotSupervisorTraining::first();
+        return view('frontend.dot_supervisor_training.index', array_merge(getFrontendData() , compact('dot_supervisor_training')));
     }
 }

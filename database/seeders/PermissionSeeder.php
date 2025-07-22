@@ -65,7 +65,10 @@ class PermissionSeeder extends Seeder
             'subscribe',
             'setting',
             'language',
-            'clear cache'
+            'clear cache',
+            'clearing house',
+            'random consortium',
+            'dot supervisor training',
         ];
 
         // Define actions

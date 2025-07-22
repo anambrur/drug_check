@@ -12,6 +12,7 @@ use App\Models\Admin\Social;
 use Illuminate\Http\Request;
 use App\Models\Admin\SiteInfo;
 use App\Models\Admin\HeaderInfo;
+use App\Mail\PaymentConfirmation;
 use App\Models\Admin\ContactInfo;
 use App\Models\Admin\ExternalUrl;
 use App\Models\Admin\FooterImage;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\Admin\ContactInfoWidget;
 use App\Models\Admin\ContactInfoSection;
 use App\Mail\RandomConsortiumApplication;
+use Illuminate\Support\Facades\Validator;
 
 class ContactController extends Controller
 {
@@ -199,16 +201,14 @@ class ContactController extends Controller
         }
     }
 
-
     public function sendMailDot(Request $request)
     {
-
         // Validate form data
-        $validatedData = $request->validate([
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string|max:15',
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'phone' => 'nullable|string',
             'address' => 'nullable|string',
             'date' => 'nullable|string',
             'gender' => 'nullable|string',
@@ -216,14 +216,23 @@ class ContactController extends Controller
             'employee_name' => 'nullable|string',
             'company_name' => 'nullable|string',
             'accounting_email' => 'nullable|string',
-            'reason_for_testing' => 'nullable|string',
-            'price' => 'nullable|string',
+            'reason_for_testing' => 'required|string',
+            'price' => 'required|string',
             'services' => 'nullable|array',
             'payment_intent_id' => 'nullable|string',
             'test_name' => 'nullable|string',
         ]);
 
+
+        // Any error checking
+        if ($validator->fails()) {
+            toastr()->error($validator->errors()->first(), 'content.error');
+            return back();
+        }
+
+
         try {
+            $validatedData = $request->all();
             // Verify Stripe payment
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
@@ -244,7 +253,7 @@ class ContactController extends Controller
                 'phone' => $validatedData['phone'] ?? null,
                 'address' => $validatedData['address'] ?? null,
                 'preferred_location' => $validatedData['preferred_location'] ?? null,
-                'employee_name' => $validatedData['employee_name'] ?? null,
+                'employee_name' => $validatedData['employee_name'] ?? ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''),
                 'company_name' => $validatedData['company_name'] ?? null,
                 'accounting_email' => $validatedData['accounting_email'] ?? null,
                 'date' => $validatedData['date'] ?? null,
@@ -258,10 +267,18 @@ class ContactController extends Controller
             $emailTo = ContactInfoWidget::pluck('email')->first();
 
             // Send confirmation email - using Mail::to() instead of Mail::raw()
-            Mail::to('anambrur@gmail.com')
+            Mail::to($emailTo)
                 ->send(new DotApplicationReceived(
                     $validatedData,
                     $validatedData['reason_for_testing'] ?? 'No message provided.'
+                ));
+
+            // Send money received confirmation email
+            Mail::to($validatedData['email'])
+                ->send(new PaymentConfirmation(
+                    $validatedData,
+                    $validatedData['test_name'] ?? 'Test',
+                    $price
                 ));
 
             return redirect()->back()->with('success', 'Payment successful, and email sent!');

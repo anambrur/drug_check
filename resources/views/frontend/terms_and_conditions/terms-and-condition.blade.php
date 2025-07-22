@@ -64,18 +64,16 @@
 
             <div class="row">
                 <div class="col-lg-12"></div>
-                    <div class="section-heading">
-                        <h2>Terms and Conditions</h2>
-                    </div>
-
-                    <p></p>
-                        @php echo html_entity_decode($TermsAndCondition->content); @endphp
-                    </p>
+                <div class="section-heading">
+                    <h2>Terms and Conditions</h2>
                 </div>
+
+                <p>
+                    @php echo html_entity_decode($TermsAndCondition->content); @endphp
+                </p>
             </div>
+        </div>
         </div>
     </section>
     <!--// Services Section End //-->
-
-    
 @endsection

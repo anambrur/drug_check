@@ -82,6 +82,7 @@ use App\Http\Controllers\Admin\VideoSectionController;
 use App\Http\Controllers\Frontend\ZipSearchController;
 use App\Http\Controllers\Admin\CareerContentController;
 use App\Http\Controllers\Admin\CareerSectionController;
+use App\Http\Controllers\Admin\ClearingHouseController;
 use App\Http\Controllers\Admin\ClientProfileController;
 use App\Http\Controllers\Admin\PrivacyPolicyController;
 use App\Http\Controllers\Admin\CareerCategoryController;
@@ -92,7 +93,6 @@ use App\Http\Controllers\Admin\FooterCategoryController;
 use App\Http\Controllers\Admin\GoogleAnalyticController;
 use App\Http\Controllers\Admin\HistorySectionController;
 use App\Http\Controllers\Admin\PortfolioImageController;
-use App\Http\Controllers\Admin\ResultRecodingController;
 use App\Http\Controllers\Admin\ServiceContentController;
 use App\Http\Controllers\Admin\ServiceFeatureController;
 use App\Http\Controllers\Admin\ServiceSectionController;
@@ -105,6 +105,7 @@ use App\Http\Controllers\Admin\ResultRecordingController;
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\PortfolioContentController;
 use App\Http\Controllers\Admin\PortfolioSectionController;
+use App\Http\Controllers\Admin\RandomConsortiumController;
 use App\Http\Controllers\Admin\SubscribeSectionController;
 use App\Http\Controllers\Admin\WhyChooseSectionController;
 use App\Http\Controllers\Admin\ContactInfoWidgetController;
@@ -116,6 +117,7 @@ use App\Http\Controllers\Admin\ContactInfoSectionController;
 use App\Http\Controllers\Admin\TestimonialSectionController;
 use App\Http\Controllers\Admin\WorkProcessSectionController;
 use App\Http\Controllers\Admin\GalleryImageSectionController;
+use App\Http\Controllers\Admin\DotSupervisorTrainingController;
 use App\Http\Controllers\Admin\ServiceFeatureSectionController;
 use App\Http\Controllers\Admin\PortfolioDetailSectionController;
 
@@ -197,6 +199,7 @@ Route::get('background-checks', [\App\Http\Controllers\Frontend\HomeController::
 Route::get('background-checks-forms', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks_forms'])->name('frontend.background-check-forms')->middleware('XSS');
 Route::get('random-consortium', [\App\Http\Controllers\Frontend\HomeController::class, 'random_consortium'])->name('frontend.random-consortium')->middleware('XSS');
 Route::get('dot-supervisor-training', [\App\Http\Controllers\Frontend\HomeController::class, 'dot_supervisor_training'])->name('frontend.dot-supervisor-training')->middleware('XSS');
+Route::get('clearing-house', [\App\Http\Controllers\Frontend\HomeController::class, 'clearing_house'])->name('frontend.clearing-house')->middleware('XSS');
 
 Route::get('background-checks-services', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks_services'])->name('frontend.background-check-services')->middleware('XSS');
 
@@ -886,6 +889,36 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('blog-section', [BlogSectionController::class, 'store'])->name('blog-section.store');
     Route::put('blog-section/{id}', [BlogSectionController::class, 'update'])->name('blog-section.update');
     Route::delete('blog-section/{id}', [BlogSectionController::class, 'destroy'])->name('blog-section.destroy');
+});
+
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:clearing house view'])->prefix('admin')->group(function () {
+    Route::get('clearing-house', [ClearingHouseController::class, 'index'])->name('clearing-house.index');
+    Route::get('clearing-house/create', [ClearingHouseController::class, 'create'])->name('clearing-house.create');
+    Route::post('clearing-house', [ClearingHouseController::class, 'store'])->name('clearing-house.store');
+    Route::get('clearing-house/{id}/edit', [ClearingHouseController::class, 'edit'])->name('clearing-house.edit');
+    Route::put('clearing-house/{id}', [ClearingHouseController::class, 'update'])->name('clearing-house.update');
+    Route::delete('clearing-house/{id}', [ClearingHouseController::class, 'destroy'])->name('clearing-house.destroy');
+});
+
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:random consortium view'])->prefix('admin')->group(function () {
+    Route::get('random-consortium', [RandomConsortiumController::class, 'index'])->name('random-consortium.index');
+    Route::get('random-consortium/create', [RandomConsortiumController::class, 'create'])->name('random-consortium.create');
+    Route::post('random-consortium', [RandomConsortiumController::class, 'store'])->name('random-consortium.store');
+    Route::get('random-consortium/{id}/edit', [RandomConsortiumController::class, 'edit'])->name('random-consortium.edit');
+    Route::put('random-consortium/{id}', [RandomConsortiumController::class, 'update'])->name('random-consortium.update');
+    Route::delete('random-consortium/{id}', [RandomConsortiumController::class, 'destroy'])->name('random-consortium.destroy');
+});
+
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:dot supervisor training view'])->prefix('admin')->group(function () {
+    Route::get('dot-supervisor-training', [DotSupervisorTrainingController::class, 'index'])->name('dot-supervisor-training.index');
+    Route::get('dot-supervisor-training/create', [DotSupervisorTrainingController::class, 'create'])->name('dot-supervisor-training.create');
+    Route::post('dot-supervisor-training', [DotSupervisorTrainingController::class, 'store'])->name('dot-supervisor-training.store');
+    Route::get('dot-supervisor-training/{id}/edit', [DotSupervisorTrainingController::class, 'edit'])->name('dot-supervisor-training.edit');
+    Route::put('dot-supervisor-training/{id}', [DotSupervisorTrainingController::class, 'update'])->name('dot-supervisor-training.update');
+    Route::delete('dot-supervisor-training/{id}', [DotSupervisorTrainingController::class, 'destroy'])->name('dot-supervisor-training.destroy');
 });
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:client profile view'])->prefix('admin')->group(function () {

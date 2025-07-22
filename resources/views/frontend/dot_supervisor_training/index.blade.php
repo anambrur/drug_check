@@ -3,37 +3,10 @@
 @section('content')
     <section class="my-5">
         <div class="container pt-5">
-            <div class="row">
+            <div class="row mt-4">
                 <div class="col-md-12">
-                    <h2 class="text-center">DOT Supervisor Training</h2>
-                    <p>Federal Motor Carrier Safety Administration (FMCSA) Random Testing
-                        All employers regulated by 49 CFR Part 382.305 are required to implement a random drug and alcohol
-                        testing program. All safety sensitive employees such as CDL drivers must be randomly tested
-                        throughout the year and an employer who employs only himself/herself as a driver who is not leased
-                        to a motor carrier, shall implement a random testing program of two or more covered employees in the
-                        random testing selection pool as a member of a consortium/random testing pool. We specialize in DOT
-                        random drug and alcohol testing programs for single owner operators and small, medium and large
-                        trucking companies with multiple drivers.
-                    </p>
-
-                    <h5>The current rate for FMCSA random drug and alcohol testing is</h5>
-                    <p>50% of the average number of driver positions for Controlled Substances (5 panel DOT urine) and 10%
-                        of the average number of diver positions for Breath Alcohol Testing (BAT)
-                    <p>
-
-
-                    <p class="mt-3">
-                        If you're looking to complete your DOT supervisor training with ease and confidence, we highly
-                        recommend visiting DOTSUPTRAINING . They specialize in helping trucking companies, owner-operators,
-                        and safety managers stay fully compliant with DOT drug and alcohol testing regulations—without the
-                        hassle or confusion. Their FMCSA-compliant program covers everything required under 49 CFR Part
-                        382.603, including 60 minutes of training on alcohol misuse and 60 minutes on controlled substances.
-
-                        The entire process is simple and efficient: watch the training, take the quiz, and download your
-                        certificate—all in one place. Trusted by safety coordinators and fleet operators nationwide,
-                        <a href="https://www.dotsuptraining.com" target="_blank">DOTSUPTRAINING</a> is the go-to platform for accessible, affordable, and audit-ready compliance
-                        training.
-                    </p>
+                    <h2 class="text-center">{{ $dot_supervisor_training->title }}</h2>
+                    <p class="text-center"> @php echo html_entity_decode($dot_supervisor_training->description); @endphp</p>
                 </div>
             </div>
         </div>

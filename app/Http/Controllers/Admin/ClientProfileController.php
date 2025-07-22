@@ -80,6 +80,7 @@ class ClientProfileController extends Controller
                 'der_contact_email'       => 'required|email',
                 'der_contact_phone'       => 'nullable|string',
                 'status'                  => 'required|in:active,inactive',
+                'send_email'              => 'nullable|boolean',
             ]);
 
             if ($validator->fails()) {
@@ -126,8 +127,10 @@ class ClientProfileController extends Controller
                 'status'                  => $input['status'],
             ]);
 
-            // Send email notifications after successful creation
-            $this->sendClientRegistrationEmail($clientProfile, $companyUser, $random_password);
+            // Send email notifications only if send_email is true
+            if ($request->has('send_email') && $request->send_email) {
+                $this->sendClientRegistrationEmail($clientProfile, $companyUser, $random_password);
+            }
             DB::commit();
 
             // toastr()->success('content.created_successfully', 'content.success');

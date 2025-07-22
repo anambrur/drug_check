@@ -10,25 +10,31 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class ContactFormSubmission extends Mailable
+class PaymentConfirmation extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $data;
+    public $testName;
+    public $amount;
 
-    public function __construct($data)
+    /**
+     * Create a new message instance.
+     */
+    public function __construct($data, $testName, $amount)
     {
         $this->data = $data;
+        $this->testName = $testName;
+        $this->amount = $amount;
     }
 
     /**
      * Get the message envelope.
      */
-  
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "New Random Consortium Application" . ($this->data['contact_subject'] ? ' - ' . $this->data['contact_subject'] : ''),
+            subject: 'Payment Confirmation for ' . $this->testName,
             from: new Address(
                 config('mail.from.address'),
                 config('mail.from.name')
@@ -42,16 +48,20 @@ class ContactFormSubmission extends Mailable
         );
     }
 
+    /**
+     * Get the message content definition.
+     */
     public function content(): Content
     {
         return new Content(
-            view: 'emails.contact_form',
+            view: 'emails.payment-confirmation',
             with: [
-                'data' => $this->data
+                'data' => $this->data,
+                'testName' => $this->testName,
+                'amount' => $this->amount,
             ],
         );
     }
-
 
     /**
      * Get the attachments for the message.

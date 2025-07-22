@@ -510,83 +510,6 @@
                 @endcan
 
                 
-                @can('lab admin view')
-                    <li
-                        class="nav-item {{ request()->is('admin/laboratory-list') ||
-                        request()->is('admin/laboratory-list/create') ||
-                        request()->is('admin/laboratory-list/*/edit') ||
-                        request()->is('admin/mro-list') ||
-                        request()->is('admin/mro-list/create') ||
-                        request()->is('admin/mro-list/*/edit') ||
-                        request()->is('admin/dot-agency-list') ||
-                        request()->is('admin/dot-agency-list/create') ||
-                        request()->is('admin/dot-agency-list/*/edit') ||
-                        request()->is('admin/panel-list') ||
-                        request()->is('admin/panel-list/create') ||
-                        request()->is('admin/panel-list/*/edit') ||
-                        request()->is('admin/test-admin') ||
-                        request()->is('admin/test-admin/create') ||
-                        request()->is('admin/test-admin/*/edit') 
-                        
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#laboratory-lists" aria-expanded="false"
-                            aria-controls="laboratory-lists">
-                            <i class="fas fa-flask menu-icon"></i>
-                            <span class="menu-title">Lab Admin</span>
-                            <i class="ti-angle-right"></i>
-                        </a>
-                        <div class="collapse {{ request()->is('admin/laboratory-list') ||
-                        request()->is('admin/laboratory-list/create') ||
-                        request()->is('admin/laboratory-list/*/edit') ||
-                        request()->is('admin/mro-list') ||
-                        request()->is('admin/mro-list/create') ||
-                        request()->is('admin/mro-list/*/edit') ||
-                        request()->is('admin/dot-agency-list') ||
-                        request()->is('admin/dot-agency-list/create') ||
-                        request()->is('admin/dot-agency-list/*/edit') ||
-                        request()->is('admin/panel-list') ||
-                        request()->is('admin/panel-list/create') ||
-                        request()->is('admin/panel-list/*/edit') ||
-                        request()->is('admin/test-admin') ||
-                        request()->is('admin/test-admin/create') ||
-                        request()->is('admin/test-admin/*/edit')
-                       
-                            ? 'show'
-                            : '' }}"
-                            id="laboratory-lists">
-                            <ul class="nav flex-column sub-menu">
-                                <li class="nav-item"> <a
-                                    class="nav-link {{ request()->is('admin/laboratory-list') ||
-                                        request()->is('admin/laboratory-list/*/edit') ? 'active' : '' }}"
-                                    href="{{ url('admin/laboratory-list') }}">Laboratory List</a>
-                                </li>
-                                <li class="nav-item"> <a
-                                    class="nav-link {{ request()->is('admin/mro-list') ||
-                                        request()->is('admin/mro-list/*/edit')  ? 'active' : '' }}"
-                                    href="{{ url('admin/mro-list') }}">MRO List</a>
-                                </li>
-                                <li class="nav-item"> <a
-                                    class="nav-link {{ request()->is('admin/panel-list') ||
-                                        request()->is('admin/panel-list/*/edit')  ? 'active' : '' }}"
-                                    href="{{ url('admin/panel-list') }}">Panel List</a>
-                                </li>
-                                <li class="nav-item"> <a
-                                    class="nav-link {{ request()->is('admin/test-admin') ||
-                                        request()->is('admin/test-admin/*/edit')  ? 'active' : '' }}"
-                                    href="{{ url('admin/test-admin') }}">Test Admin</a>
-                                </li>
-                                <li class="nav-item"> <a
-                                    class="nav-link {{ request()->is('admin/dot-agency-list') ||
-                                        request()->is('admin/dot-agency-list/*/edit')  ? 'active' : '' }}"
-                                    href="{{ url('admin/dot-agency-list') }}">Dot Agency</a>
-                                </li>
-                                
-                                
-                            </ul>
-                        </div>
-                    </li>
-                @endcan
 
                 @can('section view')
                     <li
@@ -1152,6 +1075,12 @@
                         request()->is('admin/font/create') ||
                         request()->is('admin/draft-view/create') ||
                         request()->is('admin/tawk-to/create') ||
+                        request()->is('admin/clearing-house/create') ||
+                        request()->is('admin/clearing-house/*/edit') ||
+                        request()->is('admin/dot-supervisor-training/create') ||
+                        request()->is('admin/dot-supervisor-training/*/edit') ||
+                        request()->is('admin/random-consortium/create') ||
+                        request()->is('admin/random-consortium/*/edit') ||
                         request()->is('admin/quick-access/create')
                             ? 'active'
                             : '' }}">
@@ -1187,6 +1116,12 @@
                         request()->is('admin/font/create') ||
                         request()->is('admin/draft-view/create') ||
                         request()->is('admin/tawk-to/create') ||
+                        request()->is('admin/clearing-house/create') ||
+                        request()->is('admin/clearing-house/*/edit') ||
+                        request()->is('admin/dot-supervisor-training/create') ||
+                        request()->is('admin/dot-supervisor-training/*/edit') ||
+                        request()->is('admin/random-consortium/create') ||
+                        request()->is('admin/random-consortium/*/edit') ||
                         request()->is('admin/quick-access/create')
                             ? 'show'
                             : '' }}"
@@ -1259,6 +1194,18 @@
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/seo/create') ? 'active' : '' }}"
                                         href="{{ url('admin/seo/create') }}">{{ __('content.seo') }}</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/clearing-house/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/clearing-house/create') }}">Clearing House</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/dot-supervisor-training/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/dot-supervisor-training/create') }}">Dot Supervisor Training</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/random-consortium/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/random-consortium/create') }}">Random Consortium</a>
                                 </li>
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/terms-and-conditions/create') ? 'active' : '' }}"

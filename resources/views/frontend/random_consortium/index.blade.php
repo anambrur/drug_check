@@ -3,23 +3,12 @@
 @section('content')
     <section class="my-5">
         <div class="container pt-5">
-            <div class="row">
+            <div class="row mt-4">
                 <div class="col-12">
-                    <h2 class="text-center">Random Consortium</h2>
-                    <p>Federal Motor Carrier Safety Administration (FMCSA) Random Testing
-                        All employers regulated by 49 CFR Part 382.305 are required to implement a random drug and alcohol
-                        testing program. All safety sensitive employees such as CDL drivers must be randomly tested
-                        throughout the year and an employer who employs only himself/herself as a driver who is not leased
-                        to a motor carrier, shall implement a random testing program of two or more covered employees in the
-                        random testing selection pool as a member of a consortium/random testing pool. We specialize in DOT
-                        random drug and alcohol testing programs for single owner operators and small, medium and large
-                        trucking companies with multiple drivers.
+                    <h2 class="text-center">{{ $random_consortium->title }}</h2>
+                    <p class="text-center">
+                        @php echo html_entity_decode($random_consortium->description); @endphp
                     </p>
-
-                    <h5>The current rate for FMCSA random drug and alcohol testing is</h5>
-                    <p>50% of the average number of driver positions for Controlled Substances (5 panel DOT urine) and 10%
-                        of the average number of diver positions for Breath Alcohol Testing (BAT)
-                    <p>
                 </div>
             </div>
         </div>
@@ -37,7 +26,7 @@
                                 enctype="multipart/form-data">
                                 @csrf
                                 <input type="hidden" name="payment_intent_id" id="payment_intent_id">
-                                
+
                                 <h5 class="mb-4 mt-5">Company Information</h5>
 
                                 <div class="row g-3 mb-4">
