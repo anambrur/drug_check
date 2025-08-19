@@ -1,0 +1,17 @@
+1. Porject analysis and architecture design -> 2 days,
+2. Project setup and roles & permissions -> 1 day,
+3. Driver's Application Form submit-> 15 days,
+4. Dashboard -> 3 days,
+5. Order Report -> 7 days,
+7. Dashboard -> 3 days,
+8. Order Report -> 3 days,
+9. Driver's Admin Panel-> 15 days,
+10. Asset Management-> 10 days
+11. User Management-> 2 days
+12. Setting Management-> 5 days
+13. Billing Management-> 10 days
+14. Other Management-> 15 days
+15. Frontend -> 30 days
+
+Off days: 18
+Total days: 121 + 18 = 139

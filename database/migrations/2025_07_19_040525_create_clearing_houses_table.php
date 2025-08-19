@@ -19,6 +19,8 @@ return new class extends Migration
             $table->enum('style', ['style1'])->default('style1');
             $table->text('description')->nullable();
             $table->text('short_description')->nullable();
+            $table->text('employer_pdf')->nullable(); // Store JSON array of filenames
+            $table->text('driver_pdf')->nullable();
             $table->timestamps();
         });
     }

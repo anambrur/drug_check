@@ -221,6 +221,7 @@ class ContactController extends Controller
             'services' => 'nullable|array',
             'payment_intent_id' => 'nullable|string',
             'test_name' => 'nullable|string',
+            'code' => 'nullable|string',
         ]);
 
 
@@ -281,7 +282,27 @@ class ContactController extends Controller
                     $price
                 ));
 
-            return redirect()->back()->with('success', 'Payment successful, and email sent!');
+            // return redirect()->back()->with('success', 'Payment successful, and email sent!');
+            // Store payment data in session for the Quest order form
+            $request->session()->put('payment_data', [
+                'payment_intent_id' => $validatedData['payment_intent_id'],
+                'first_name' => $validatedData['first_name'],
+                'last_name' => $validatedData['last_name'],
+                'email' => $validatedData['email'],
+                'phone' => $validatedData['phone'],
+                'portfolio' => (object)[
+                    'id' => $request->portfolio_id ?? null,
+                    'title' => $validatedData['test_name'] ?? 'Test',
+                    'price' => $price,
+                    'quest_unit_code' => $validatedData['code'] ?? null,
+                    // Add any other portfolio fields you need
+                ],
+                // Add any other needed fields
+            ]);
+
+            // Redirect to Quest order form instead of back
+            return redirect()->route('quest.order-form')
+                ->with('success', 'Payment successful! Please complete your test information.');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed: ' . $e->getMessage());
         }

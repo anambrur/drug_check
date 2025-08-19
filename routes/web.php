@@ -117,6 +117,7 @@ use App\Http\Controllers\Admin\ContactInfoSectionController;
 use App\Http\Controllers\Admin\TestimonialSectionController;
 use App\Http\Controllers\Admin\WorkProcessSectionController;
 use App\Http\Controllers\Admin\GalleryImageSectionController;
+use App\Http\Controllers\Frontend\QuestDiagnosticsController;
 use App\Http\Controllers\Admin\DotSupervisorTrainingController;
 use App\Http\Controllers\Admin\ServiceFeatureSectionController;
 use App\Http\Controllers\Admin\PortfolioDetailSectionController;
@@ -208,6 +209,20 @@ Route::get('terms-and-conditions', [\App\Http\Controllers\Frontend\HomeControlle
 
 //privacy policy
 Route::get('privacy-policy', [\App\Http\Controllers\Frontend\HomeController::class, 'privacy_policy'])->name('frontend.privacy-policy')->middleware('XSS');
+
+
+// Quest Diagnostics routes
+Route::prefix('quest')->group(function() {
+    Route::get('/order-form', [QuestDiagnosticsController::class, 'showOrderForm'])
+        ->name('quest.order-form');
+    
+    Route::post('/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])
+        ->name('quest.submit-order');
+    
+    Route::get('/order-success/{quest_order_id}/{reference_test_id}', [QuestDiagnosticsController::class, 'orderSuccess'])
+        ->name('quest.order-success');
+});
+
 
 
 

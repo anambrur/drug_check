@@ -286,6 +286,91 @@ class HomeController extends Controller
     public function dot_supervisor_training()
     {
         $dot_supervisor_training = DotSupervisorTraining::first();
-        return view('frontend.dot_supervisor_training.index', array_merge(getFrontendData() , compact('dot_supervisor_training')));
+        return view('frontend.dot_supervisor_training.index', array_merge(getFrontendData(), compact('dot_supervisor_training')));
+    }
+
+    public function quest()
+    {
+        $username = 'cli_SkyrosUAT';
+        $password = 'kfIVZEUj46uM';
+
+        // Sample XML structure (replace with actual structure and data)
+        $orderXml = <<<XML
+                <Order>
+                <EventInfo>
+                    <CollectionSiteID></CollectionSiteID>
+                    <EmailAuthorizationAddresses>
+                    <EmailAddress>janedoe@gmail.com</EmailAddress> <!-- Can be repeated -->
+                    </EmailAuthorizationAddresses>
+                    <EndDateTime/>
+                    <!--  <EndDateTimeTimeZoneID/>  -->
+                </EventInfo>
+                <DonorInfo>
+                    <FirstName>JANE</FirstName>
+                    <MiddleName></MiddleName>
+                    <LastName>DOE</LastName>
+                    <PrimaryID>KS1111111</PrimaryID>
+                    <DOB>08/13/1983</DOB>
+                    <PrimaryPhone>9135551212</PrimaryPhone>
+                    <SecondaryPhone>9135552222</SecondaryPhone>
+                </DonorInfo>
+                <ClientInfo>
+                    <ContactName>XanDER Smith</ContactName>
+                    <TelephoneNumber>9139139133</TelephoneNumber>
+                    <LabAccount>12345678</LabAccount>
+                    <CSL>001</CSL>
+                </ClientInfo>
+                <TestInfo>
+                    <ClientReferenceID>ORDER#1124</ClientReferenceID>
+                    <DOTTest>F</DOTTest>
+                    <!--  <TestingAuthority></TestingAuthority>  -->
+                    <ReasonForTestID>1</ReasonForTestID>
+                    <ObservedRequested>N</ObservedRequested>
+                    <SplitSpecimenRequested>N</SplitSpecimenRequested>
+                    <CSOs>
+                    <CSO>
+                        <CSONumber>17</CSONumber>
+                        <CSOPrompt>LOCATION</CSOPrompt>
+                        <CSOText>KANSAS</CSOText>
+                    </CSO>
+                    </CSOs>
+                    <Screenings>
+                    <UnitCodes>
+                        <UnitCode>65105N</UnitCode>
+                        <UnitCode>11070N</UnitCode>
+                    </UnitCodes>
+                    </Screenings>
+                </TestInfo>
+                <ClientCustom>
+                    <ResponseURL></ResponseURL>
+                </ClientCustom>
+                </Order>
+            XML;
+
+        try {
+            $client = new \SoapClient('https://qcs-uat.questdiagnostics.com/services/ESPService.asmx?WSDL', [
+                'trace' => true,
+                'exceptions' => true
+            ]);
+
+            $params = [
+                'username' => $username,
+                'password' => $password,
+                'orderXml' => $orderXml
+            ];
+
+            $response = $client->__soapCall('CreateOrder', [$params]);
+
+            return response()->json([
+                'success' => true,
+                'response' => $response
+            ]);
+        } catch (\SoapFault $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 }

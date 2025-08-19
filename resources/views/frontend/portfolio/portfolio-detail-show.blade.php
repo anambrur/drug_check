@@ -62,6 +62,10 @@
                     @endcan
         @endif
 
+        @php
+            // dd($portfolio_content);
+        @endphp
+
         @isset($portfolio_content)
             <div class="portfolio-single-inner custom-blog-img">
                 <h4>{{ $portfolio->title }}</h4>
@@ -178,7 +182,7 @@
     @endif
 
     <hr>
-
+    
 
     <!--// Application Form Section //-->
     <section class="section" id="application-form">
@@ -227,6 +231,7 @@
                                 <input type="hidden" name="payment_intent_id" id="payment_intent_id">
                                 <input type="hidden" name="test_name" id="test_name"
                                     value="{{ $portfolio->title }}">
+                                <input type="hidden" name="code" value="{{ $portfolio->code }}">
 
                                 <!-- ========== Personal Information Section ========== -->
                                 <div class="mb-5">
@@ -453,6 +458,8 @@
                                                 <label for="price">Total Amount</label>
                                             </div>
                                         </div>
+
+
                                     </div>
                                 </div>
 
@@ -463,6 +470,29 @@
                                     </h4>
 
                                     <div class="payment-card-container p-4 bg-light rounded-3">
+                                        <!-- Card Type Selection -->
+                                        <div class="mb-4">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <input type="radio" id="credit-card" name="payment-method"
+                                                    class="me-2" checked>
+                                                <label for="credit-card" class="me-3">Credit card</label>
+                                                <div class="card-icons d-flex align-items-center">
+                                                    <i class="fab fa-cc-visa fa-2x me-2" style="color: #1a1f71;"></i>
+                                                    <!-- Visa blue -->
+                                                    <i class="fab fa-cc-mastercard fa-2x me-2"
+                                                        style="color: #eb001b;"></i> <!-- Mastercard red -->
+                                                    <i class="fab fa-cc-amex fa-2x me-2" style="color: #016fd0;"></i>
+                                                    <!-- Amex blue -->
+                                                    <i class="fab fa-cc-discover fa-2x me-2"
+                                                        style="color: #ff6000;"></i> <!-- Discover orange -->
+
+                                                    <i class="fab fa-cc-jcb fa-2x me-2" style="color: #0b4ea2;"></i>
+                                                    <!-- JCB (Blue) -->
+                                                    <i class="fab fa-cc-diners-club fa-2x me-2"
+                                                        style="color: #0079be;"></i> <!-- Diners Club (Blue) -->
+                                                </div>
+                                            </div>
+                                        </div>
                                         <!-- Cardholder Name -->
                                         <div class="form-floating mb-3">
                                             <input type="text"

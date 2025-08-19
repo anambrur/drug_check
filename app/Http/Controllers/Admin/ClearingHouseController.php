@@ -8,11 +8,11 @@ use App\Models\Admin\PanelImage;
 use App\Models\Admin\ClearingHouse;
 use Mews\Purifier\Facades\Purifier;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
 class ClearingHouseController extends Controller
 {
-
     /**
      * Show the form for creating a new resource.
      */
@@ -33,10 +33,13 @@ class ClearingHouseController extends Controller
     {
         // Form validation
         $validator = Validator::make($request->all(), [
-            'title'   =>  'required',
-            'description'   =>  'nullable',
-            'short_description'   =>  'nullable',
+            'title' => 'required',
+            'description' => 'nullable',
+            'short_description' => 'nullable',
+            'employer_pdf.*' => 'nullable|mimes:pdf|max:10240',
+            'driver_pdf.*' => 'nullable|mimes:pdf|max:10240',
         ]);
+
 
         // Any error checking
         if ($validator->fails()) {
@@ -45,7 +48,37 @@ class ClearingHouseController extends Controller
         }
 
         // Get All Request
-        $input = $request->all();
+        $input = $request->except(['employer_pdf', 'driver_pdf']);
+
+        // Handle employer PDFs
+        if ($request->hasFile('employer_pdf')) {
+            $employerPdfs = [];
+            $folder = 'uploads/pdf/employer_pdf/';
+
+            // Upload new files
+            foreach ($request->file('employer_pdf') as $file) {
+                $pdfName = time() . '-' . $file->getClientOriginalName();
+                $file->move($folder, $pdfName);
+                $employerPdfs[] = $pdfName;
+            }
+
+            $input['employer_pdf'] = json_encode($employerPdfs);
+        }
+
+        // Handle driver PDFs
+        if ($request->hasFile('driver_pdf')) {
+            $driverPdfs = [];
+            $folder = 'uploads/pdf/driver_pdf/';
+
+            // Upload new files
+            foreach ($request->file('driver_pdf') as $file) {
+                $pdfName = time() . '-' . $file->getClientOriginalName();
+                $file->move($folder, $pdfName);
+                $driverPdfs[] = $pdfName;
+            }
+
+            $input['driver_pdf'] = json_encode($driverPdfs);
+        }
 
         // Record to database
         ClearingHouse::create([
@@ -54,6 +87,8 @@ class ClearingHouseController extends Controller
             'title' => $input['title'],
             'description' => Purifier::clean($input['description']),
             'short_description' => Purifier::clean($input['short_description']),
+            'employer_pdf' => $input['employer_pdf'] ?? null,
+            'driver_pdf' => $input['driver_pdf'] ?? null,
         ]);
 
         // Set a success toast, with a title
@@ -62,8 +97,6 @@ class ClearingHouseController extends Controller
         return redirect()->route('clearing-house.create');
     }
 
-   
-
     /**
      * Update the specified resource in storage.
      */
@@ -71,25 +104,70 @@ class ClearingHouseController extends Controller
     {
         // Form validation
         $validator = Validator::make($request->all(), [
-            'title'   =>  'required',
-            'description'   =>  'nullable',
-            'short_description'   =>  'nullable',
+            'title' => 'required',
+            'description' => 'nullable',
+            'short_description' => 'nullable',
+            'employer_pdf.*' => 'nullable|mimes:pdf|max:10240', 
+            'driver_pdf.*' => 'nullable|mimes:pdf|max:10240',
         ]);
 
-        // Any error checking
         if ($validator->fails()) {
             toastr()->error($validator->errors()->first(), 'content.error');
             return back();
         }
 
-        // Get All Request
-        $input = $request->all();
+        $clearingHouse = ClearingHouse::findOrFail($id);
+        $input = $request->except(['employer_pdf', 'driver_pdf']);
 
-        ClearingHouse::find($id)->update($input);
+        // Handle employer PDFs
+        if ($request->hasFile('employer_pdf')) {
+            $employerPdfs = [];
+            $folder = 'uploads/pdf/employer_pdf/';
 
-        // Set a success toast, with a title
+            // Delete old files if needed
+            if ($clearingHouse->employer_pdf) {
+                $oldFiles = json_decode($clearingHouse->employer_pdf, true);
+                foreach ($oldFiles as $oldFile) {
+                    File::delete(public_path($folder . $oldFile));
+                }
+            }
+
+            // Upload new files
+            foreach ($request->file('employer_pdf') as $file) {
+                $pdfName = time() . '-' . $file->getClientOriginalName();
+                $file->move($folder, $pdfName);
+                $employerPdfs[] = $pdfName;
+            }
+
+            $input['employer_pdf'] = json_encode($employerPdfs);
+        }
+
+        // Handle driver PDFs
+        if ($request->hasFile('driver_pdf')) {
+            $driverPdfs = [];
+            $folder = 'uploads/pdf/driver_pdf/';
+
+            // Delete old files if needed
+            if ($clearingHouse->driver_pdf) {
+                $oldFiles = json_decode($clearingHouse->driver_pdf, true);
+                foreach ($oldFiles as $oldFile) {
+                    File::delete(public_path($folder . $oldFile));
+                }
+            }
+
+            // Upload new files
+            foreach ($request->file('driver_pdf') as $file) {
+                $pdfName = time() . '-' . $file->getClientOriginalName();
+                $file->move($folder, $pdfName);
+                $driverPdfs[] = $pdfName;
+            }
+
+            $input['driver_pdf'] = json_encode($driverPdfs);
+        }
+
+        $clearingHouse->update($input);
+
         toastr()->success('content.updated_successfully', 'content.success');
-
         return redirect()->route('clearing-house.create');
     }
 }

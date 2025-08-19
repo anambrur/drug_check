@@ -55,6 +55,42 @@
                                 <textarea id="summernote" name="description" class="form-control">{{ $item_section->description }}</textarea>
                             </div>
                         </div>
+
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="employer_pdf">Employer PDF</label>
+                                <input id="employer_pdf" name="employer_pdf[]" type="file" multiple
+                                    class="form-control-file" accept=".pdf">
+                                <small class="form-text text-muted">Select one or more PDF files</small>
+                                @if ($item_section->employer_pdf)
+                                    @foreach (json_decode($item_section->employer_pdf) as $pdf)
+                                        <div>
+                                            <a href="{{ asset('uploads/pdf/employer_pdf/' . $pdf) }}"
+                                                target="_blank">{{ $pdf }}</a>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="driver_pdf">Driver PDF</label>
+                                <input id="driver_pdf" name="driver_pdf[]" type="file" multiple class="form-control-file"
+                                    accept=".pdf">
+                                <small class="form-text text-muted">Select one or more PDF files</small>
+                                @if ($item_section->driver_pdf)
+                                    @foreach (json_decode($item_section->driver_pdf) as $pdf)
+                                        <div>
+                                            <a href="{{ asset('uploads/pdf/driver_pdf/' . $pdf) }}"
+                                                target="_blank">{{ $pdf }}</a>
+                                        </div>
+                                    @endforeach
+                                @endif
+                            </div>
+                        </div>
+
                         <div class="col-md-12">
                             <button type="submit" class="btn btn-primary mr-2">{{ __('content.submit') }}</button>
                             <a href="#" class="btn btn-primary" data-toggle="modal"
@@ -96,6 +132,24 @@
                             <div class="form-group">
                                 <label for="summernote">Description</label>
                                 <textarea id="summernote" name="description" class="form-control"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="employer_pdf">Employer PDF</label>
+                                <input id="employer_pdf" name="employer_pdf[]" type="file" multiple
+                                    class="form-control-file" accept=".pdf">
+                                <small class="form-text text-muted">Select one or more PDF files</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="driver_pdf">Driver PDF</label>
+                                <input id="driver_pdf" name="driver_pdf[]" type="file" multiple
+                                    class="form-control-file" accept=".pdf">
+                                <small class="form-text text-muted">Select one or more PDF files</small>
                             </div>
                         </div>
 
