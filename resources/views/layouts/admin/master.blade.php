@@ -90,6 +90,7 @@
 
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
 
 </head>
 <body @if (session()->has('language_direction_from_dropdown')) @if(session()->get('language_direction_from_dropdown') == 1)  class="rtl-version" @endif @elseif (isset($language)) @if ($language->direction == 1) class="rtl-version" @endif  @endif >
@@ -398,6 +399,120 @@
                     </li>
                 @endcan
 
+
+                @can('dot-test view')
+                    <li
+                        class="nav-item {{ request()->is('admin/dot-test') ||
+                        request()->is('admin/dot-test/full') ||
+                        request()->is('admin/dot-test/incremental') ||
+                        request()->is('admin/dot-test/clear') ||
+                        request()->is('admin/dot-test-image/view')
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#dot-tests" aria-expanded="false"
+                            aria-controls="dot-tests">
+                            <i class="fas fa-location-arrow menu-icon"></i>
+                            <span class="menu-title">Dot Test</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/dot-test') ||
+                        request()->is('admin/dot-test/full') ||
+                        request()->is('admin/dot-test/incremental') ||
+                        request()->is('admin/dot-test/clear') ||
+                        request()->is('admin/dot-test-image/view')
+                            ? 'show'
+                            : '' }}"
+                            id="dot-tests">
+                            <ul class="nav flex-column sub-menu">
+                                
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/dot-test') ? 'active' : '' }}"
+                                        href="{{ url('admin/dot-test') }}">Dot Test 
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/dot-test/full') ? 'active' : '' }}"
+                                        href="{{ url('admin/dot-test/full') }}">Full Quest
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
+
+
+                @can('quest-site view')
+                    <li
+                        class="nav-item {{ request()->is('admin/quest-site') ||
+                        request()->is('admin/quest-site/full') ||
+                        request()->is('admin/quest-site/incremental') ||
+                        request()->is('admin/quest-site/clear') ||
+                        request()->is('admin/quest-site-image/view')
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#quest-sites" aria-expanded="false"
+                            aria-controls="quest-sites">
+                            <i class="fas fa-location-arrow menu-icon"></i>
+                            <span class="menu-title">Quest Site</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/quest-site') ||
+                        request()->is('admin/quest-site/full') ||
+                        request()->is('admin/quest-site/incremental') ||
+                        request()->is('admin/quest-site/clear') ||
+                        request()->is('admin/quest-site-image/view')
+                            ? 'show'
+                            : '' }}"
+                            id="quest-sites">
+                            <ul class="nav flex-column sub-menu">
+                                
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-site') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-site') }}">Quest Site Dashboard
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-site/full') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-site/full') }}">Full Quest
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-site/incremental') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-site/incremental') }}">Incremental
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-site/clear') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-site/clear') }}">Clear
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-site/view') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-site/view') }}">View
+                                    </a>
+                                </li>
+
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-site/collection-site-insert') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-site/collection-site-insert') }}">collection site
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
+
                 @can('client profile view')
                     <li
                         class="nav-item {{ request()->is('admin/client-profile') ||
@@ -428,10 +543,13 @@
                             : '' }}"
                             id="client-profiles">
                             <ul class="nav flex-column sub-menu">
-                                
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/client-profile/create') ? 'active' : '' }}"
-                                        href="{{ url('admin/client-profile/create') }}">Add Client Profile</a></li>
+                                @can('client profile create')
+                                    <li class="nav-item"> <a
+                                            class="nav-link {{ request()->is('admin/client-profile/create') ? 'active' : '' }}"
+                                            href="{{ url('admin/client-profile/create') }}">Add Client Profile
+                                        </a>
+                                    </li>
+                                @endcan
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/client-profile') ||
                                         request()->is('admin/client-profile/*/edit') ||
@@ -1435,6 +1553,8 @@
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+    @stack('scripts')
+
 
     <script>
         // Tags Input Separate
@@ -1727,7 +1847,7 @@
         }(jQuery));
     </script>
 
-    @stack('script')
+    
 
 
     </body>

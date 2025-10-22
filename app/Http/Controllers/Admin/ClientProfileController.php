@@ -13,6 +13,7 @@ use App\Models\Admin\ClientProfile;
 use Illuminate\Support\Facades\Log;
 use Mews\Purifier\Facades\Purifier;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -31,7 +32,14 @@ class ClientProfileController extends Controller
         $language = getLanguage();
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
-        $clientProfiles = ClientProfile::orderBy('id', 'desc')->get();
+        $query = ClientProfile::orderBy('id', 'desc');
+
+        if (!Auth::user()->hasPermissionTo('client profile view_all')) {
+            $query->where('user_id', Auth::id());
+        }
+
+        $clientProfiles = $query->get();
+
 
         return view('admin.client_profile.index', compact('favicon', 'panel_image', 'clientProfiles'));
     }
@@ -64,6 +72,7 @@ class ClientProfileController extends Controller
             // Form validation
             $validator = Validator::make($request->all(), [
                 'company_name'            => 'required|string|max:255',
+                'account_no'              => 'required',
                 'short_description'       => 'nullable|string',
                 'address'                 => 'required|string',
                 'city'                    => 'required|string',
@@ -84,8 +93,10 @@ class ClientProfileController extends Controller
             ]);
 
             if ($validator->fails()) {
-                throw new \Exception($validator->errors()->first());
+                toastr()->error($validator->errors()->first(), 'content.error');
+                return back();
             }
+
 
             DB::beginTransaction();
 
@@ -109,6 +120,7 @@ class ClientProfileController extends Controller
             $clientProfile = ClientProfile::create([
                 'user_id'                 => $companyUser->id,
                 'company_name'            => $input['company_name'],
+                'account_no'              => $input['account_no'],
                 'short_description'       => Purifier::clean($input['short_description']),
                 'address'                 => $input['address'],
                 'city'                    => $input['city'],
@@ -133,7 +145,7 @@ class ClientProfileController extends Controller
             }
             DB::commit();
 
-            // toastr()->success('content.created_successfully', 'content.success');
+            toastr()->success('content.created_successfully', 'content.success');
             return redirect()->route('client-profile.index');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -194,6 +206,7 @@ class ClientProfileController extends Controller
             // Validate input
             $validator = Validator::make($request->all(), [
                 'company_name'            => 'required|string|max:255',
+                'account_no'              => 'required',
                 'short_description'       => 'nullable|string',
                 'address'                 => 'required|string',
                 'city'                    => 'required|string',

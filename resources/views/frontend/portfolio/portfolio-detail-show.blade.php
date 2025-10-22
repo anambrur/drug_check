@@ -62,9 +62,7 @@
                     @endcan
         @endif
 
-        @php
-            // dd($portfolio_content);
-        @endphp
+
 
         @isset($portfolio_content)
             <div class="portfolio-single-inner custom-blog-img">
@@ -182,351 +180,365 @@
     @endif
 
     <hr>
-    
 
-    <!--// Application Form Section //-->
-    <section class="section" id="application-form">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-10">
-                    <div class="card shadow-sm">
-                        <div class="card-body p-5">
-                            <h2 class="text-center mb-4">Apply For {{ $portfolio->title }} Testing</h2>
+    @if ($portfolio->category_name == 'Non DOT Testing')
+        <!--// Application Form Section //-->
+        <section class="section" id="application-form">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-5">
+                                <h2 class="text-center mb-4">Apply For {{ $portfolio->title }} Testing</h2>
 
-                            <!-- Status Messages -->
-                            @if (session('success'))
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    {{ session('success') }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                        aria-label="Close"></button>
-                                </div>
-                            @endif
-
-                            @if (session('error'))
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-exclamation-circle me-2"></i>
-                                    {{ session('error') }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                        aria-label="Close"></button>
-                                </div>
-                            @endif
-
-                            @if ($errors->any())
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    <strong>Please fix these errors:</strong>
-                                    <ul class="mt-2 mb-0">
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                        aria-label="Close"></button>
-                                </div>
-                            @endif
-
-                            <form id="payment-form" action="{{ route('send.mail_dot') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="payment_intent_id" id="payment_intent_id">
-                                <input type="hidden" name="test_name" id="test_name"
-                                    value="{{ $portfolio->title }}">
-                                <input type="hidden" name="code" value="{{ $portfolio->code }}">
-
-                                <!-- ========== Personal Information Section ========== -->
-                                <div class="mb-5">
-                                    <h4 class="section-title mb-4">
-                                        <i class="fas fa-user-circle me-2"></i> Personal Information
-                                    </h4>
-
-                                    <div class="row g-3">
-                                        <!-- First Name -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-
-                                                <input type="text"
-                                                    class="form-control @error('first_name') is-invalid @enderror"
-                                                    name="first_name" id="first_name"
-                                                    value="{{ old('first_name') }}" placeholder="First name"
-                                                    required>
-                                                <label for="first_name">First Name <span
-                                                        class="text-red">*</span></label>
-                                                @error('first_name')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Last Name -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input type="text"
-                                                    class="form-control @error('last_name') is-invalid @enderror"
-                                                    name="last_name" id="last_name" value="{{ old('last_name') }}"
-                                                    placeholder="Last name" required>
-                                                <label for="last_name">Last Name *</label>
-                                                @error('last_name')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Email -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input type="email"
-                                                    class="form-control @error('email') is-invalid @enderror"
-                                                    name="email" id="email" value="{{ old('email') }}"
-                                                    placeholder="Email address" required>
-                                                <label for="email">Email Address *</label>
-                                                @error('email')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Phone -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input type="tel"
-                                                    class="form-control @error('phone') is-invalid @enderror"
-                                                    name="phone" id="phone" value="{{ old('phone') }}"
-                                                    placeholder="Phone number" required>
-                                                <label for="phone">Phone Number *</label>
-                                                @error('phone')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Address -->
-                                        <div class="col-12">
-                                            <div class="form-floating">
-                                                <input type="text"
-                                                    class="form-control @error('address') is-invalid @enderror"
-                                                    name="address" id="address" value="{{ old('address') }}"
-                                                    placeholder="Street address" required>
-                                                <label for="address">Street Address </label>
-                                                @error('address')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Gender -->
-                                        <div class="col-12">
-                                            <label class="form-label">Gender *</label>
-                                            <div class="d-flex gap-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="gender"
-                                                        id="male" value="Male" @checked(old('gender') == 'Male')
-                                                        required>
-                                                    <label class="form-check-label" for="male">Male</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="gender"
-                                                        id="female" value="Female" @checked(old('gender') == 'Female')>
-                                                    <label class="form-check-label" for="female">Female</label>
-                                                </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio" name="gender"
-                                                        id="other" value="Other" @checked(old('gender') == 'Other')>
-                                                    <label class="form-check-label" for="other">Other</label>
-                                                </div>
-                                            </div>
-                                            @error('gender')
-                                                <div class="text-danger small mt-1">{{ $message }}</div>
-                                            @enderror
-                                        </div>
+                                <!-- Status Messages -->
+                                @if (session('success'))
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        {{ session('success') }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
                                     </div>
-                                </div>
+                                @endif
 
-                                <!-- ========== Testing Information Section ========== -->
-                                <div class="mb-5">
-                                    <h4 class="section-title mb-4">
-                                        <i class="fas fa-flask me-2"></i> Testing Information
-                                    </h4>
-
-                                    <div class="row g-3">
-                                        <!-- Test Date -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input type="date"
-                                                    class="form-control @error('date') is-invalid @enderror"
-                                                    name="date" id="date"
-                                                    value="{{ old('date', date('Y-m-d')) }}" required>
-                                                <label for="date">Preferred Test Date </label>
-                                                @error('date')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Preferred Location -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input type="text"
-                                                    class="form-control @error('preferred_location') is-invalid @enderror"
-                                                    name="preferred_location" id="preferred_location"
-                                                    value="{{ old('preferred_location') }}" placeholder="Location"
-                                                    required>
-                                                <label for="preferred_location">Preferred Location </label>
-                                                @error('preferred_location')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Employer Information -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input type="text"
-                                                    class="form-control @error('employee_name') is-invalid @enderror"
-                                                    name="employee_name" id="employee_name"
-                                                    value="{{ old('employee_name') }}" placeholder="Employer name"
-                                                    required>
-                                                <label for="employee_name">Employer Name *</label>
-                                                @error('employee_name')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Company Name -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input type="text"
-                                                    class="form-control @error('company_name') is-invalid @enderror"
-                                                    name="company_name" id="company_name"
-                                                    value="{{ old('company_name') }}" placeholder="Company name">
-                                                <label for="company_name">Company Name</label>
-                                                @error('company_name')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Accounting Email -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <input type="email"
-                                                    class="form-control @error('accounting_email') is-invalid @enderror"
-                                                    name="accounting_email" id="accounting_email"
-                                                    value="{{ old('accounting_email') }}"
-                                                    placeholder="Accounting email">
-                                                <label for="accounting_email">Accounting Email</label>
-                                                @error('accounting_email')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Reason for Testing -->
-                                        <div class="col-md-6">
-                                            <div class="form-floating">
-                                                <select
-                                                    class="form-select @error('reason_for_testing') is-invalid @enderror"
-                                                    name="reason_for_testing" id="reason_for_testing" required>
-                                                    <option value="" disabled selected>Select a reason</option>
-                                                    <option value="Follow Up Test" @selected(old('reason_for_testing') == 'Follow Up Test')>Follow
-                                                        Up Test</option>
-                                                    <option value="Pre Employment" @selected(old('reason_for_testing') == 'Pre Employment')>Pre
-                                                        Employment</option>
-                                                    <option value="Random" @selected(old('reason_for_testing') == 'Random')>Random</option>
-                                                    <option value="Return to Duty" @selected(old('reason_for_testing') == 'Return to Duty')>Return
-                                                        to Duty</option>
-                                                    <option value="Post Accident" @selected(old('reason_for_testing') == 'Post Accident')>Post
-                                                        Accident</option>
-                                                    <option value="Promotion" @selected(old('reason_for_testing') == 'Promotion')>Promotion
-                                                    </option>
-                                                    <option value="Reasonable Cause/Suspicion"
-                                                        @selected(old('reason_for_testing') == 'Reasonable Cause/Suspicion')>Reasonable Cause/Suspicion</option>
-                                                    <option value="Other" @selected(old('reason_for_testing') == 'Other')>Other</option>
-                                                </select>
-                                                <label for="reason_for_testing">Reason for Testing *</label>
-                                                @error('reason_for_testing')
-                                                    <div class="invalid-feedback">{{ $message }}</div>
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <!-- Price (readonly) -->
-                                        <div class="col-12">
-                                            <div class="form-floating">
-                                                <input type="text" class="form-control bg-light" name="price"
-                                                    id="price" value="${{ $portfolio->price }}" readonly>
-                                                <label for="price">Total Amount</label>
-                                            </div>
-                                        </div>
-
-
+                                @if (session('error'))
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                        {{ session('error') }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
                                     </div>
-                                </div>
+                                @endif
 
-                                <!-- ========== Payment Section ========== -->
-                                <div class="mb-5">
-                                    <h4 class="section-title mb-4">
-                                        <i class="fas fa-credit-card me-2"></i> Payment Details
-                                    </h4>
+                                @if ($errors->any())
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>Please fix these errors:</strong>
+                                        <ul class="mt-2 mb-0">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
+                                    </div>
+                                @endif
 
-                                    <div class="payment-card-container p-4 bg-light rounded-3">
-                                        <!-- Card Type Selection -->
-                                        <div class="mb-4">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <input type="radio" id="credit-card" name="payment-method"
-                                                    class="me-2" checked>
-                                                <label for="credit-card" class="me-3">Credit card</label>
-                                                <div class="card-icons d-flex align-items-center">
-                                                    <i class="fab fa-cc-visa fa-2x me-2" style="color: #1a1f71;"></i>
-                                                    <!-- Visa blue -->
-                                                    <i class="fab fa-cc-mastercard fa-2x me-2"
-                                                        style="color: #eb001b;"></i> <!-- Mastercard red -->
-                                                    <i class="fab fa-cc-amex fa-2x me-2" style="color: #016fd0;"></i>
-                                                    <!-- Amex blue -->
-                                                    <i class="fab fa-cc-discover fa-2x me-2"
-                                                        style="color: #ff6000;"></i> <!-- Discover orange -->
+                                <form id="payment-form" action="{{ route('send.mail_dot') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="payment_intent_id" id="payment_intent_id">
+                                    <input type="hidden" name="test_name" id="test_name"
+                                        value="{{ $portfolio->title }}">
+                                    <input type="hidden" name="code" value="{{ $portfolio->code }}">
 
-                                                    <i class="fab fa-cc-jcb fa-2x me-2" style="color: #0b4ea2;"></i>
-                                                    <!-- JCB (Blue) -->
-                                                    <i class="fab fa-cc-diners-club fa-2x me-2"
-                                                        style="color: #0079be;"></i> <!-- Diners Club (Blue) -->
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- Cardholder Name -->
-                                        <div class="form-floating mb-3">
-                                            <input type="text"
-                                                class="form-control @error('cardholder_name') is-invalid @enderror"
-                                                id="cardholder-name" placeholder="Cardholder Name" required>
-                                            <label for="cardholder-name">Cardholder Name *</label>
-                                        </div>
-
-                                        <!-- Card Elements -->
-                                        <div class="mb-3">
-                                            <label class="form-label">Card Number *</label>
-                                            <div id="card-number" class="form-control p-3"></div>
-                                        </div>
+                                    <!-- ========== Personal Information Section ========== -->
+                                    <div class="mb-5">
+                                        <h4 class="section-title mb-4">
+                                            <i class="fas fa-user-circle me-2"></i> Personal Information
+                                        </h4>
 
                                         <div class="row g-3">
+                                            <!-- First Name -->
                                             <div class="col-md-6">
-                                                <label class="form-label">Expiration Date *</label>
-                                                <div id="card-expiry" class="form-control p-3"></div>
+                                                <div class="form-floating">
+
+                                                    <input type="text"
+                                                        class="form-control @error('first_name') is-invalid @enderror"
+                                                        name="first_name" id="first_name"
+                                                        value="{{ old('first_name') }}" placeholder="First name"
+                                                        required>
+                                                    <label for="first_name">First Name <span
+                                                            class="text-red">*</span></label>
+                                                    @error('first_name')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
                                             </div>
+
+                                            <!-- Last Name -->
                                             <div class="col-md-6">
-                                                <label class="form-label">CVC *</label>
-                                                <div id="card-cvc" class="form-control p-3"></div>
+                                                <div class="form-floating">
+                                                    <input type="text"
+                                                        class="form-control @error('last_name') is-invalid @enderror"
+                                                        name="last_name" id="last_name"
+                                                        value="{{ old('last_name') }}" placeholder="Last name"
+                                                        required>
+                                                    <label for="last_name">Last Name *</label>
+                                                    @error('last_name')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Email -->
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="email"
+                                                        class="form-control @error('email') is-invalid @enderror"
+                                                        name="email" id="email" value="{{ old('email') }}"
+                                                        placeholder="Email address" required>
+                                                    <label for="email">Email Address *</label>
+                                                    @error('email')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Phone -->
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="tel"
+                                                        class="form-control @error('phone') is-invalid @enderror"
+                                                        name="phone" id="phone" value="{{ old('phone') }}"
+                                                        placeholder="Phone number" required>
+                                                    <label for="phone">Phone Number *</label>
+                                                    @error('phone')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Address -->
+                                            <div class="col-12">
+                                                <div class="form-floating">
+                                                    <input type="text"
+                                                        class="form-control @error('address') is-invalid @enderror"
+                                                        name="address" id="address" value="{{ old('address') }}"
+                                                        placeholder="Street address" required>
+                                                    <label for="address">Street Address </label>
+                                                    @error('address')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Gender -->
+                                            <div class="col-12">
+                                                <label class="form-label">Gender *</label>
+                                                <div class="d-flex gap-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="gender"
+                                                            id="male" value="Male" @checked(old('gender') == 'Male')
+                                                            required>
+                                                        <label class="form-check-label" for="male">Male</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="gender"
+                                                            id="female" value="Female"
+                                                            @checked(old('gender') == 'Female')>
+                                                        <label class="form-check-label" for="female">Female</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="gender"
+                                                            id="other" value="Other"
+                                                            @checked(old('gender') == 'Other')>
+                                                        <label class="form-check-label" for="other">Other</label>
+                                                    </div>
+                                                </div>
+                                                @error('gender')
+                                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                                @enderror
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div class="row g-3 mt-2">
+                                    <!-- ========== Testing Information Section ========== -->
+                                    <div class="mb-5">
+                                        <h4 class="section-title mb-4">
+                                            <i class="fas fa-flask me-2"></i> Testing Information
+                                        </h4>
+
+                                        <div class="row g-3">
+                                            <!-- Test Date -->
                                             <div class="col-md-6">
-                                                <label class="form-label">ZIP Code *</label>
-                                                <div id="postal-code" class="form-control p-3"></div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Country *</label>
                                                 <div class="form-floating">
-                                                    {{-- <select class="form-select" id="country" name="country"
+                                                    <input type="date"
+                                                        class="form-control @error('date') is-invalid @enderror"
+                                                        name="date" id="date"
+                                                        value="{{ old('date', date('Y-m-d')) }}" required>
+                                                    <label for="date">Preferred Test Date </label>
+                                                    @error('date')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Preferred Location -->
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="text"
+                                                        class="form-control @error('preferred_location') is-invalid @enderror"
+                                                        name="preferred_location" id="preferred_location"
+                                                        value="{{ old('preferred_location') }}"
+                                                        placeholder="Location" required>
+                                                    <label for="preferred_location">Preferred Location </label>
+                                                    @error('preferred_location')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Employer Information -->
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="text"
+                                                        class="form-control @error('employee_name') is-invalid @enderror"
+                                                        name="employee_name" id="employee_name"
+                                                        value="{{ old('employee_name') }}"
+                                                        placeholder="Employer name" required>
+                                                    <label for="employee_name">Employer Name *</label>
+                                                    @error('employee_name')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Company Name -->
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="text"
+                                                        class="form-control @error('company_name') is-invalid @enderror"
+                                                        name="company_name" id="company_name"
+                                                        value="{{ old('company_name') }}" placeholder="Company name">
+                                                    <label for="company_name">Company Name</label>
+                                                    @error('company_name')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Accounting Email -->
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <input type="email"
+                                                        class="form-control @error('accounting_email') is-invalid @enderror"
+                                                        name="accounting_email" id="accounting_email"
+                                                        value="{{ old('accounting_email') }}"
+                                                        placeholder="Accounting email">
+                                                    <label for="accounting_email">Accounting Email</label>
+                                                    @error('accounting_email')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Reason for Testing -->
+                                            <div class="col-md-6">
+                                                <div class="form-floating">
+                                                    <select
+                                                        class="form-select @error('reason_for_testing') is-invalid @enderror"
+                                                        name="reason_for_testing" id="reason_for_testing" required>
+                                                        <option value="" disabled selected>Select a reason
+                                                        </option>
+                                                        <option value="Follow Up Test" @selected(old('reason_for_testing') == 'Follow Up Test')>
+                                                            Follow
+                                                            Up Test</option>
+                                                        <option value="Pre Employment" @selected(old('reason_for_testing') == 'Pre Employment')>Pre
+                                                            Employment</option>
+                                                        <option value="Random" @selected(old('reason_for_testing') == 'Random')>Random
+                                                        </option>
+                                                        <option value="Return to Duty" @selected(old('reason_for_testing') == 'Return to Duty')>
+                                                            Return
+                                                            to Duty</option>
+                                                        <option value="Post Accident" @selected(old('reason_for_testing') == 'Post Accident')>Post
+                                                            Accident</option>
+                                                        <option value="Promotion" @selected(old('reason_for_testing') == 'Promotion')>
+                                                            Promotion
+                                                        </option>
+                                                        <option value="Reasonable Cause/Suspicion"
+                                                            @selected(old('reason_for_testing') == 'Reasonable Cause/Suspicion')>Reasonable Cause/Suspicion
+                                                        </option>
+                                                        <option value="Other" @selected(old('reason_for_testing') == 'Other')>Other
+                                                        </option>
+                                                    </select>
+                                                    <label for="reason_for_testing">Reason for Testing *</label>
+                                                    @error('reason_for_testing')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+
+                                            <!-- Price (readonly) -->
+                                            <div class="col-12">
+                                                <div class="form-floating">
+                                                    <input type="text" class="form-control bg-light"
+                                                        name="price" id="price"
+                                                        value="${{ $portfolio->price }}" readonly>
+                                                    <label for="price">Total Amount</label>
+                                                </div>
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+
+                                    <!-- ========== Payment Section ========== -->
+                                    <div class="mb-5">
+                                        <h4 class="section-title mb-4">
+                                            <i class="fas fa-credit-card me-2"></i> Payment Details
+                                        </h4>
+
+                                        <div class="payment-card-container p-4 bg-light rounded-3">
+                                            <!-- Card Type Selection -->
+                                            <div class="mb-4">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <input type="radio" id="credit-card" name="payment-method"
+                                                        class="me-2" checked>
+                                                    <label for="credit-card" class="me-3">Credit card</label>
+                                                    <div class="card-icons d-flex align-items-center">
+                                                        <i class="fab fa-cc-visa fa-2x me-2"
+                                                            style="color: #1a1f71;"></i>
+                                                        <!-- Visa blue -->
+                                                        <i class="fab fa-cc-mastercard fa-2x me-2"
+                                                            style="color: #eb001b;"></i> <!-- Mastercard red -->
+                                                        <i class="fab fa-cc-amex fa-2x me-2"
+                                                            style="color: #016fd0;"></i>
+                                                        <!-- Amex blue -->
+                                                        <i class="fab fa-cc-discover fa-2x me-2"
+                                                            style="color: #ff6000;"></i> <!-- Discover orange -->
+
+                                                        <i class="fab fa-cc-jcb fa-2x me-2"
+                                                            style="color: #0b4ea2;"></i>
+                                                        <!-- JCB (Blue) -->
+                                                        <i class="fab fa-cc-diners-club fa-2x me-2"
+                                                            style="color: #0079be;"></i> <!-- Diners Club (Blue) -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Cardholder Name -->
+                                            <div class="form-floating mb-3">
+                                                <input type="text"
+                                                    class="form-control @error('cardholder_name') is-invalid @enderror"
+                                                    id="cardholder-name" placeholder="Cardholder Name" required>
+                                                <label for="cardholder-name">Cardholder Name *</label>
+                                            </div>
+
+                                            <!-- Card Elements -->
+                                            <div class="mb-3">
+                                                <label class="form-label">Card Number *</label>
+                                                <div id="card-number" class="form-control p-3"></div>
+                                            </div>
+
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Expiration Date *</label>
+                                                    <div id="card-expiry" class="form-control p-3"></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">CVC *</label>
+                                                    <div id="card-cvc" class="form-control p-3"></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-3 mt-2">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">ZIP Code *</label>
+                                                    <div id="postal-code" class="form-control p-3"></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Country *</label>
+                                                    <div class="form-floating">
+                                                        {{-- <select class="form-select" id="country" name="country"
                                                         required>
                                                         <option value="" selected disabled>Select Country
                                                         </option>
@@ -535,114 +547,207 @@
                                                         <option value="GB">United Kingdom</option>
                                                         <option value="AU">Australia</option>
                                                     </select> --}}
-                                                    <select class="form-select" id="country" name="country"
-                                                        required>
-                                                        <option value="" selected disabled>Select Country
-                                                        </option>
-                                                    </select>
+                                                        <select class="form-select" id="country" name="country"
+                                                            required>
+                                                            <option value="" selected disabled>Select Country
+                                                            </option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <!-- Card Errors -->
-                                        <div id="card-errors" class="text-danger mt-3 small" role="alert"></div>
+                                            <!-- Card Errors -->
+                                            <div id="card-errors" class="text-danger mt-3 small" role="alert">
+                                            </div>
 
-                                        <!-- Security Badge -->
-                                        <div class="d-flex align-items-center mt-4 text-muted">
-                                            <i class="fas fa-lock text-success me-2"></i>
-                                            <small>Your payment is secured with 256-bit SSL encryption</small>
+                                            <!-- Security Badge -->
+                                            <div class="d-flex align-items-center mt-4 text-muted">
+                                                <i class="fas fa-lock text-success me-2"></i>
+                                                <small>Your payment is secured with 256-bit SSL encryption</small>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    <!-- ========== Terms and Conditions ========== -->
+                                    <div class="mb-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input @error('terms') is-invalid @enderror"
+                                                type="checkbox" id="terms-check" required>
+                                            <label class="form-check-label" for="terms-check">
+                                                I agree to the <a href="#" data-bs-toggle="modal"
+                                                    data-bs-target="#termsModal">Terms and Conditions</a>
+                                                and <a href="#" data-bs-toggle="modal"
+                                                    data-bs-target="#privacyModal">Privacy Policy</a> *
+                                            </label>
+                                            @error('terms')
+                                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+
+                                    <!-- ========== Submit Button ========== -->
+                                    <div class="text-center mt-4">
+                                        <button type="button" id="pay-button"
+                                            class="btn btn-primary btn-lg w-100 py-3">
+                                            <span id="pay-button-text">Pay & Schedule Test -
+                                                ${{ $portfolio->price }}</span>
+                                            <span id="pay-button-loader"
+                                                class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Terms and Conditions Modal -->
+        <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{-- @include('partials.terms-conditions')  --}}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Policy Modal -->
+        <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{-- @include('partials.privacy-policy')  --}}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Success Modal -->
+        <div class="modal fade" id="paymentSuccessModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body text-center p-5">
+                        <div class="mb-4">
+                            <div class="checkmark-circle">
+                                <div class="checkmark draw"></div>
+                            </div>
+                        </div>
+                        <h4 class="mb-3">Payment Successful!</h4>
+                        <p class="mb-4">Thank you for your payment. Your test has been scheduled successfully.</p>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @else
+        <!-- DOT Testing - Show login form -->
+        <section class="section" id="application-form">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm">
+                            <div class="card-body p-5">
+                                <h2 class="text-center mb-4">Login Required for DOT Testing</h2>
+
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    DOT testing requires user authentication for security and compliance purposes.
                                 </div>
 
-                                <!-- ========== Terms and Conditions ========== -->
-                                <div class="mb-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input @error('terms') is-invalid @enderror"
-                                            type="checkbox" id="terms-check" required>
-                                        <label class="form-check-label" for="terms-check">
-                                            I agree to the <a href="#" data-bs-toggle="modal"
-                                                data-bs-target="#termsModal">Terms and Conditions</a>
-                                            and <a href="#" data-bs-toggle="modal"
-                                                data-bs-target="#privacyModal">Privacy Policy</a> *
-                                        </label>
-                                        @error('terms')
-                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                <!-- Status Messages -->
+                                @if (session('status'))
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        {{ session('status') }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
+                                    </div>
+                                @endif
+
+                                @if ($errors->any())
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>Login failed:</strong>
+                                        <ul class="mt-2 mb-0">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Close"></button>
+                                    </div>
+                                @endif
+
+                                <!-- Use custom login route with portfolio ID -->
+                                <form method="POST" action="{{ route('portfolio.login.submit', $portfolio->id) }}">
+                                    @csrf
+
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email Address</label>
+                                        <input type="email" name="email" value="{{ old('email') }}"
+                                            class="form-control @error('email') is-invalid @enderror" id="email"
+                                            required autofocus>
+                                        @error('email')
+                                            <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                </div>
 
-                                <!-- ========== Submit Button ========== -->
-                                <div class="text-center mt-4">
-                                    <button type="button" id="pay-button" class="btn btn-primary btn-lg w-100 py-3">
-                                        <span id="pay-button-text">Pay & Schedule Test -
-                                            ${{ $portfolio->price }}</span>
-                                        <span id="pay-button-loader"
-                                            class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label">Password</label>
+                                        <input type="password" name="password" required
+                                            class="form-control @error('password') is-invalid @enderror"
+                                            id="password">
+                                        @error('password')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="remember"
+                                            name="remember">
+                                        <label class="form-check-label" for="remember">Remember me</label>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100 py-2">
+                                        <i class="fas fa-sign-in-alt me-2"></i> Login & Continue Application
                                     </button>
-                                </div>
-                            </form>
+
+                                    <div class="text-center mt-3">
+                                        @if (Route::has('password.request'))
+                                            <a href="{{ route('password.request') }}" class="text-decoration-none">
+                                                Forgot your password?
+                                            </a>
+                                        @endif
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Terms and Conditions Modal -->
-    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    {{-- @include('partials.terms-conditions')  --}}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Privacy Policy Modal -->
-    <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    {{-- @include('partials.privacy-policy')  --}}
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Payment Success Modal -->
-    <div class="modal fade" id="paymentSuccessModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body text-center p-5">
-                    <div class="mb-4">
-                        <div class="checkmark-circle">
-                            <div class="checkmark draw"></div>
-                        </div>
-                    </div>
-                    <h4 class="mb-3">Payment Successful!</h4>
-                    <p class="mb-4">Thank you for your payment. Your test has been scheduled successfully.</p>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Continue</button>
-                </div>
-            </div>
-        </div>
-    </div>
+        </section>
+    @endif
 
     </div>
     </div>

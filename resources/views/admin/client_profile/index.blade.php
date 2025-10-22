@@ -18,8 +18,11 @@
                             </div>
                         </h6>
                         <div>
-                            <a href="{{ url('admin/client-profile/create') }}" class="btn btn-primary float-right mb-3">+
-                                Add Client Profile</a>
+                            @can('client profile create')
+                                <a href="{{ url('admin/client-profile/create') }}" class="btn btn-primary float-right mb-3">+
+                                    Add Client Profile</a>
+                            @endcan
+
                         </div>
                     </div>
 
@@ -74,6 +77,7 @@
                             <thead>
                                 <tr>
                                     <th>Company Name</th>
+                                    <th>Account No</th>
                                     <th>Address</th>
                                     <th>City</th>
                                     <th>State</th>
@@ -98,6 +102,7 @@
                                 @foreach ($clientProfiles as $clientProfile)
                                     <tr>
                                         <td>{{ $clientProfile->company_name }}</td>
+                                        <td>{{ $clientProfile->account_no }}</td>
                                         <td>{{ $clientProfile->address }}</td>
                                         <td>{{ $clientProfile->city }}</td>
                                         <td>{{ $clientProfile->state }}</td>
@@ -122,18 +127,25 @@
                                         </td>
                                         <td>
                                             <div>
-                                                <a href="{{ route('client-profile.edit', $clientProfile->id) }}"
-                                                    class="mr-2">
-                                                    <i class="fa fa-edit text-info font-18"></i>
-                                                </a>
-                                                <a href="{{ route('client-profile.show', $clientProfile->id) }}"
-                                                    class="mr-2">
-                                                    <i class="fa fa-eye text-primary font-18"></i>
-                                                </a>
-                                                <a href="#" data-toggle="modal"
-                                                    data-target="#deleteModal{{ $clientProfile->id }}">
-                                                    <i class="fa fa-trash text-danger font-18"></i>
-                                                </a>
+                                                @can('client profile edit')
+                                                    <a href="{{ route('client-profile.edit', $clientProfile->id) }}"
+                                                        class="mr-2">
+                                                        <i class="fa fa-edit text-info font-18"></i>
+                                                    </a>
+                                                @endcan
+
+                                                @can('client profile view')
+                                                    <a href="{{ route('client-profile.show', $clientProfile->id) }}"
+                                                        class="mr-2">
+                                                        <i class="fa fa-eye text-primary font-18"></i>
+                                                    </a>
+                                                @endcan
+                                                @can('client profile delete')
+                                                    <a href="#" data-toggle="modal"
+                                                        data-target="#deleteModal{{ $clientProfile->id }}">
+                                                        <i class="fa fa-trash text-danger font-18"></i>
+                                                    </a>
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>

@@ -50,6 +50,21 @@
 
                             <div class="col-md-12">
                                 <div class="form-group">
+                                    <label for="account_no">Lab Account Number <span class="text-red">*</span></label>
+                                    <input id="account_no" name="account_no" type="text"
+                                        class="form-control @error('account_no') is-invalid @enderror"
+                                        placeholder="Enter Lab account number"
+                                        value="{{ old('account_no', $clientProfile->account_no) }}" required>
+                                    @error('account_no')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
                                     <label for="short_description">{{ __('content.short_description') }}</label>
                                     <textarea id="short_description" name="short_description"
                                         class="form-control @error('short_description') is-invalid @enderror" rows="3"

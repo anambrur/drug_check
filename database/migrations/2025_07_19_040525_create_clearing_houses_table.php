@@ -11,18 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('clearing_houses', function (Blueprint $table) {
-            $table->id();
-            $table->string('title')->nullable();
-            $table->unsignedBigInteger('language_id');
-            $table->foreign('language_id')->references('id')->on('languages')->onDelete('cascade');
-            $table->enum('style', ['style1'])->default('style1');
-            $table->text('description')->nullable();
-            $table->text('short_description')->nullable();
-            $table->text('employer_pdf')->nullable(); // Store JSON array of filenames
-            $table->text('driver_pdf')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('clearing_houses')) {
+            Schema::create('clearing_houses', function (Blueprint $table) {
+                $table->id();
+                $table->string('title')->nullable();
+                $table->unsignedBigInteger('language_id');
+                $table->foreign('language_id')->references('id')->on('languages')->onDelete('cascade');
+                $table->enum('style', ['style1'])->default('style1');
+                $table->text('description')->nullable();
+                $table->text('short_description')->nullable();
+                $table->text('employer_pdf')->nullable(); // Store JSON array of filenames
+                $table->text('driver_pdf')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -15,6 +15,7 @@ class ClientProfile extends Model
         'client_id',
         'profile_id',
         'company_name',
+        'account_no',
         'short_description',
         'address',
         'city',

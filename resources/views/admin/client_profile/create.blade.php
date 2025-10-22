@@ -33,6 +33,20 @@
                                     @enderror
                                 </div>
                             </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="account_no">Lab Account Number <span class="text-red">*</span></label>
+                                    <input id="account_no" name="account_no" type="text"
+                                        class="form-control @error('account_no') is-invalid @enderror"
+                                        placeholder="Enter Lab account number" value="{{ old('account_no') }}" required>
+                                    @error('account_no')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="short_description">{{ __('content.short_description') }}</label>
@@ -271,7 +285,7 @@
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-12">
                                 <button type="submit" class="btn btn-primary mr-2">{{ __('content.submit') }}</button>
                             </div>

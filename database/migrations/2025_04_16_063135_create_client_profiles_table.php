@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('state', 100);
             $table->string('zip', 20);
             $table->foreignId('dot_agency_id')->constrained('dot_agencies')->onDelete('cascade');
+            $table->string('account_no', 20)->nullable();
 
             $table->string('phone', 20)->nullable();
             $table->string('fax', 20)->nullable();
@@ -28,7 +29,7 @@ return new class extends Migration
 
             $table->string('billing_contact_name', 100)->nullable();
             $table->string('billing_contact_email', 150)->nullable()->index();
-            $table->string('billing_contact_phone', 20)->nullable();
+            $table->string('billing_contact_phone', 20)->nullable();    
 
             $table->string('der_contact_name', 100);
             $table->string('der_contact_email', 150)->index();

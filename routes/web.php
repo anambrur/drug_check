@@ -3,6 +3,7 @@
 use Stripe\Stripe;
 use Livewire\Livewire;
 use Stripe\PaymentIntent;
+use App\Http\Middleware\XSS;
 use Illuminate\Http\Request;
 use App\Models\Admin\PageBuilder;
 use Illuminate\Support\Facades\Mail;
@@ -52,6 +53,7 @@ use App\Http\Controllers\Admin\DraftViewController;
 use App\Http\Controllers\Admin\ErrorPageController;
 use App\Http\Controllers\Admin\PortfolioController;
 use App\Http\Controllers\Admin\PreloaderController;
+use App\Http\Controllers\Admin\QuestSyncController;
 use App\Http\Controllers\Admin\SubscribeController;
 use App\Http\Controllers\Admin\TestAdminController;
 use App\Http\Controllers\Admin\WhyChooseController;
@@ -144,6 +146,69 @@ use App\Http\Controllers\Admin\PortfolioDetailSectionController;
 //     }
 // });
 
+// Route::get('/test-firebase', function () {
+//     try {
+//         $firebaseService = app(App\Services\FirebaseService::class);
+//         $count = $firebaseService->getSitesCount();
+
+//         return response()->json([
+//             'success' => true,
+//             'message' => 'Firebase connection successful!',
+//             'sites_count' => $count
+//         ]);
+//     } catch (\Exception $e) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Firebase connection failed: ' . $e->getMessage()
+//         ], 500);
+//     }
+// });
+
+Route::get('/test-collection-connection', function () {
+    try {
+        $collectionService = app(App\Services\QuestCollectionService::class);
+        $result = $collectionService->testConnection();
+
+        return response()->json($result);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+
+
+Route::get('/test-all-combinations', function () {
+    try {
+        $collectionService = app(App\Services\QuestCollectionService::class);
+        $result = $collectionService->getFullCollectionSiteDetails();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Success! Retrieved ' . count($result['sites']) . ' sites',
+            'sites_count' => count($result['sites'])
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'All combinations failed: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
 Route::post('/create-payment-intent', function (Request $request) {
     Stripe::setApiKey(env('STRIPE_SECRET'));
 
@@ -212,15 +277,23 @@ Route::get('privacy-policy', [\App\Http\Controllers\Frontend\HomeController::cla
 
 
 // Quest Diagnostics routes
-Route::prefix('quest')->group(function() {
+Route::prefix('quest')->group(function () {
     Route::get('/order-form', [QuestDiagnosticsController::class, 'showOrderForm'])
         ->name('quest.order-form');
-    
+
     Route::post('/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])
         ->name('quest.submit-order');
-    
+
     Route::get('/order-success/{quest_order_id}/{reference_test_id}', [QuestDiagnosticsController::class, 'orderSuccess'])
         ->name('quest.order-success');
+
+    Route::get('/order/{id}/document/{docType}', [QuestDiagnosticsController::class, 'getDocument'])->name('quest.get-document');
+
+    // Add these routes to your web.php file
+    Route::get('/order-details', [QuestDiagnosticsController::class, 'getOrderDetailsForm'])->name('quest.order-details.form');
+    Route::post('/order-details', [QuestDiagnosticsController::class, 'getOrderDetails'])->name('quest.order-details.submit');
+    Route::get('/order-details/show', [QuestDiagnosticsController::class, 'showOrderDetails'])->name('quest.order-details.show');
+    Route::get('/order-details/{questOrderId}/{referenceTestId?}', [QuestDiagnosticsController::class, 'getOrderDetails'])->name('quest.order-details.direct');
 });
 
 
@@ -284,8 +357,10 @@ if (isset($zip_search)) {
 Route::post('/send-mail', [ContactController::class, 'sendMail'])->name('send.mail');
 Route::post('/send-mail-dot', [ContactController::class, 'sendMailDot'])->name('send.mail_dot');
 Route::post('/send-mail-form', [ContactController::class, 'sendMailForm'])->name('send.mail_form');
-
 // End Site Frontend Route
+
+
+
 
 // Start Site Admin Panel Route
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'role:super-admin'])->prefix('admin')->group(function () {
@@ -936,20 +1011,52 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::delete('dot-supervisor-training/{id}', [DotSupervisorTrainingController::class, 'destroy'])->name('dot-supervisor-training.destroy');
 });
 
-Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:client profile view'])->prefix('admin')->group(function () {
-    Route::get('client-profile', [ClientProfileController::class, 'index'])->name('client-profile.index');
-    Route::get('client-profile/create', [ClientProfileController::class, 'create'])->name('client-profile.create');
-    Route::post('client-profile', [ClientProfileController::class, 'store'])->name('client-profile.store');
-    Route::get('client-profile/{id}/edit', [ClientProfileController::class, 'edit'])->name('client-profile.edit');
-    Route::get('client-profile/{id}/show', [ClientProfileController::class, 'show'])->name('client-profile.show');
-    Route::put('client-profile/{id}', [ClientProfileController::class, 'update'])->name('client-profile.update');
-    Route::delete('client-profile/{id}', [ClientProfileController::class, 'destroy'])->name('client-profile.destroy');
-    Route::delete('client-profile', [ClientProfileController::class, 'destroy_checked'])->name('client-profile.destroy_checked');
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS'])->prefix('admin')->group(function () {
+    Route::get('client-profile', [ClientProfileController::class, 'index'])->name('client-profile.index')->middleware('permission:client profile view|client profile view_all');
+    Route::get('client-profile/create', [ClientProfileController::class, 'create'])->name('client-profile.create')->middleware('permission:client profile create|client profile create_all');
+    Route::post('client-profile', [ClientProfileController::class, 'store'])->name('client-profile.store')->middleware('permission:client profile create|client profile create_all');
+    Route::get('client-profile/{id}/edit', [ClientProfileController::class, 'edit'])->name('client-profile.edit')->middleware('permission:client profile edit|client profile edit_all');
+    Route::get('client-profile/{id}/show', [ClientProfileController::class, 'show'])->name('client-profile.show')->middleware('permission:client profile view|client profile view_all');
+    Route::put('client-profile/{id}', [ClientProfileController::class, 'update'])->name('client-profile.update')->middleware('permission:client profile edit|client profile edit_all');
+    Route::delete('client-profile/{id}', [ClientProfileController::class, 'destroy'])->name('client-profile.destroy')->middleware('permission:client profile delete|client profile delete_all');
+    Route::delete('client-profile', [ClientProfileController::class, 'destroy_checked'])->name('client-profile.destroy_checked')->middleware('permission:client profile delete|client profile delete_all');
 
     Route::post('add-employee', [EmployeeController::class, 'store'])->name('client-profile.employee_store');
     Route::get('employee/{id}/edit', [EmployeeController::class, 'edit'])->name('client-profile.employee_edit');
     Route::put('employee/{id}', [EmployeeController::class, 'update'])->name('client-profile.employee_update');
     Route::delete('employee/{id}', [EmployeeController::class, 'destroy'])->name('client-profile.employee_destroy');
+});
+
+
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:quest-site view'])->prefix('admin')->group(function () {
+    Route::get('quest-site/', [QuestSyncController::class, 'dashboard'])->name('quest-site.dashboard');
+    Route::post('quest-site/full', [QuestSyncController::class, 'fullSync'])->name('quest-site.full');
+    Route::post('quest-site/incremental', [QuestSyncController::class, 'incrementalSync'])->name('quest-site.incremental');
+    Route::post('quest-site/clear', [QuestSyncController::class, 'clearData'])->name('quest-site.clear');
+    Route::get('quest-site/view', [QuestSyncController::class, 'viewSites'])->name('quest-site.view');
+    Route::get('quest-sync/status', [QuestSyncController::class, 'syncStatus'])->name('quest-sync.status');
+    Route::get('quest-site/collection-site-insert', [QuestSyncController::class, 'collectionSiteInsert'])->name('quest-site.collectionSiteInsert');
+    Route::post('quest-site/process-collection-sites', [QuestSyncController::class, 'processCollectionSites'])->name('quest-site.process-collection-sites');
+});
+
+// Custom login routes with portfolio ID
+Route::get('/portfolio/{portfolio}/login', [App\Http\Controllers\Auth\CustomLoginController::class, 'create'])
+    ->name('portfolio.login');
+
+Route::post('/portfolio/{portfolio}/login', [App\Http\Controllers\Auth\CustomLoginController::class, 'store'])
+    ->name('portfolio.login.submit');
+
+
+Route::get('/collection-sites/search', [QuestDiagnosticsController::class, 'searchCollectionSites'])->name('collection-sites.search');
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:dot-test view'])->prefix('admin')->group(function () {
+    Route::get('dot-test/{portfolioId}', [QuestDiagnosticsController::class, 'dotTest'])->name('dot-test.index');
+    Route::post('dot-test/process-payment', [QuestDiagnosticsController::class, 'processPayment'])->name('admin.dot-test.process-payment');
+
+    // Updated route with payment intent parameter
+    Route::get('dot-test/order-form/{paymentIntent}', [QuestDiagnosticsController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form');
+
+    Route::post('dot-test/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])->name('admin.dot-test.submit-order');
 });
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:lab admin view'])->prefix('admin')->group(function () {

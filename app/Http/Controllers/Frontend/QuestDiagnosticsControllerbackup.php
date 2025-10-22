@@ -2,17 +2,11 @@
 
 namespace App\Http\Controllers\Frontend;
 
-use Stripe\Stripe;
 use SimpleXMLElement;
-use Stripe\PaymentIntent;
 use Illuminate\Http\Request;
-use App\Models\Admin\Employee;
-use App\Models\Admin\Portfolio;
 use App\Models\Admin\QuestOrder;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Models\Admin\CollectionSite;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class QuestDiagnosticsController extends Controller
@@ -41,7 +35,6 @@ class QuestDiagnosticsController extends Controller
 
     public function submitOrder(Request $request)
     {
-        // dd($request->all());
         $validator = Validator::make($request->all(), [
             'payment_intent_id' => 'required|string',
             'first_name' => 'required|string|max:20',
@@ -65,7 +58,6 @@ class QuestDiagnosticsController extends Controller
             'split_specimen_requested' => 'nullable|in:Y,N',
             'unit_codes' => 'required|array',
             'unit_codes.*' => 'string|max:15',
-            'lab_account' => 'required|string|max:20',
             'csl' => 'nullable|string|max:20',
             'contact_name' => 'required_if:is_ebat,true|nullable|string|max:45',
             'telephone_number' => 'required_if:is_ebat,true|nullable|string|max:10',
@@ -173,8 +165,8 @@ class QuestDiagnosticsController extends Controller
             $clientInfo->addChild('TelephoneNumber', preg_replace('/[^0-9]/', '', $data['telephone_number']));
         }
 
-        // Use LabAccount from form data instead of environment
-        $clientInfo->addChild('LabAccount', $data['lab_account']);
+        // Use LabAccount from environment, not from form
+        $clientInfo->addChild('LabAccount', env('QUEST_LAB_ACCOUNT'));
 
         if (!empty($data['csl'])) {
             $clientInfo->addChild('CSL', $data['csl']);
@@ -234,7 +226,7 @@ class QuestDiagnosticsController extends Controller
         $url = config('app.env') === 'production' ? $this->prodUrl : $this->devUrl;
 
         // Log the original order XML for debugging
-        // Log::info('Original Order XML: ' . $orderXml);
+        Log::info('Original Order XML: ' . $orderXml);
 
         // Build the SOAP request manually
         $soapRequest = $this->buildSoapRequest($username, $password, $orderXml);
@@ -254,8 +246,8 @@ class QuestDiagnosticsController extends Controller
                 'Content-Length: ' . strlen($soapRequest)
             ],
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 120,
-            CURLOPT_CONNECTTIMEOUT => 60,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_CONNECTTIMEOUT => 30,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false,
             CURLOPT_VERBOSE => true,
@@ -848,166 +840,4 @@ class QuestDiagnosticsController extends Controller
 
     //     Log::info('=== END DEBUG ===');
     // }
-
-
-
-
-    // admin dot test start
-    public function dotTest($portfolioId = null)
-    {
-        $portfolio = Portfolio::findOrFail($portfolioId);
-        $authUser = Auth::user();
-
-        return view('admin.dot-test.index', compact('portfolio', 'authUser'));
-    }
-    public function processPayment(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'portfolio_id' => 'required|exists:portfolios,id',
-            'price' => 'required|numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $portfolio = Portfolio::find($request->portfolio_id);
-            $amount = $request->price; // Already in cents from frontend
-
-            Stripe::setApiKey(env('STRIPE_SECRET'));
-
-            $paymentIntent = PaymentIntent::create([
-                'amount' => $amount,
-                'currency' => 'usd',
-                'metadata' => [
-                    'portfolio_id' => $portfolio->id,
-                    'test_name' => $portfolio->title,
-                ],
-                'automatic_payment_methods' => [
-                    'enabled' => true,
-                ],
-            ]);
-
-            // Store minimal payment session data
-            session([
-                'dot_test_payment_data' => [
-                    'payment_intent_id' => $paymentIntent->id,
-                    'portfolio_id' => $portfolio->id,
-                    'amount' => $amount / 100,
-                    'test_name' => $portfolio->title,
-                    'quest_unit_code' => $portfolio->quest_unit_code,
-                ]
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'client_secret' => $paymentIntent->client_secret,
-                'payment_intent_id' => $paymentIntent->id,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Payment processing failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment processing failed. Please try again.'
-            ], 500);
-        }
-    }
-
-    public function showDotOrderForm(Request $request, $paymentIntent)
-    {
-        // Retrieve payment data from session
-        $paymentData = session('dot_test_payment_data');
-
-        if (!$paymentData || $paymentData['payment_intent_id'] !== $paymentIntent) {
-            toastr()->error('Invalid or expired payment session. Please complete payment first.', 'Error');
-            return redirect()->route('dot-test.index', ['portfolioId' => $paymentData['portfolio_id'] ?? null]);
-        }
-
-        $authUser = Auth::user();
-        $employee = Employee::with('clientProfile')->where('user_id', $authUser->id)->first();
-
-
-        // Get portfolio info
-        $portfolio = Portfolio::find($paymentData['portfolio_id']);
-
-        $collectionSites = CollectionSite::orderBy('name')->get();
-
-        return view('admin.dot-test.dot-test-order-form', compact('employee', 'paymentData', 'portfolio'));
-    }
-
-    // Add this new method for AJAX search
-    public function searchCollectionSites(Request $request)
-    {
-        try {
-            $searchTerm = $request->get('q', '');
-
-            // Validate search term
-            if (strlen($searchTerm) < 2) {
-                return response()->json([]);
-            }
-
-            $sites = CollectionSite::when($searchTerm, function ($query) use ($searchTerm) {
-                $searchTerm = '%' . $searchTerm . '%';
-                $query->where(function ($q) use ($searchTerm) {
-                    $q->where('name', 'LIKE', $searchTerm)
-                        ->orWhere('address_1', 'LIKE', $searchTerm)
-                        ->orWhere('address_2', 'LIKE', $searchTerm)
-                        ->orWhere('city', 'LIKE', $searchTerm)
-                        ->orWhere('zip_code', 'LIKE', $searchTerm)
-                        ->orWhere('state', 'LIKE', $searchTerm);
-                });
-            })
-                ->orderBy('name')
-                ->limit(30) // Reduced limit for better performance
-                ->get(['id', 'collection_site_code', 'name', 'address_1', 'address_2', 'city', 'state', 'zip_code']);
-
-
-            $formattedSites = $sites->map(function ($site) {
-                return [
-                    'id' => $site->id,
-                    'collection_site_code' => $site->collection_site_code,
-                    'text' => $this->formatSiteDisplay($site)
-                ];
-            });
-
-            return response()->json($formattedSites);
-        } catch (\Exception $e) {
-            Log::error('Collection site search error: ' . $e->getMessage());
-            return response()->json([], 500);
-        }
-    }
-
-    private function formatSiteDisplay($site)
-    {
-        $parts = [];
-
-        if ($site->name) {
-            $parts[] = $site->name;
-        }
-
-        $addressParts = [];
-        if ($site->address_1) {
-            $addressParts[] = $site->address_1;
-        }
-        if ($site->city) {
-            $addressParts[] = $site->city;
-        }
-        if ($site->state) {
-            $addressParts[] = $site->state;
-        }
-        if ($site->zip_code) {
-            $addressParts[] = $site->zip_code;
-        }
-
-        if (!empty($addressParts)) {
-            $parts[] = implode(', ', $addressParts);
-        }
-
-        return implode(' - ', $parts);
-    }
 }

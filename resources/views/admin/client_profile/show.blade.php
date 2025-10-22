@@ -357,57 +357,57 @@
                                 id="cdl_state">
                                 <option value="">{{ __('content.select_your_option') }}</option>
                                 @foreach ([
-                                    'AL' => 'Alabama',
-                                    'AK' => 'Alaska',
-                                    'AZ' => 'Arizona',
-                                    'AR' => 'Arkansas',
-                                    'CA' => 'California',
-                                    'CO' => 'Colorado',
-                                    'CT' => 'Connecticut',
-                                    'DE' => 'Delaware',
-                                    'FL' => 'Florida',
-                                    'GA' => 'Georgia',
-                                    'HI' => 'Hawaii',
-                                    'ID' => 'Idaho',
-                                    'IL' => 'Illinois',
-                                    'IN' => 'Indiana',
-                                    'IA' => 'Iowa',
-                                    'KS' => 'Kansas',
-                                    'KY' => 'Kentucky',
-                                    'LA' => 'Louisiana',
-                                    'ME' => 'Maine',
-                                    'MD' => 'Maryland',
-                                    'MA' => 'Massachusetts',
-                                    'MI' => 'Michigan',
-                                    'MN' => 'Minnesota',
-                                    'MS' => 'Mississippi',
-                                    'MO' => 'Missouri',
-                                    'MT' => 'Montana',
-                                    'NE' => 'Nebraska',
-                                    'NV' => 'Nevada',
-                                    'NH' => 'New Hampshire',
-                                    'NJ' => 'New Jersey',
-                                    'NM' => 'New Mexico',
-                                    'NY' => 'New York',
-                                    'NC' => 'North Carolina',
-                                    'ND' => 'North Dakota',
-                                    'OH' => 'Ohio',
-                                    'OK' => 'Oklahoma',
-                                    'OR' => 'Oregon',
-                                    'PA' => 'Pennsylvania',
-                                    'RI' => 'Rhode Island',
-                                    'SC' => 'South Carolina',
-                                    'SD' => 'South Dakota',
-                                    'TN' => 'Tennessee',
-                                    'TX' => 'Texas',
-                                    'UT' => 'Utah',
-                                    'VT' => 'Vermont',
-                                    'VA' => 'Virginia',
-                                    'WA' => 'Washington',
-                                    'WV' => 'West Virginia',
-                                    'WI' => 'Wisconsin',
-                                    'WY' => 'Wyoming',
-                                ] as $abbr => $state)
+            'AL' => 'Alabama',
+            'AK' => 'Alaska',
+            'AZ' => 'Arizona',
+            'AR' => 'Arkansas',
+            'CA' => 'California',
+            'CO' => 'Colorado',
+            'CT' => 'Connecticut',
+            'DE' => 'Delaware',
+            'FL' => 'Florida',
+            'GA' => 'Georgia',
+            'HI' => 'Hawaii',
+            'ID' => 'Idaho',
+            'IL' => 'Illinois',
+            'IN' => 'Indiana',
+            'IA' => 'Iowa',
+            'KS' => 'Kansas',
+            'KY' => 'Kentucky',
+            'LA' => 'Louisiana',
+            'ME' => 'Maine',
+            'MD' => 'Maryland',
+            'MA' => 'Massachusetts',
+            'MI' => 'Michigan',
+            'MN' => 'Minnesota',
+            'MS' => 'Mississippi',
+            'MO' => 'Missouri',
+            'MT' => 'Montana',
+            'NE' => 'Nebraska',
+            'NV' => 'Nevada',
+            'NH' => 'New Hampshire',
+            'NJ' => 'New Jersey',
+            'NM' => 'New Mexico',
+            'NY' => 'New York',
+            'NC' => 'North Carolina',
+            'ND' => 'North Dakota',
+            'OH' => 'Ohio',
+            'OK' => 'Oklahoma',
+            'OR' => 'Oregon',
+            'PA' => 'Pennsylvania',
+            'RI' => 'Rhode Island',
+            'SC' => 'South Carolina',
+            'SD' => 'South Dakota',
+            'TN' => 'Tennessee',
+            'TX' => 'Texas',
+            'UT' => 'Utah',
+            'VT' => 'Vermont',
+            'VA' => 'Virginia',
+            'WA' => 'Washington',
+            'WV' => 'West Virginia',
+            'WI' => 'Wisconsin',
+            'WY' => 'Wyoming',
+        ] as $abbr => $state)
                                     <option value="{{ $abbr }}"
                                         {{ old('cdl_state') == $abbr ? 'selected' : '' }}>{{ $state }}</option>
                                 @endforeach
@@ -446,6 +446,13 @@
                         <button type="submit" class="btn btn-primary w-100">{{ __('content.submit') }}</button>
                     </div>
                 </div>
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="send_email" name="send_email"
+                            value="1" checked>
+                        <label class="custom-control-label" for="send_email">Send registration email to employee</label>
+                    </div>
+                </div>
                 </form>
             </div>
         </div>
@@ -463,6 +470,7 @@
                             <th>First Name</th>
                             <th>Last Name</th>
                             <th>Middle Name</th>
+                            <th>Email</th>
                             <th>Department</th>
                             <th>Shift</th>
                             <th>Date Of Birth</th>
@@ -471,7 +479,6 @@
                             <th>Employee ID</th>
                             <th>Background Check Date</th>
                             <th>SSN</th>
-                            <th>Email</th>
                             <th>Phone</th>
                             <th>Description</th>
                             <th>CDL State</th>
@@ -488,6 +495,7 @@
                                 <td>{{ $employee->first_name }}</td>
                                 <td>{{ $employee->last_name }}</td>
                                 <td>{{ $employee->middle_name }}</td>
+                                <td>{{ $employee->email }}</td>
                                 <td>{{ $employee->department }}</td>
                                 <td>{{ $employee->shift }}</td>
                                 <td>{{ $employee->date_of_birth }}</td>
@@ -496,7 +504,6 @@
                                 <td>{{ $employee->employee_id }}</td>
                                 <td>{{ $employee->background_check_date }}</td>
                                 <td>{{ $employee->ssn }}</td>
-                                <td>{{ $employee->email }}</td>
                                 <td>{{ $employee->phone }}</td>
                                 <td>{{ $employee->short_description }}</td>
                                 <td>{{ $employee->cdl_state }}</td>
@@ -523,7 +530,7 @@
 
                                         <a href="{{ route('result-recording.resultByEmployee', $employee->id) }}"
                                             class="ml-2">
-                                           <span class="badge badge-pill badge-info">Result</span>
+                                            <span class="badge badge-pill badge-info">Result</span>
                                         </a>
                                     </div>
                                 </td>

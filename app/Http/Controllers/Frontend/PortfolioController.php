@@ -244,7 +244,6 @@ class PortfolioController extends Controller
     {
         $language = getSiteLanguage();
 
-
         $portfolios_style1 = Portfolio::join("portfolio_categories", 'portfolio_categories.id', '=', 'portfolios.category_id')
             ->where('portfolio_categories.language_id', $language->id)
             ->where('portfolios.style', 'style1')

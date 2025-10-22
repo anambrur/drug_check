@@ -12,37 +12,13 @@ use Spatie\Permission\PermissionRegistrar;
 
 class PermissionSeeder extends Seeder
 {
-
-    // php artisan db:seed --class=PermissionSeeder
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
+        // php artisan db:seed --class=PermissionSeeder
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-
-        // Clear all permission-related data and demo users
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('role_has_permissions')->truncate();
-        DB::table('model_has_roles')->truncate();
-        DB::table('model_has_permissions')->truncate();
-        Permission::truncate();
-        Role::truncate();
-
-        // Delete the demo users if they exist
-        // User::whereIn('email', [
-        //     'superadmin@gmail.com',
-        //     'admin@gmail.com',
-        //     'company@gmail.com',
-        //     'employee@gmail.com'
-        // ])->delete();
-        User::truncate();
-
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-
-        // Define the modules
+        // Define modules and actions
         $modules = [
             'upload',
             'page builder',
@@ -69,124 +45,154 @@ class PermissionSeeder extends Seeder
             'clearing house',
             'random consortium',
             'dot supervisor training',
+            'quest-site',
+            'dot-test',
+            // Add new modules here as needed
         ];
 
-        // Define actions
-        $actions = ['create', 'view', 'edit', 'delete'];
+        // Define basic actions
+        $basicActions = ['create', 'view', 'edit', 'delete'];
 
-        // Create permissions dynamically
-        $permissions = [];
+        // Define special actions for specific modules
+        $specialActions = [
+            'client profile' => ['view_all', 'create_all', 'edit_all', 'delete_all',],
+            // Add more special actions as needed
+        ];
+
+        // Get existing permissions to avoid duplicates
+        $existingPermissions = Permission::pluck('name')->toArray();
+
+        // Create permissions (only new ones)
         foreach ($modules as $module) {
-            foreach ($actions as $action) {
-                $permissions["$module $action"] = Permission::firstOrCreate(['name' => "$module $action"]);
+            // Create basic permissions
+            foreach ($basicActions as $action) {
+                $permissionName = "$module $action";
+
+                if (!in_array($permissionName, $existingPermissions)) {
+                    Permission::firstOrCreate([
+                        'name' => $permissionName,
+                        'guard_name' => 'web'
+                    ]);
+                }
+            }
+
+            // Create special permissions if defined for this module
+            if (isset($specialActions[$module])) {
+                foreach ($specialActions[$module] as $action) {
+                    $permissionName = "$module $action";
+
+                    if (!in_array($permissionName, $existingPermissions)) {
+                        Permission::firstOrCreate([
+                            'name' => $permissionName,
+                            'guard_name' => 'web'
+                        ]);
+                    }
+                }
             }
         }
 
-        // Create roles
-        $roleSuperAdmin = Role::firstOrCreate(['name' => 'super-admin']);
-        $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
-        $roleCompany = Role::firstOrCreate(['name' => 'company']);
-        $roleEmployee = Role::firstOrCreate(['name' => 'employee']);
+        // Create or get roles
+        $roleSuperAdmin = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $roleCompany = Role::firstOrCreate(['name' => 'company', 'guard_name' => 'web']);
+        $roleEmployee = Role::firstOrCreate(['name' => 'employee', 'guard_name' => 'web']);
 
         // Assign all permissions to Super Admin
-        $roleSuperAdmin->syncPermissions(array_values($permissions));
+        $roleSuperAdmin->syncPermissions(Permission::all());
 
-        // Assign permissions to Admin
-        $adminPermissions = [
-            'upload view',
-            'upload create',
-            'upload edit',
-            'upload delete',
-            'blog view',
-            'blog create',
-            'blog edit',
-            'blog delete',
-            'menu view',
-            'menu create',
-            'menu edit',
-            'menu delete',
-            'setting view',
-            'setting edit',
-            'language view',
-            'language edit',
-            'clear cache view',
-            'clear cache edit'
-        ];
-        $roleAdmin->syncPermissions(array_intersect_key($permissions, array_flip($adminPermissions)));
+        // Assign specific permissions to admin role (example)
+        $adminPermissions = Permission::where(function ($query) {
+            $query->where('name', 'like', 'blog%')
+                ->orWhere('name', 'like', 'contact message%')
+                ->orWhere('name', 'like', 'setting%');
+        })->get();
+        $roleAdmin->syncPermissions($adminPermissions);
 
-        // Assign permissions to Company
-        $companyPermissions = [
-            'portfolio view',
-            'portfolio create',
-            'portfolio edit',
-            'portfolio delete',
-            'team view',
-            'team create',
-            'team edit',
-            'team delete',
-            'gallery view',
-            'gallery create',
-            'gallery edit',
-            'gallery delete',
-            'career view',
-            'career create',
-            'career edit',
-            'career delete',
-            'page view',
-            'page create',
-            'page edit',
-            'page delete'
-        ];
-        $roleCompany->syncPermissions(array_intersect_key($permissions, array_flip($companyPermissions)));
+        // Assign specific permissions to company role (example)
+        $companyPermissions = Permission::where(function ($query) {
+            $query->where('name', 'like', 'client profile%')
+                ->orWhere('name', 'like', 'result recording%');
+        })->get();
+        $roleCompany->syncPermissions($companyPermissions);
 
-        // Assign permissions to Employee
-        $employeePermissions = [
-            'contact message view',
-            'contact message create',
-            'contact message edit',
-            'contact message delete',
-            'subscribe view',
-            'subscribe create',
-            'subscribe edit',
-            'subscribe delete'
-        ];
-        $roleEmployee->syncPermissions(array_intersect_key($permissions, array_flip($employeePermissions)));
+        // Create demo users only if they don't exist
+        $superAdminUser = User::firstOrCreate(
+            ['email' => 'superadmin@gmail.com'],
+            [
+                'name' => 'Super-Admin User',
+                'password' => Hash::make('12345678'),
+                'type' => 0,
+                'status' => 1
+            ]
+        );
+        $superAdminUser->syncRoles([$roleSuperAdmin]);
 
-        // Create demo users
-        $superAdminUser = User::factory()->create([
-            'name' => 'Super-Admin User',
-            'email' => 'superadmin@gmail.com',
-            'password' => Hash::make('12345678'),
-            'type' => 0,
-            'status' => 1
-        ]);
-        $superAdminUser->assignRole($roleSuperAdmin);
+        $adminUser = User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('12345678'),
+                'type' => 1,
+                'status' => 1
+            ]
+        );
+        $adminUser->syncRoles([$roleAdmin]);
 
-        $adminUser = User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('12345678'),
-            'type' => 1,
-            'status' => 1
-        ]);
-        $adminUser->assignRole($roleAdmin);
+        $companyUser = User::firstOrCreate(
+            ['email' => 'company@gmail.com'],
+            [
+                'name' => 'Company User',
+                'password' => Hash::make('12345678'),
+                'type' => 2,
+                'status' => 1
+            ]
+        );
+        $companyUser->syncRoles([$roleCompany]);
 
-        $companyUser = User::factory()->create([
-            'name' => 'Company User',
-            'email' => 'company@gmail.com',
-            'password' => Hash::make('12345678'),
-            'type' => 2,
-            'status' => 1
-        ]);
-        $companyUser->assignRole($roleCompany);
+        $employeeUser = User::firstOrCreate(
+            ['email' => 'employee@gmail.com'],
+            [
+                'name' => 'Employee User',
+                'password' => Hash::make('12345678'),
+                'type' => 3,
+                'status' => 1
+            ]
+        );
+        $employeeUser->syncRoles([$roleEmployee]);
 
-        $employeeUser = User::factory()->create([
-            'name' => 'Employee User',
-            'email' => 'employee@gmail.com',
-            'password' => Hash::make('12345678'),
-            'type' => 3,
-            'status' => 1
-        ]);
-        $employeeUser->assignRole($roleEmployee);
+        // Optional: Clean up orphaned permissions (permissions that don't belong to any module)
+        $this->cleanupOrphanedPermissions($modules, $basicActions, $specialActions);
+    }
+
+    /**
+     * Remove permissions that are no longer in the defined modules
+     */
+    protected function cleanupOrphanedPermissions(array $modules, array $basicActions, array $specialActions): void
+    {
+        $validPermissions = [];
+
+        foreach ($modules as $module) {
+            // Add basic permissions
+            foreach ($basicActions as $action) {
+                $validPermissions[] = "$module $action";
+            }
+
+            // Add special permissions if defined for this module
+            if (isset($specialActions[$module])) {
+                foreach ($specialActions[$module] as $action) {
+                    $validPermissions[] = "$module $action";
+                }
+            }
+        }
+
+        // Get all permissions that don't match our current structure
+        $orphanedPermissions = Permission::whereNotIn('name', $validPermissions)->get();
+
+        foreach ($orphanedPermissions as $permission) {
+            // Only delete if not assigned to any role
+            if ($permission->roles()->count() === 0) {
+                $permission->delete();
+            }
+        }
     }
 }

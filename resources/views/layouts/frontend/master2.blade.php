@@ -179,6 +179,9 @@
     src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_api_key') }}&libraries=places&callback=initMap" >
     </script>
 
+  
+<!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 
 {{-- <body data-bs-spy="scroll" data-bs-target="#fixedNavbar" @if (session()->has('language_direction_from_dropdown')) @if (session()->get('language_direction_from_dropdown') == 1)  class="rtl-mode" @endif @elseif (isset($language)) @if ($language->direction == 1) class="rtl-mode" @endif  @endif > --}}
@@ -249,6 +252,11 @@
     <!--// Main Js //-->
     <script src="{{ asset('assets/frontend/js/main.js') }}"></script>
 
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    @stack('scripts')
+
     @isset ($banner_style3)
 
         <script>
@@ -312,7 +320,6 @@
     @livewireScripts
 
 
-    
 
 </body>
 

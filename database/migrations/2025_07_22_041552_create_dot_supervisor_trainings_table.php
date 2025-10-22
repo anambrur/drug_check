@@ -11,16 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('dot_supervisor_trainings', function (Blueprint $table) {
-            $table->id();
-            $table->string('title')->nullable();
-            $table->unsignedBigInteger('language_id');
-            $table->foreign('language_id')->references('id')->on('languages')->onDelete('cascade');
-            $table->enum('style', ['style1'])->default('style1');
-            $table->text('description')->nullable();
-            $table->text('short_description')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('dot_supervisor_trainings')) {
+            Schema::create('dot_supervisor_trainings', function (Blueprint $table) {
+                $table->id();
+                $table->string('title')->nullable();
+                $table->unsignedBigInteger('language_id');
+                $table->foreign('language_id')->references('id')->on('languages')->onDelete('cascade');
+                $table->enum('style', ['style1'])->default('style1');
+                $table->text('description')->nullable();
+                $table->text('short_description')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

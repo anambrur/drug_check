@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Admin\Employee;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Admin\ClientProfile;
 use Laravel\Jetstream\HasProfilePhoto;
@@ -69,5 +70,10 @@ class User extends Authenticatable
     public function clientProfile()
     {
         return $this->hasOne(ClientProfile::class);
+    }
+
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
     }
 }

@@ -2,8 +2,9 @@
 
 namespace App\Models\Admin;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Employee extends Model
 {
@@ -46,5 +47,10 @@ class Employee extends Model
     public function selections()
     {
         return $this->hasMany(SelectedEmployee::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }
