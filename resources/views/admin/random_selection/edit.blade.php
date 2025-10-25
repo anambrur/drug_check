@@ -25,11 +25,11 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="name">Protocol Name</label>
-                                    <input type="text" class="form-control" id="name" name="name" value="{{ $protocol->name }}"
-                                        placeholder="Enter Protocol Name" required>
+                                    <input type="text" class="form-control" id="name" name="name"
+                                        value="{{ $protocol->name }}" placeholder="Enter Protocol Name" required>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            {{-- <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="client_id">Client / Company</label>
                                     <select class="form-control" id="client_id" name="client_id" required>
@@ -38,6 +38,19 @@
                                             <option value="{{ $client->id }}"
                                                 {{ $protocol->client_id == $client->id ? 'selected' : '' }}>
                                                 {{ $client->company_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div> --}}
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="client_ids">Client(s) / Company</label>
+                                    <select class="form-control" id="client_ids" name="client_ids[]" multiple required>
+                                        @foreach ($clients as $client)
+                                            <option value="{{ $client->id }}"
+                                                {{ in_array($client->id, $protocol->clients->pluck('id')->toArray()) ? 'selected' : '' }}>
+                                                {{ $client->company_name }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -78,8 +91,20 @@
                                             Employees</option>
                                         <option value="NON_DOT" {{ $protocol->group == 'NON_DOT' ? 'selected' : '' }}>
                                             Non-DOT Employees</option>
-                                        {{-- <option value="DOT_AGENCY"
-                                            {{ $protocol->group == 'DOT_AGENCY' ? 'selected' : '' }}>DOT Agency</option> --}}
+                                        <option value="FMCSA" {{ $protocol->group == 'FMCSA' ? 'selected' : '' }}>
+                                            FMCSA</option>
+                                        <option value="FRA" {{ $protocol->group == 'FRA' ? 'selected' : '' }}>FRA
+                                        </option>
+                                        <option value="FTA" {{ $protocol->group == 'FTA' ? 'selected' : '' }}>FTA
+                                        </option>
+                                        <option value="FAA" {{ $protocol->group == 'FAA' ? 'selected' : '' }}>FAA
+                                        </option>
+                                        <option value="PHMSA" {{ $protocol->group == 'PHMSA' ? 'selected' : '' }}>
+                                            PHMSA</option>
+                                        <option value="RSPA" {{ $protocol->group == 'RSPA' ? 'selected' : '' }}>RSPA
+                                        </option>
+                                        <option value="USCG" {{ $protocol->group == 'USCG' ? 'selected' : '' }}>USCG
+                                        </option>
                                     </select>
                                 </div>
                             </div>
@@ -155,7 +180,8 @@
                                     </option>
                                     <option value="MONTHLY"
                                         {{ $protocol->selection_period == 'MONTHLY' ? 'selected' : '' }}>Per Month</option>
-                                    <option value="MANUAL" {{ $protocol->selection_period == 'MANUAL' ? 'selected' : '' }}>
+                                    <option value="MANUAL"
+                                        {{ $protocol->selection_period == 'MANUAL' ? 'selected' : '' }}>
                                         Manually Selected Dates</option>
                                 </select>
                             </div>

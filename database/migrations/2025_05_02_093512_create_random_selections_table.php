@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('selection_protocols', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable();
-            $table->foreignId('client_id')->constrained('client_profiles')->onDelete('cascade');
+            $table->foreignId('client_id')->nullable()->constrained('client_profiles')->onDelete('cascade');
             $table->foreignId('test_id')->constrained('test_admins')->onDelete('cascade');
             $table->enum('group', ['DOT', 'NON_DOT', 'DOT_AGENCY', 'ALL']);
             $table->foreignId('dot_agency_id')->constrained('dot_agencies')->onDelete('cascade')->nullable();

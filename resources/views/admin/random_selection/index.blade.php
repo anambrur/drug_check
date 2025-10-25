@@ -21,26 +21,15 @@
                         @foreach ($protocols as $protocol)
                             <tr>
                                 <td>{{ $protocol->name }}</td>
-                                <td>{{ $protocol->client->company_name }}</td>
+                                {{-- <td>{{ $protocol->client->company_name }}</td> --}}
+                                <td>
+                                    @foreach ($protocol->clients as $client)
+                                        <span class="badge badge-primary mb-1">{{ $client->company_name }}</span>
+                                    @endforeach
+                                </td>
                                 <td>{{ $protocol->test->test_name }}</td>
                                 <td>
-                                    @switch($protocol->group)
-                                        @case('DOT')
-                                            <span class="badge badge-pill badge-primary">DOT</span>
-                                        @break
-
-                                        @case('NON_DOT')
-                                            <span class="badge badge-pill badge-secondary">Non-DOT</span>
-                                        @break
-
-                                        @case('DOT_AGENCY')
-                                            <span class="badge badge-pill badge-info">DOT Agency:
-                                                {{ $protocol->dotAgency->name ?? 'N/A' }}</span>
-                                        @break
-
-                                        @default
-                                            <span class="badge badge-pill badge-dark">All Employees</span>
-                                    @endswitch
+                                    <span class="badge badge-pill badge-dark">{{ $protocol->group }}</span> 
                                 </td>
                                 <td>
                                     @switch($protocol->selection_period)

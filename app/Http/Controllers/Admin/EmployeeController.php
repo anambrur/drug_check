@@ -239,74 +239,7 @@ class EmployeeController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-
-    // public function update(Request $request, $id)
-    // {
-    //     try {
-    //         // First find the employee
-    //         $employee = Employee::find($id);
-
-    //         if (!$employee) {
-    //             toastr()->error('Employee not found', 'content.error');
-    //             return back();
-    //         }
-
-    //         // Validate input
-    //         $validator = Validator::make($request->all(), [
-    //             'client_profile_id'     => 'required|exists:client_profiles,id',
-    //             'first_name'            => 'required|string|max:255',
-    //             'last_name'             => 'required|string|max:255',
-    //             'middle_name'           => 'nullable|string|max:255',
-    //             'department'            => 'nullable|string|max:255',
-    //             'shift'                 => 'nullable|string|max:255',
-    //             'date_of_birth'         => 'required|date',
-    //             'start_date'            => 'nullable|date',
-    //             'end_date'              => 'nullable|date',
-    //             'employee_id'           => 'required|string|max:20|unique:employees,employee_id,' . $id . ',id',
-    //             'background_check_date' => 'nullable|date',
-    //             'ssn'                   => 'nullable|string|max:255',
-    //             'email'                 => 'required|email|max:255',
-    //             'phone'                 => 'nullable|string|max:255',
-    //             'short_description'     => 'nullable|string',
-    //             'cdl_state'             => 'nullable|string|max:255',
-    //             'cdl_number'            => 'nullable|string|max:255',
-    //             'status'                => 'required|in:active,inactive',
-    //             'dot'                   => 'nullable|string|max:255',
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             toastr()->error($validator->errors()->first(), 'content.error');
-    //             return back()->withInput();
-    //         }
-
-    //         DB::beginTransaction(); // Start transaction
-
-    //         // Get and process input
-    //         $input = $request->all();
-    //         $dateFields = ['start_date', 'end_date', 'background_check_date'];
-    //         foreach ($dateFields as $field) {
-    //             $input[$field] = $input[$field] === '' ? null : $input[$field];
-    //         }
-
-    //         // Clean short_description
-    //         if (isset($input['short_description'])) {
-    //             $input['short_description'] = Purifier::clean($input['short_description']);
-    //         }
-
-    //         // Update employee
-    //         $employee->update($input);
-
-    //         DB::commit(); // Commit changes
-
-    //         toastr()->success('content.updated_successfully', 'content.success');
-    //         return redirect()->back();
-    //     } catch (\Exception $e) {
-    //         DB::rollBack(); // Rollback on failure
-    //         Log::error('Employee Update Error: ' . $e->getMessage());
-    //         toastr()->error('An error occurred while updating the employee. Please try again.', 'content.error');
-    //         return back()->withInput();
-    //     }
-    // }
+    
     public function update(Request $request, $id)
     {
         try {

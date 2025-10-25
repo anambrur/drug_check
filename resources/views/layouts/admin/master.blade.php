@@ -346,6 +346,8 @@
                         </a>
                     </li>
                 @endcan
+
+
                 @can('blog view')
                     <li
                         class="nav-item {{ request()->is('admin/blog') ||
@@ -400,57 +402,10 @@
                 @endcan
 
 
-                @can('dot-test view')
-                    <li
-                        class="nav-item {{ request()->is('admin/dot-test') ||
-                        request()->is('admin/dot-test/full') ||
-                        request()->is('admin/dot-test/incremental') ||
-                        request()->is('admin/dot-test/clear') ||
-                        request()->is('admin/dot-test-image/view')
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#dot-tests" aria-expanded="false"
-                            aria-controls="dot-tests">
-                            <i class="fas fa-location-arrow menu-icon"></i>
-                            <span class="menu-title">Dot Test</span>
-                            <i class="ti-angle-right"></i>
-                        </a>
-                        <div class="collapse {{ request()->is('admin/dot-test') ||
-                        request()->is('admin/dot-test/full') ||
-                        request()->is('admin/dot-test/incremental') ||
-                        request()->is('admin/dot-test/clear') ||
-                        request()->is('admin/dot-test-image/view')
-                            ? 'show'
-                            : '' }}"
-                            id="dot-tests">
-                            <ul class="nav flex-column sub-menu">
-                                
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/dot-test') ? 'active' : '' }}"
-                                        href="{{ url('admin/dot-test') }}">Dot Test 
-                                    </a>
-                                </li>
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/dot-test/full') ? 'active' : '' }}"
-                                        href="{{ url('admin/dot-test/full') }}">Full Quest
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                @endcan
-
-
-
                 @can('quest-site view')
                     <li
-                        class="nav-item {{ request()->is('admin/quest-site') ||
-                        request()->is('admin/quest-site/full') ||
-                        request()->is('admin/quest-site/incremental') ||
-                        request()->is('admin/quest-site/clear') ||
-                        request()->is('admin/quest-site-image/view')
+                        class="nav-item {{ request()->is('admin/quest-site/collection-site-insert') ||
+                        request()->is('admin/quest-site/full') 
                             ? 'active'
                             : '' }}">
                         <a class="nav-link" data-toggle="collapse" href="#quest-sites" aria-expanded="false"
@@ -459,51 +414,16 @@
                             <span class="menu-title">Quest Site</span>
                             <i class="ti-angle-right"></i>
                         </a>
-                        <div class="collapse {{ request()->is('admin/quest-site') ||
-                        request()->is('admin/quest-site/full') ||
-                        request()->is('admin/quest-site/incremental') ||
-                        request()->is('admin/quest-site/clear') ||
-                        request()->is('admin/quest-site-image/view')
+                        <div class="collapse {{ request()->is('admin/quest-site/collection-site-insert') ||
+                        request()->is('admin/quest-site/full') 
                             ? 'show'
                             : '' }}"
                             id="quest-sites">
                             <ul class="nav flex-column sub-menu">
-                                
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/quest-site') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-site') }}">Quest Site Dashboard
-                                    </a>
-                                </li>
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/quest-site/full') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-site/full') }}">Full Quest
-                                    </a>
-                                </li>
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/quest-site/incremental') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-site/incremental') }}">Incremental
-                                    </a>
-                                </li>
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/quest-site/clear') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-site/clear') }}">Clear
-                                    </a>
-                                </li>
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/quest-site/view') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-site/view') }}">View
-                                    </a>
-                                </li>
-
                                 <li class="nav-item"> 
                                     <a
                                         class="nav-link {{ request()->is('admin/quest-site/collection-site-insert') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-site/collection-site-insert') }}">collection site
+                                        href="{{ url('admin/quest-site/collection-site-insert') }}">Collection site
                                     </a>
                                 </li>
                                 
@@ -512,6 +432,61 @@
                     </li>
                 @endcan
 
+
+                @can('lab admin view')
+                    <li
+                        class="nav-item {{ request()->is('admin/laboratory-list*') ||
+                        request()->is('admin/mro-list*') ||
+                        request()->is('admin/panel-list*') ||
+                        request()->is('admin/test-admin*') ||
+                        request()->is('admin/dot-agency-list*') 
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#tests" aria-expanded="false"
+                            aria-controls="tests">
+                            <i class="fas fa-vial menu-icon"></i>
+                            <span class="menu-title">Lab Admin</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/laboratory-list*') ||
+                        request()->is('admin/mro-list*') ||
+                        request()->is('admin/panel-list*') ||
+                        request()->is('admin/test-admin*') ||
+                        request()->is('admin/test-admin*') ||
+                        request()->is('admin/dot-agency-list*') 
+                            ? 'show'
+                            : '' }}"
+                            id="tests">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> 
+                                    <a class="nav-link {{ request()->is('admin/laboratory-list') && !request()->is('admin/laboratory-list/*') ? 'active' : '' }}"
+                                    href="{{ route('laboratory-list.index') }}">Laboratories List
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a class="nav-link {{ request()->is('admin/mro-list') && !request()->is('admin/mro-list/*') ? 'active' : '' }}"
+                                    href="{{ route('mro-list.index') }}">MROs List
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a class="nav-link {{ request()->is('admin/panel-list') && !request()->is('admin/panel-list/*') ? 'active' : '' }}"
+                                    href="{{ route('panel-list.index') }}">Panels List
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a class="nav-link {{ request()->is('admin/test-admin') && !request()->is('admin/test-admin/*') ? 'active' : '' }}"
+                                    href="{{ route('test-admin.index') }}">Tests List
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a class="nav-link {{ request()->is('admin/dot-agency-list') && !request()->is('admin/dot-agency-list/*') ? 'active' : '' }}"
+                                    href="{{ route('dot-agency-list.index') }}">DOT Agencies List
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
 
                 @can('client profile view')
                     <li
@@ -588,8 +563,8 @@
                         request()->is('admin/random-selection/*/edit') ||
                         request()->is('admin/random-selection/*/show') ||
                         request()->is('admin/random-selection/results/*') ||
+                        request()->is('admin/admin/random-selection/execute/*') ||
                         request()->is('admin/random-selection/executions/*') 
-                        
                             ? 'active'
                             : '' }}">
                         <a class="nav-link" data-toggle="collapse" href="#random-selections" aria-expanded="false"
@@ -601,9 +576,10 @@
                         <div class="collapse {{ request()->is('admin/random-selection') ||
                         request()->is('admin/random-selection/create') ||
                         request()->is('admin/random-selection/*/edit') ||
+                        request()->is('admin/random-selection/*/show') ||
                         request()->is('admin/random-selection/results/*') ||
+                        request()->is('admin/admin/random-selection/execute/*') ||
                         request()->is('admin/random-selection/executions/*') 
-                        
                             ? 'show'
                             : '' }}"
                             id="random-selections">

@@ -38,9 +38,14 @@ class SelectionProtocol extends Model
         'is_active' => 'boolean'
     ];
 
+    public function clients()
+    {
+        return $this->belongsToMany(ClientProfile::class, 'protocol_client');
+    }
+
     public function client()
     {
-        return $this->belongsTo(ClientProfile::class, );
+        return $this->belongsTo(ClientProfile::class,);
     }
 
     public function test()

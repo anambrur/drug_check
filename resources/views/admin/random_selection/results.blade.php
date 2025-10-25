@@ -98,7 +98,7 @@
                                         @foreach ($primary as $selection)
                                             <tr>
                                                 <td>{{ $counter++ }}</td>
-                                                <td>{{ $selection->employee ? str_pad($selection->employee->id, 6, '0', STR_PAD_LEFT) : 'N/A' }}
+                                                <td>{{ $selection->employee->employee_id ?? 'N/A' }}
                                                 </td>
                                                 <td>{{ $selection->employee->first_name . ' ' . $selection->employee->last_name ?? 'N/A' }}
                                                 </td>

@@ -48,9 +48,10 @@ class RandomSelectionController extends Controller
             // Validate the main form data
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'client_id' => 'required|exists:client_profiles,id',
+                'client_ids' => 'required|array|min:1',
+                'client_ids.*' => 'exists:client_profiles,id',
                 'test_id' => 'required|exists:test_admins,id',
-                'group' => 'required|in:DOT,NON_DOT,DOT_AGENCY,ALL',
+                'group' => 'required|in:DOT,NON_DOT,ALL,FMCSA,FRA,FTA,FAA,PHMSA,RSPA,USCG',
                 'dot_agency_id' => 'required_if:group,DOT_AGENCY|exists:dot_agencies,id',
                 'department_filter' => 'nullable|string|max:255',
                 'shift_filter' => 'nullable|string|max:255',
@@ -85,7 +86,7 @@ class RandomSelectionController extends Controller
 
             $protocol = SelectionProtocol::create([
                 'name' => $input['name'],
-                'client_id' => $input['client_id'],
+                // 'client_id' => $input['client_id'],
                 'test_id' => $input['test_id'],
                 'group' => $input['group'],
                 'dot_agency_id' => $input['group'] === 'DOT_AGENCY' ? $input['dot_agency_id'] : null,
@@ -103,6 +104,12 @@ class RandomSelectionController extends Controller
                 'calculate_pool_average' => $request->has('calculate_pool_average'),
                 'is_active' => $request->has('is_active')
             ]);
+
+            // Attach multiple clients
+            $protocol->clients()->attach($request->client_ids);
+
+            // For backward compatibility, set the first client as primary
+            $protocol->update(['client_id' => $request->client_ids[0]]);
 
             // Add extra tests
             if (!empty($input['extra_tests'])) {
@@ -134,21 +141,49 @@ class RandomSelectionController extends Controller
     }
 
 
+    // public function execute(SelectionProtocol $protocol, RandomSelectionService $service)
+    // {
+    //     try {
+    //         $results = $service->executeProtocol($protocol);
+    //         return view('admin.random_selection.results', [
+    //             'protocol' => $protocol,
+    //             'event' => $results['event'],
+    //             'primary' => $results['primary'],
+    //             'extra' => $results['extra'],
+    //             'sub' => $results['sub'],
+    //             'alternates' => $results['alternates']
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         // dd($e->getMessage());
+    //         return back()->with('error', $e->getMessage());
+    //     }
+    // }
+
     public function execute(SelectionProtocol $protocol, RandomSelectionService $service)
     {
         try {
             $results = $service->executeProtocol($protocol);
+
+            // Show appropriate message based on selection outcome
+            if (!empty($results['warning'])) {
+                toastr()->warning($results['warning'], 'Partial Selection');
+            } else {
+                toastr()->success('Protocol executed successfully. All employees selected.', 'Success');
+            }
+
             return view('admin.random_selection.results', [
                 'protocol' => $protocol,
                 'event' => $results['event'],
                 'primary' => $results['primary'],
                 'extra' => $results['extra'],
                 'sub' => $results['sub'],
-                'alternates' => $results['alternates']
+                'alternates' => $results['alternates'],
+                'warning' => $results['warning'] ?? null
             ]);
         } catch (\Exception $e) {
-            // dd($e->getMessage());
-            return back()->with('error', $e->getMessage());
+            Log::error('Random Selection Error: ' . $e->getMessage());
+            toastr()->error($e->getMessage(), 'Error');
+            return back();
         }
     }
 
@@ -171,6 +206,7 @@ class RandomSelectionController extends Controller
         $event->load([
             'protocol',
             'selectedEmployees.employee',
+            'selectedEmployees.employee.clientProfile',
             'selectedEmployees.test'
         ]);
 
@@ -185,6 +221,7 @@ class RandomSelectionController extends Controller
         foreach ($event->selectedEmployees as $selection) {
             $selections[strtolower($selection->selection_type)]->push($selection);
         }
+
 
         return view('admin.random_selection.execution_results', [
             'event' => $event,
@@ -228,9 +265,11 @@ class RandomSelectionController extends Controller
 
             // Validate the main form data
             $validator = Validator::make($request->all(), [
-                'client_id' => 'required|exists:client_profiles,id',
+                'name' => 'required|string|max:255', // Add name validation
+                'client_ids' => 'required|array|min:1', // Validate client_ids instead of client_id
+                'client_ids.*' => 'exists:client_profiles,id',
                 'test_id' => 'required|exists:test_admins,id',
-                'group' => 'required|in:DOT,NON_DOT,DOT_AGENCY,ALL',
+                'group' => 'required|in:DOT,NON_DOT,ALL,FMCSA,FRA,FTA,FAA,PHMSA,RSPA,USCG',
                 'dot_agency_id' => 'required_if:group,DOT_AGENCY|exists:dot_agencies,id',
                 'department_filter' => 'nullable|string|max:255',
                 'shift_filter' => 'nullable|string|max:255',
@@ -268,7 +307,8 @@ class RandomSelectionController extends Controller
 
             // Update the protocol
             $protocol->update([
-                'client_id' => $input['client_id'],
+                'name' => $input['name'],
+                'client_id' => $input['client_id'] ?? null,
                 'test_id' => $input['test_id'],
                 'group' => $input['group'],
                 'dot_agency_id' => $input['group'] === 'DOT_AGENCY' ? $input['dot_agency_id'] : null,
@@ -286,6 +326,12 @@ class RandomSelectionController extends Controller
                 'calculate_pool_average' => $request->has('calculate_pool_average'),
                 'is_active' => $request->has('is_active')
             ]);
+
+            // Update clients
+            $protocol->clients()->sync($request->client_ids);
+
+            // Update primary client (optional - use first one)
+            $protocol->update(['client_id' => $request->client_ids[0]]);
 
             // Handle extra tests
             $protocol->extraTests()->delete(); // Remove existing

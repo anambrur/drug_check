@@ -27,7 +27,7 @@
                                         placeholder="Enter Protocol Name" required>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            {{-- <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="client_id">Client / Company</label>
                                     <select class="form-control" id="client_id" name="client_id" required>
@@ -36,6 +36,20 @@
                                             <option value="{{ $client->id }}">{{ $client->company_name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                            </div> --}}
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="client_ids">Client(s) / Company</label>
+                                    <select class="form-control" id="client_ids" name="client_ids[]" multiple required>
+                                        @foreach ($clients as $client)
+                                            <option value="{{ $client->id }}">{{ $client->company_name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Hold Ctrl/Cmd to select multiple clients
+                                    </small>
                                 </div>
                             </div>
 
@@ -73,6 +87,15 @@
                                         <option value="DOT">DOT Employees</option>
                                         <option value="NON_DOT">Non-DOT Employees</option>
                                         {{-- <option value="DOT_AGENCY">DOT Agency</option> --}}
+                                        <option value="FMCSA" {{ old('dot') == 'FMCSA' ? 'selected' : '' }}>FMCSA
+                                        </option>
+                                        <option value="FRA" {{ old('dot') == 'FRA' ? 'selected' : '' }}>FRA</option>
+                                        <option value="FTA" {{ old('dot') == 'FTA' ? 'selected' : '' }}>FTA</option>
+                                        <option value="FAA" {{ old('dot') == 'FAA' ? 'selected' : '' }}>FAA</option>
+                                        <option value="PHMSA" {{ old('dot') == 'PHMSA' ? 'selected' : '' }}>PHMSA
+                                        </option>
+                                        <option value="RSPA" {{ old('dot') == 'RSPA' ? 'selected' : '' }}>RSPA</option>
+                                        <option value="USCG" {{ old('dot') == 'USCG' ? 'selected' : '' }}>USCG</option>
                                     </select>
                                 </div>
                             </div>

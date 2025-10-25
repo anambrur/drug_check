@@ -232,15 +232,17 @@
                                     <label for="dot" class="col-form-label">DOT</label>
                                     <select class="form-control @error('dot') is-invalid @enderror" name="dot"
                                         id="dot">
-                                        <option value="">{{ __('content.select_your_option') }}</option>
+                                        <option value="FMCSA" {{ old('dot') == 'FMCSA' ? 'selected' : '' }}>FMCSA
+                                        </option>
+                                        <option value="FRA" {{ old('dot') == 'FRA' ? 'selected' : '' }}>FRA</option>
+                                        <option value="FTA" {{ old('dot') == 'FTA' ? 'selected' : '' }}>FTA</option>
+                                        <option value="FAA" {{ old('dot') == 'FAA' ? 'selected' : '' }}>FAA</option>
+                                        <option value="PHMSA" {{ old('dot') == 'PHMSA' ? 'selected' : '' }}>PHMSA
+                                        </option>
+                                        <option value="RSPA" {{ old('dot') == 'RSPA' ? 'selected' : '' }}>RSPA</option>
+                                        <option value="USCG" {{ old('dot') == 'USCG' ? 'selected' : '' }}>USCG</option>
                                         <option value="yes" {{ old('dot') == 'yes' ? 'selected' : '' }}>YES</option>
-                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>FMCSA</option>
-                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>FRA</option>
-                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>FTA</option>
-                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>FAA</option>
-                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>PHMSA</option>
-                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>RSPA</option>
-                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>USCG</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>NO</option>
                                     </select>
                                     @error('dot')
                                         <span class="invalid-feedback" role="alert">
@@ -471,6 +473,7 @@
                             <th>Last Name</th>
                             <th>Middle Name</th>
                             <th>Email</th>
+                            <th>Group</th>
                             <th>Department</th>
                             <th>Shift</th>
                             <th>Date Of Birth</th>
@@ -496,6 +499,7 @@
                                 <td>{{ $employee->last_name }}</td>
                                 <td>{{ $employee->middle_name }}</td>
                                 <td>{{ $employee->email }}</td>
+                                <td>{{ $employee->dot }}</td>
                                 <td>{{ $employee->department }}</td>
                                 <td>{{ $employee->shift }}</td>
                                 <td>{{ $employee->date_of_birth }}</td>
