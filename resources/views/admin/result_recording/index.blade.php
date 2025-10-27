@@ -206,10 +206,11 @@
                                     {{ \Carbon\Carbon::parse($result->collection_datetime)->format('Y-m-d h:i A') }}
                                 </td>
 
-                                <td>{{ $result->clientProfile->company_name }}</td>
-                                <td>{{ $result->employee->first_name }} {{ $result->employee->first_name }}</td>
-                                <td>{{ $result->reason_for_test }}</td>
-                                <td>{{ $result->testAdmin->test_name }}</td>
+                                <td>{{ $result->clientProfile->company_name ?? 'N/A' }}</td>
+                                <td>{{ $result->employee->first_name ?? 'N/A' }}
+                                    {{ $result->employee->first_name ?? 'N/A' }}</td>
+                                <td>{{ $result->reason_for_test ?? 'N/A' }}</td>
+                                <td>{{ $result->testAdmin->test_name ?? 'N/A' }}</td>
                                 <td>
                                     @if ($result->status == 'positive')
                                         <span class="badge badge-pill badge-danger">Positive</span>
@@ -314,7 +315,8 @@
                                             </button>
                                         </div>
                                         <form method="POST"
-                                            action="{{ route('result-recording.send-notification', $result->id) }}" enctype="multipart/form-data">
+                                            action="{{ route('result-recording.send-notification', $result->id) }}"
+                                            enctype="multipart/form-data">
                                             @csrf
                                             <div class="modal-body">
                                                 <p>The following email may be sent to the client:</p>
@@ -324,8 +326,8 @@
                                                     <p><strong>Subject:</strong> You have new test results and new random
                                                         selections from Skyros Drug Checks Inc</p>
 
-                                                    <p>Hello {{ $result->employee->first_name }}
-                                                        {{ $result->employee->last_name }},</p>
+                                                    <p>Hello {{ $result->employee->first_name ?? '' }}
+                                                        {{ $result->employee->last_name ?? '' }},</p>
 
                                                     <p>Skyros Drug Checks Inc has added new test results to your company
                                                         portal.

@@ -37,21 +37,22 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="first_name">First Name <span class="text-red">*</span></label>
-                                    <input id="first_name" name="first_name" value="{{ $employee->first_name }}" type="text" class="form-control"
-                                        placeholder="Enter First Name" required>
+                                    <input id="first_name" name="first_name" value="{{ $employee->first_name }}"
+                                        type="text" class="form-control" placeholder="Enter First Name" required>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="department">Department</label>
-                                    <input id="department" name="department" value="{{ $employee->department }}" type="text" class="form-control"
-                                        placeholder="Enter Department">
+                                    <input id="department" name="department" value="{{ $employee->department }}"
+                                        type="text" class="form-control" placeholder="Enter Department">
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="date_of_birth">Date of Birth</label>
-                                    <input id="date_of_birth" name="date_of_birth" value="{{ $employee->date_of_birth }}" type="date" class="form-control">
+                                    <input id="date_of_birth" name="date_of_birth" value="{{ $employee->date_of_birth }}"
+                                        type="date" class="form-control">
                                 </div>
                             </div>
 
@@ -64,21 +65,22 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="last_name">Last Name <span class="text-red">*</span></label>
-                                    <input id="last_name" name="last_name" value="{{ $employee->last_name }}" type="text" class="form-control"
-                                        placeholder="Enter Last Name" required>
+                                    <input id="last_name" name="last_name" value="{{ $employee->last_name }}" type="text"
+                                        class="form-control" placeholder="Enter Last Name" required>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="shift">Shift</label>
-                                    <input id="shift" name="shift" value="{{ $employee->shift }}" type="text" class="form-control"
-                                        placeholder="Enter Shift">
+                                    <input id="shift" name="shift" value="{{ $employee->shift }}" type="text"
+                                        class="form-control" placeholder="Enter Shift">
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="start_date">Start Date</label>
-                                    <input id="start_date" name="start_date" value="{{ $employee->start_date }}" type="date" class="form-control">
+                                    <input id="start_date" name="start_date" value="{{ $employee->start_date }}"
+                                        type="date" class="form-control">
                                 </div>
                             </div>
 
@@ -90,31 +92,68 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="middle_name">Middle Name / Initial</label>
-                                    <input id="middle_name" name="middle_name" value="{{ $employee->middle_name }}" type="text" class="form-control"
-                                        placeholder="Enter Middle Name">
+                                    <input id="middle_name" name="middle_name" value="{{ $employee->middle_name }}"
+                                        type="text" class="form-control" placeholder="Enter Middle Name">
                                 </div>
                             </div>
+
+                            {{-- <div class="col-xl-12">
+                                <div class="form-group">
+                                    <label for="dot" class="col-form-label">DOT</label>
+                                    <select class="form-control" name="dot" id="dot">
+                                        <option value="FMCSA" {{ old('dot') == 'FMCSA' ? 'selected' : '' }}>FMCSA
+                                        </option>
+                                        <option value="FRA" {{ old('dot') == 'FRA' ? 'selected' : '' }}>FRA</option>
+                                        <option value="FTA" {{ old('dot') == 'FTA' ? 'selected' : '' }}>FTA</option>
+                                        <option value="FAA" {{ old('dot') == 'FAA' ? 'selected' : '' }}>FAA</option>
+                                        <option value="PHMSA" {{ old('dot') == 'PHMSA' ? 'selected' : '' }}>PHMSA
+                                        </option>
+                                        <option value="RSPA" {{ old('dot') == 'RSPA' ? 'selected' : '' }}>RSPA</option>
+                                        <option value="USCG" {{ old('dot') == 'USCG' ? 'selected' : '' }}>USCG</option>
+                                        <option value="yes" {{ old('dot') == 'yes' ? 'selected' : '' }}>YES</option>
+                                        <option value="no" {{ old('dot') == 'no' ? 'selected' : '' }}>NO</option>
+                                    </select>
+                                </div>
+                            </div> --}}
 
                             <div class="col-xl-12">
                                 <div class="form-group">
                                     <label for="dot" class="col-form-label">DOT</label>
                                     <select class="form-control" name="dot" id="dot">
-                                        <option value="published" selected>{{ __('content.select_your_option') }}</option>
-                                        <option value="yes">YES</option>
-                                        <option value="no">FMCSA</option>
-                                        <option value="no">FRA</option>
-                                        <option value="no">FTA</option>
-                                        <option value="no">FAA</option>
-                                        <option value="no">PHMSA</option>
-                                        <option value="no">RSPA</option>
-                                        <option value="no">USCG</option>
+                                        @php
+                                            $dotOptions = [
+                                                'FMCSA',
+                                                'FRA',
+                                                'FTA',
+                                                'FAA',
+                                                'PHMSA',
+                                                'RSPA',
+                                                'USCG',
+                                                'yes',
+                                                'no',
+                                            ];
+                                        @endphp
+
+                                        <option disabled {{ $employee->dot == null ? 'selected' : '' }}>Select DOT Option
+                                        </option>
+
+                                        @foreach ($dotOptions as $option)
+                                            <option value="{{ $option }}"
+                                                {{ old('dot', $employee->dot) == $option ? 'selected' : '' }}>
+                                                {{ $option }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
+
+
+
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="end_date">End Date</label>
-                                    <input id="end_date" name="end_date" value="{{ $employee->end_date }}" type="date" class="form-control">
+                                    <input id="end_date" name="end_date" value="{{ $employee->end_date }}"
+                                        type="date" class="form-control">
                                 </div>
                             </div>
 
@@ -126,8 +165,8 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="employee_id">Employee ID <span class="text-red">*</span></label>
-                                    <input id="employee_id" name="employee_id" value="{{ $employee->employee_id }}" type="text" class="form-control"
-                                        placeholder="Enter Employee ID">
+                                    <input id="employee_id" name="employee_id" value="{{ $employee->employee_id }}"
+                                        type="text" class="form-control" placeholder="Enter Employee ID">
                                 </div>
                             </div>
 
@@ -135,15 +174,16 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="background_check_date">Background Check Date</label>
-                                    <input id="background_check_date" name="background_check_date" value="{{ $employee->background_check_date }}" type="date"
+                                    <input id="background_check_date" name="background_check_date"
+                                        value="{{ $employee->background_check_date }}" type="date"
                                         class="form-control">
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="ssn">SSN / SIN (reference only)</label>
-                                    <input id="ssn" name="ssn" type="text" value="{{ $employee->ssn }}" class="form-control"
-                                        placeholder="Enter SSN">
+                                    <input id="ssn" name="ssn" type="text" value="{{ $employee->ssn }}"
+                                        class="form-control" placeholder="Enter SSN">
                                 </div>
                             </div>
                         </div>
@@ -153,15 +193,15 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="email">Email <span class="text-red">*</span></label>
-                            <input id="email" name="email" value="{{ $employee->email }}" type="email" class="form-control"
-                                placeholder="Enter Email">
+                            <input id="email" name="email" value="{{ $employee->email }}" type="email"
+                                class="form-control" placeholder="Enter Email">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="phone">Phone</label>
-                            <input id="phone" name="phone" value="{{ $employee->phone }}" type="text" class="form-control"
-                                placeholder="Enter Phone">
+                            <input id="phone" name="phone" value="{{ $employee->phone }}" type="text"
+                                class="form-control" placeholder="Enter Phone">
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -176,28 +216,74 @@
                         <div class="form-group">
                             <label for="cdl_state">CDL State/Province</label>
                             <select class="form-control" name="cdl_state" id="cdl_state">
-                                <option disabled {{ $employee->cdl_state == null ? 'selected' : '' }}>{{ __('content.select_your_option') }}</option>
-                                @foreach([
-                                    'AL'=>'Alabama','AK'=>'Alaska','AZ'=>'Arizona','AR'=>'Arkansas','CA'=>'California','CO'=>'Colorado','CT'=>'Connecticut','DE'=>'Delaware','FL'=>'Florida',
-                                    'GA'=>'Georgia','HI'=>'Hawaii','ID'=>'Idaho','IL'=>'Illinois','IN'=>'Indiana','IA'=>'Iowa','KS'=>'Kansas','KY'=>'Kentucky','LA'=>'Louisiana','ME'=>'Maine',
-                                    'MD'=>'Maryland','MA'=>'Massachusetts','MI'=>'Michigan','MN'=>'Minnesota','MS'=>'Mississippi','MO'=>'Missouri','MT'=>'Montana','NE'=>'Nebraska','NV'=>'Nevada',
-                                    'NH'=>'New Hampshire','NJ'=>'New Jersey','NM'=>'New Mexico','NY'=>'New York','NC'=>'North Carolina','ND'=>'North Dakota','OH'=>'Ohio','OK'=>'Oklahoma',
-                                    'OR'=>'Oregon','PA'=>'Pennsylvania','RI'=>'Rhode Island','SC'=>'South Carolina','SD'=>'South Dakota','TN'=>'Tennessee','TX'=>'Texas','UT'=>'Utah',
-                                    'VT'=>'Vermont','VA'=>'Virginia','WA'=>'Washington','WV'=>'West Virginia','WI'=>'Wisconsin','WY'=>'Wyoming'
-                                ] as $abbr => $state)
-                                    <option value="{{ $abbr }}" {{ $employee->cdl_state == $abbr ? 'selected' : '' }}>
+                                <option disabled {{ $employee->cdl_state == null ? 'selected' : '' }}>
+                                    {{ __('content.select_your_option') }}</option>
+                                @foreach ([
+            'AL' => 'Alabama',
+            'AK' => 'Alaska',
+            'AZ' => 'Arizona',
+            'AR' => 'Arkansas',
+            'CA' => 'California',
+            'CO' => 'Colorado',
+            'CT' => 'Connecticut',
+            'DE' => 'Delaware',
+            'FL' => 'Florida',
+            'GA' => 'Georgia',
+            'HI' => 'Hawaii',
+            'ID' => 'Idaho',
+            'IL' => 'Illinois',
+            'IN' => 'Indiana',
+            'IA' => 'Iowa',
+            'KS' => 'Kansas',
+            'KY' => 'Kentucky',
+            'LA' => 'Louisiana',
+            'ME' => 'Maine',
+            'MD' => 'Maryland',
+            'MA' => 'Massachusetts',
+            'MI' => 'Michigan',
+            'MN' => 'Minnesota',
+            'MS' => 'Mississippi',
+            'MO' => 'Missouri',
+            'MT' => 'Montana',
+            'NE' => 'Nebraska',
+            'NV' => 'Nevada',
+            'NH' => 'New Hampshire',
+            'NJ' => 'New Jersey',
+            'NM' => 'New Mexico',
+            'NY' => 'New York',
+            'NC' => 'North Carolina',
+            'ND' => 'North Dakota',
+            'OH' => 'Ohio',
+            'OK' => 'Oklahoma',
+            'OR' => 'Oregon',
+            'PA' => 'Pennsylvania',
+            'RI' => 'Rhode Island',
+            'SC' => 'South Carolina',
+            'SD' => 'South Dakota',
+            'TN' => 'Tennessee',
+            'TX' => 'Texas',
+            'UT' => 'Utah',
+            'VT' => 'Vermont',
+            'VA' => 'Virginia',
+            'WA' => 'Washington',
+            'WV' => 'West Virginia',
+            'WI' => 'Wisconsin',
+            'WY' => 'Wyoming',
+        ] as $abbr => $state)
+                                    <option value="{{ $abbr }}"
+                                        {{ $employee->cdl_state == $abbr ? 'selected' : '' }}>
                                         {{ $state }}
                                     </option>
                                 @endforeach
                             </select>
-                            
+
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="cdl_number">CDL Number</label>
-                            <input id="cdl_number" name="cdl_number" value="{{ $employee->cdl_number }}" type="text" class="form-control"
-                                placeholder="Enter CDL Number">
+                            <input id="cdl_number" name="cdl_number" value="{{ $employee->cdl_number }}" type="text"
+                                class="form-control" placeholder="Enter CDL Number">
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -205,8 +291,7 @@
                             <label for="status" class="col-form-label">{{ __('content.status') }}</label>
                             <select class="form-control" name="status" id="status">
                                 <option value="active" selected>{{ __('content.select_your_option') }}</option>
-                                <option value="active"
-                                    {{ $employee->status == 'active' ? 'selected' : '' }}>
+                                <option value="active" {{ $employee->status == 'active' ? 'selected' : '' }}>
                                     Active</option>
                                 <option value="inactive" {{ $employee->status == 'inactive"' ? 'selected' : '' }}>
                                     Inactive</option>

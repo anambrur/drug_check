@@ -26,7 +26,6 @@ class AdminUserController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $admin_users = User::all();
-        // dd($admin_users);
 
         return view('admin.admin_user.index', compact('favicon', 'panel_image', 'admin_users'));
     }
@@ -60,6 +59,7 @@ class AdminUserController extends Controller
             'name' => 'required|max:255',
             'email' => 'required|email|unique:users|max:255',
             'password' => 'required|confirmed|min:6',
+            'status' => 'required|in:1,2,3',
             'profile_photo_path' => 'image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
@@ -157,6 +157,7 @@ class AdminUserController extends Controller
                 Rule::unique('users')->ignore($id),
             ],
             'password' => 'required|confirmed|min:6',
+            'status' => 'required|in:1,2,3',
             'profile_photo_path' => 'image|mimes:jpeg,jpg,png|max:2048',
         ]);
 

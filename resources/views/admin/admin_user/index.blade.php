@@ -131,11 +131,16 @@
 
 @endsection
 
-@push('script')
+@push('scripts')
     <script>
         $(document).ready(function() {
-            // Status change handler
-            $('.status-select').on('change', function() {
+            // Store previous value when select gets focus
+            $(document).on('focus', '.status-select', function() {
+                $(this).data('previous-value', $(this).val());
+            });
+
+            // Handle status change with event delegation
+            $(document).on('change', '.status-select', function() {
                 var $select = $(this);
                 var userId = $select.data('user-id');
                 var newStatus = $select.val();
@@ -145,7 +150,7 @@
 
                 // Send AJAX request to update status
                 $.ajax({
-                    url: 'admin-user/' + userId + '/status',
+                    url: '{{ url('admin/admin-user') }}/' + userId + '/status',
                     method: 'POST',
                     data: {
                         status: newStatus,
@@ -169,7 +174,7 @@
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: 'Failed to update status!',
+                                text: data.message || 'Failed to update status!',
                                 timer: 5000,
                                 showConfirmButton: true
                             });
@@ -177,6 +182,7 @@
                     },
                     error: function(xhr, status, error) {
                         console.error('Error:', error);
+                        // Revert to previous value
                         $select.val($select.data('previous-value'));
                         // Error
                         Swal.fire({

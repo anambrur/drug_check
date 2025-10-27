@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\Admin\Employee;
 use App\Models\Admin\Portfolio;
 use App\Models\Admin\QuestOrder;
+use App\Models\Admin\ClientProfile;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Admin\CollectionSite;
@@ -857,14 +858,26 @@ class QuestDiagnosticsController extends Controller
     {
         $portfolio = Portfolio::findOrFail($portfolioId);
         $authUser = Auth::user();
+        $role = $authUser->roles()->first();
 
-        return view('admin.dot-test.index', compact('portfolio', 'authUser'));
+        $clientProfile = ClientProfile::where('user_id', $authUser->id)->first();
+
+        if ($role->name == 'company') {
+            $employees = Employee::with('clientProfile')->where('status', 'active')->where('client_profile_id', $clientProfile->id)->get();
+        } elseif ($role->name == 'super-admin') {
+            $employees = Employee::with('clientProfile')->where('status', 'active')->get();
+        } else {
+            $employees = [];
+        }
+
+        return view('admin.dot-test.index', compact('portfolio', 'authUser', 'employees'));
     }
     public function processPayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'portfolio_id' => 'required|exists:portfolios,id',
             'price' => 'required|numeric',
+            'employee_id' => 'required|exists:employees,id',
         ]);
 
         if ($validator->fails()) {
@@ -887,6 +900,7 @@ class QuestDiagnosticsController extends Controller
                 'metadata' => [
                     'portfolio_id' => $portfolio->id,
                     'test_name' => $portfolio->title,
+                    'employee_id' => $request->employee_id,
                 ],
                 'automatic_payment_methods' => [
                     'enabled' => true,
@@ -901,6 +915,7 @@ class QuestDiagnosticsController extends Controller
                     'amount' => $amount / 100,
                     'test_name' => $portfolio->title,
                     'quest_unit_code' => $portfolio->quest_unit_code,
+                    'employee_id' => $request->employee_id,
                 ]
             ]);
 
@@ -927,10 +942,11 @@ class QuestDiagnosticsController extends Controller
             toastr()->error('Invalid or expired payment session. Please complete payment first.', 'Error');
             return redirect()->route('dot-test.index', ['portfolioId' => $paymentData['portfolio_id'] ?? null]);
         }
-
-        $authUser = Auth::user();
-        $employee = Employee::with('clientProfile')->where('user_id', $authUser->id)->first();
-
+        // Get employee data from session or database
+        $employee = null;
+        if (isset($paymentData['employee_id'])) {
+            $employee = Employee::with('clientProfile')->find($paymentData['employee_id']);
+        }
 
         // Get portfolio info
         $portfolio = Portfolio::find($paymentData['portfolio_id']);

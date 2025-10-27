@@ -35,6 +35,23 @@
                             </div>
                         </div>
 
+                        <div class="form-group">
+                            <label for="employee_id" class="col-form-label"><i
+                                    class="fas fa-user mr-2 text-primary"></i>Select Employee <span
+                                    class="text-red">*</span></label>
+                            <select class="form-control" name="employee_id" id="employee_id" required>
+                                <option value="" selected disabled>Choose an employee...</option>
+                                @foreach ($employees as $employee)
+                                    <option value="{{ $employee->id }}">
+                                        {{ $employee->first_name }} {{ $employee->last_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>Select the employee who will take this test
+                            </div>
+                        </div>
+
                         <!-- Order Summary -->
                         <div class="bg-light rounded-3 p-4 mb-4 border">
                             <h5 class="text-center mb-3 fw-semibold">Order Summary</h5>
@@ -52,18 +69,20 @@
                             </div>
                         </div>
 
-
                         <form id="payment-form" method="POST">
                             @csrf
                             <input type="hidden" name="portfolio_id" value="{{ $portfolio->id }}">
                             <input type="hidden" name="payment_intent_id" id="payment_intent_id">
                             <input type="hidden" name="test_name" id="test_name" value="{{ $portfolio->title }}">
                             <input type="hidden" id="price" value="{{ $portfolio->price * 100 }}">
+                            <!-- Add hidden input for employee_id -->
+                            <input type="hidden" name="employee_id" id="selected_employee_id">
 
+                            <!-- Rest of your payment form remains the same -->
                             <!-- Payment Card Section -->
                             <div class="mb-4">
                                 <h6 class="fw-semibold mb-3 text-dark">
-                                    <i class="fas fa-credit-card me-2 text-primary"></i>Payment Information
+                                    <i class="fas fa-credit-card mr-2 text-primary"></i>Payment Information
                                 </h6>
 
                                 <div class="border rounded-3 p-4 bg-white">
@@ -79,41 +98,42 @@
 
                                     <!-- Cardholder Name -->
                                     <div class="form-floating mb-3">
+                                        <label for="cardholder-name" class="col-form-label text-muted">Cardholder Name
+                                            *</label>
                                         <input type="text" class="form-control" id="cardholder-name"
                                             placeholder="Cardholder Name" required>
-                                        <label for="cardholder-name" class="text-muted">Cardholder Name *</label>
                                     </div>
 
                                     <!-- Card Elements -->
                                     <div class="mb-3">
-                                        <label class="form-label small fw-semibold text-dark mb-2">Card Number *</label>
-                                        <div id="card-number" class="border rounded p-3 bg-white"></div>
+                                        <label class="col-form-label">Card Number *</label>
+                                        <div id="card-number" class="border rounded p-2 bg-white"></div>
                                     </div>
 
                                     <div class="row g-3 mb-3">
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-semibold text-dark mb-2">Expiration Date
-                                                *</label>
-                                            <div id="card-expiry" class="border rounded p-3 bg-white"></div>
+                                            <label class="col-form-label">Expiration Date *</label>
+                                            <div id="card-expiry" class="border rounded p-2 bg-white"></div>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-semibold text-dark mb-2">CVC *</label>
-                                            <div id="card-cvc" class="border rounded p-3 bg-white"></div>
+                                            <label class="col-form-label">CVC *</label>
+                                            <div id="card-cvc" class="border rounded p-2 bg-white"></div>
                                         </div>
                                     </div>
 
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-semibold text-dark mb-2">ZIP Code *</label>
-                                            <div id="postal-code" class="border rounded p-3 bg-white"></div>
+                                            <label class="col-form-label">ZIP Code *</label>
+                                            <div id="postal-code" class="border rounded p-2 bg-white"></div>
                                         </div>
                                         <div class="col-md-6">
-                                            <label class="form-label small fw-semibold text-dark mb-2">Country *</label>
-                                            <div class="form-floating">
-                                                <select class="form-select" id="country" name="country" required>
+                                            <div class="form-group">
+                                                <label for="status" class="col-form-label">Country <span
+                                                        class="text-red">*</span>
+                                                </label>
+                                                <select class="form-control" name="country" id="country" required>
                                                     <option value="" selected disabled>Select Country</option>
                                                 </select>
-                                                <label for="country" class="text-muted">Country *</label>
                                             </div>
                                         </div>
                                     </div>
@@ -124,7 +144,7 @@
                                     <!-- Security Badge -->
                                     <div class="text-center mt-4 pt-3 border-top">
                                         <div class="d-flex align-items-center justify-content-center text-muted small">
-                                            <i class="fas fa-lock text-success me-2"></i>
+                                            <i class="fas fa-lock text-success mr-2"></i>
                                             <span>Secure SSL Encryption • Your payment information is safe</span>
                                         </div>
                                     </div>
@@ -135,7 +155,7 @@
                             <div class="mt-4">
                                 <div class="form-check mb-4">
                                     <input class="form-check-input" type="checkbox" id="terms-check" required>
-                                    <label class="form-check-label small text-muted" for="terms-check">
+                                    <label class="form-check-label small text-muted ml-3" for="terms-check">
                                         I agree to the <a href="#" class="text-decoration-none"
                                             data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a>
                                         and authorize the charge of ${{ number_format($portfolio->price, 2) }}
@@ -218,6 +238,8 @@
             const payButtonLoader = document.getElementById('pay-button-loader');
             const errorContainer = document.getElementById('card-errors');
             const price = {{ $portfolio->price * 100 }}; // Convert to cents
+            const employeeSelect = document.getElementById('employee_id');
+            const selectedEmployeeIdInput = document.getElementById('selected_employee_id');
 
             // Element styles using Bootstrap theme colors
             const elementStyles = {
@@ -276,6 +298,19 @@
                 let isValid = true;
                 clearError();
 
+                // Employee validation
+                const employeeId = employeeSelect.value;
+                if (!employeeId) {
+                    employeeSelect.classList.add('is-invalid');
+                    showError('Please select an employee');
+                    isValid = false;
+                } else {
+                    employeeSelect.classList.remove('is-invalid');
+                    employeeSelect.classList.add('is-valid');
+                    // Set the selected employee ID in the hidden input
+                    selectedEmployeeIdInput.value = employeeId;
+                }
+
                 // Cardholder name validation
                 const cardholderName = document.getElementById('cardholder-name');
                 if (!cardholderName.value.trim()) {
@@ -316,7 +351,10 @@
                 setLoading(true);
 
                 try {
-                    // Create payment intent
+                    // Get the selected employee ID
+                    const employeeId = employeeSelect.value;
+
+                    // Create payment intent with employee_id
                     const response = await fetch("{{ route('admin.dot-test.process-payment') }}", {
                         method: "POST",
                         headers: {
@@ -325,7 +363,8 @@
                         },
                         body: JSON.stringify({
                             portfolio_id: {{ $portfolio->id }},
-                            price: price
+                            price: price,
+                            employee_id: employeeId // Add employee_id to the request
                         })
                     });
 
@@ -395,10 +434,10 @@
 
             function showError(message) {
                 errorContainer.innerHTML = `<div class="alert alert-danger alert-dismissible fade show d-flex align-items-center">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <div>${message}</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
-            </div>`;
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <div>${message}</div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                </div>`;
 
                 // Scroll to error
                 errorContainer.scrollIntoView({
@@ -436,11 +475,17 @@
                 });
 
             // Real-time form validation
-            document.querySelectorAll('#cardholder-name, #country, #terms-check').forEach(element => {
+            document.querySelectorAll('#employee_id, #cardholder-name, #country, #terms-check').forEach(element => {
                 element.addEventListener('input', function() {
                     this.classList.remove('is-invalid');
                     clearError();
                 });
+            });
+
+            // Employee select change
+            employeeSelect.addEventListener('change', function() {
+                this.classList.remove('is-invalid');
+                clearError();
             });
 
             // Terms checkbox validation

@@ -65,7 +65,7 @@
                         <div class="d-flex align-items-center">
                             <div class="flex-grow-1">
                                 <h4 class="mb-1 text-white">
-                                    <i class="fas fa-flask me-2"></i>Quest Diagnostics DOT Test Order Form
+                                    <i class="fas fa-flask mr-2"></i>Quest Diagnostics DOT Test Order Form
                                 </h4>
                                 <p class="mb-0 opacity-75">Complete the form to schedule your {{ $portfolio->title }} DOT
                                     test</p>
@@ -86,7 +86,7 @@
                                         <div class="progress-bar bg-primary" role="progressbar" style="width: 50%"></div>
                                     </div>
 
-                                    <div class="text-center z-2">
+                                    <div class="text-center" style="z-index: 2">
                                         <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
                                             style="width: 40px; height: 40px;">
                                             <i class="fas fa-check"></i>
@@ -94,7 +94,7 @@
                                         <div class="small fw-semibold text-success">Payment</div>
                                     </div>
 
-                                    <div class="text-center z-2">
+                                    <div class="text-center" style="z-index: 2">
                                         <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
                                             style="width: 40px; height: 40px;">
                                             2
@@ -102,7 +102,7 @@
                                         <div class="small fw-semibold text-primary">Test Information</div>
                                     </div>
 
-                                    <div class="text-center z-2">
+                                    <div class="text-center" style="z-index: 2">
                                         <div class="bg-light text-muted rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
                                             style="width: 40px; height: 40px;">
                                             3
@@ -115,7 +115,7 @@
 
                         @if (session('error'))
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <i class="fas fa-exclamation-circle me-2"></i>
+                                <i class="fas fa-exclamation-circle mr-2"></i>
                                 {{ session('error') }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
@@ -144,9 +144,11 @@
                             <div class="card mb-4">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0">
-                                        <i class="fas fa-user-circle me-2 text-primary"></i>Personal Information
+                                        <i class="fas fa-user-circle mr-2 text-primary"></i>Personal Information
                                     </h5>
                                 </div>
+
+                                
                                 <div class="card-body">
                                     <div class="row g-3">
                                         <div class="col-md-6">
@@ -279,7 +281,7 @@
                             <div class="card mb-4">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0">
-                                        <i class="fas fa-flask me-2 text-primary"></i>DOT Test Information
+                                        <i class="fas fa-flask mr-2 text-primary"></i>DOT Test Information
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -523,7 +525,7 @@
                             <!-- Submit Button -->
                             <div class="text-center mt-4">
                                 <button type="submit" class="btn btn-primary btn-lg px-5 py-3">
-                                    <i class="fas fa-paper-plane me-2"></i>Submit DOT Test to Quest Diagnostics
+                                    <i class="fas fa-paper-plane mr-2"></i>Submit DOT Test to Quest Diagnostics
                                 </button>
                             </div>
                         </form>

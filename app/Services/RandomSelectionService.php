@@ -295,8 +295,8 @@ class RandomSelectionService
             // Send notification email (only for primary selections)
             if ($type === 'PRIMARY' && $employee->email) {
                 try {
-                    // Mail::to($employee->email)
-                    //     ->queue(new EmployeeSelectedNotification($employee, $event->protocol));
+                    Mail::to($employee->email)
+                        ->queue(new EmployeeSelectedNotification($employee, $event->protocol));
 
                     $selection->update(['notification_sent' => true, 'notification_sent_at' => now()]);
                 } catch (\Exception $e) {

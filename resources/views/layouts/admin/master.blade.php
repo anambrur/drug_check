@@ -497,7 +497,8 @@
                         request()->is('admin/client-profile-image/*/create') ||
                         request()->is('admin/client-profile-image/*/*/edit') ||
                         request()->is('admin/client-profile-detail/*/create') ||
-                        request()->is('admin/client-profile-detail/*/*/edit')
+                        request()->is('admin/client-profile-detail/*/*/edit') ||
+                        request()->is('admin/employee/*/edit') 
                             ? 'active'
                             : '' }}">
                         <a class="nav-link" data-toggle="collapse" href="#client-profiles" aria-expanded="false"
@@ -513,7 +514,8 @@
                         request()->is('admin/client-profile-image/*/create') ||
                         request()->is('admin/client-profile-image/*/*/edit') ||
                         request()->is('admin/client-profile-detail/*/create') ||
-                        request()->is('admin/client-profile-detail/*/*/edit')
+                        request()->is('admin/client-profile-detail/*/*/edit') ||
+                        request()->is('admin/employee/*/edit')
                             ? 'show'
                             : '' }}"
                             id="client-profiles">
