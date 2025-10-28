@@ -23,7 +23,7 @@ return new class extends Migration
             $table->date('date_of_birth')->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->string('employee_id')->unique();
+            $table->string('employee_id');
             $table->date('background_check_date')->nullable();
             $table->string('ssn')->nullable();
             $table->string('email');

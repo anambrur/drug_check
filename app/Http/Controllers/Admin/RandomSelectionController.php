@@ -35,6 +35,7 @@ class RandomSelectionController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request->all());
         DB::beginTransaction();
 
         try {
@@ -86,7 +87,7 @@ class RandomSelectionController extends Controller
 
             $protocol = SelectionProtocol::create([
                 'name' => $input['name'],
-                // 'client_id' => $input['client_id'],
+                'client_id' => $request->client_ids[0],
                 'test_id' => $input['test_id'],
                 'group' => $input['group'],
                 'dot_agency_id' => $input['group'] === 'DOT_AGENCY' ? $input['dot_agency_id'] : null,
@@ -109,7 +110,7 @@ class RandomSelectionController extends Controller
             $protocol->clients()->attach($request->client_ids);
 
             // For backward compatibility, set the first client as primary
-            $protocol->update(['client_id' => $request->client_ids[0]]);
+            // $protocol->update(['client_id' => $request->client_ids[0]]);
 
             // Add extra tests
             if (!empty($input['extra_tests'])) {

@@ -399,7 +399,7 @@
     <!-- end row -->
 @endsection
 
-@push('script')
+@push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // DOT agency field visibility

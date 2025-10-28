@@ -74,7 +74,7 @@
     <!-- end row -->
 @endsection
 
-@push('script')
+@push('scripts')
     <script>
         $(document).ready(function() {
             // Master Checkbox (Check All)
