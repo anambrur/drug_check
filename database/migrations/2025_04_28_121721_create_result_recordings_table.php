@@ -39,6 +39,7 @@ return new class extends Migration
             // Additional Information
             $table->text('note')->nullable();
             $table->enum('status', ['positive', 'negative', 'refused','excused','cancelled','pending','saved','collection only'])->default('pending');
+            $table->string('pdf_path')->nullable();
 
             // Timestamps
             $table->timestamps();

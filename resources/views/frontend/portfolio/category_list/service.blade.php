@@ -75,7 +75,7 @@
                                         <div class="portfolio-details">
                                             <h6>{{ $item->title }}</h6>
                                             <div class="d-flex justify-content-between mt-2">
-                                                <span class="text-start">{{ $item->code }}</span>
+                                                <span class="text-start">{{ $item->test_code }}</span>
                                                 <span class="text-end">${{ $item->price }}</span>
                                             </div>
                                         </div>

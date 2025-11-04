@@ -80,6 +80,15 @@
                                 value="{{ old('code') }}" placeholder="Enter Code">
                         </div>
                     </div>
+
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="test_code">Test Code</label>
+                            <input type="text" name="test_code" class="form-control" id="test_code"
+                                value="{{ old('test_code') }}" placeholder="Enter Test Code">
+                        </div>
+                    </div>
+                    
                     <div class="col-xl-12">
                         <div class="form-group">
                             <label for="status" class="col-form-label">{{ __('content.status') }} </label>

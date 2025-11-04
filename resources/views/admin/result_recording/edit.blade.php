@@ -3,10 +3,6 @@
 @section('content')
     <!-- Form row -->
 
-
-    
-
-
     <div class="row">
         <div class="col-xl-12 box-margin height-card">
             <div class="card card-body">
@@ -232,6 +228,37 @@
                         </div>
                     </div>
 
+                    <!-- PDF Upload Section -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="pdf_file">Upload PDF Report</label>
+                            <input type="file" class="form-control-file" id="pdf_file" name="pdf_file"
+                                accept=".pdf,.PDF">
+                            <small class="form-text text-muted">
+                                Upload a PDF file (Max: 10MB). Leave empty to keep existing file.
+                            </small>
+
+                            @if ($recoding_result->pdf_path)
+                                <div class="mt-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-pdf text-danger mr-2"></i>
+                                        <a href="{{ asset($recoding_result->pdf_path) }}" target="_blank"
+                                            class="mr-3">
+                                            View Current PDF
+                                        </a>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="remove_pdf"
+                                                id="remove_pdf" value="1">
+                                            <label class="form-check-label text-danger ml-3" for="remove_pdf">
+                                                Remove PDF
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="note">Note</label>
@@ -265,6 +292,14 @@
                     $('#date_of_collection').val() + ' ' + $('#time_of_collection').val() + ':00'
                 );
             });
+
+            // Show/hide remove PDF checkbox based on file input
+            $('#pdf_file').change(function() {
+                if (this.files.length > 0) {
+                    $('#remove_pdf').prop('checked', false);
+                }
+            });
+
 
             // Load employees when company is selected
             $('#company_id').change(function() {

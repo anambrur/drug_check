@@ -142,24 +142,6 @@ class RandomSelectionController extends Controller
     }
 
 
-    // public function execute(SelectionProtocol $protocol, RandomSelectionService $service)
-    // {
-    //     try {
-    //         $results = $service->executeProtocol($protocol);
-    //         return view('admin.random_selection.results', [
-    //             'protocol' => $protocol,
-    //             'event' => $results['event'],
-    //             'primary' => $results['primary'],
-    //             'extra' => $results['extra'],
-    //             'sub' => $results['sub'],
-    //             'alternates' => $results['alternates']
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         // dd($e->getMessage());
-    //         return back()->with('error', $e->getMessage());
-    //     }
-    // }
-
     public function execute(SelectionProtocol $protocol, RandomSelectionService $service)
     {
         try {
@@ -309,7 +291,7 @@ class RandomSelectionController extends Controller
             // Update the protocol
             $protocol->update([
                 'name' => $input['name'],
-                'client_id' => $input['client_id'] ?? null,
+                'client_id' =>  $request->client_ids[0],
                 'test_id' => $input['test_id'],
                 'group' => $input['group'],
                 'dot_agency_id' => $input['group'] === 'DOT_AGENCY' ? $input['dot_agency_id'] : null,
@@ -331,8 +313,7 @@ class RandomSelectionController extends Controller
             // Update clients
             $protocol->clients()->sync($request->client_ids);
 
-            // Update primary client (optional - use first one)
-            $protocol->update(['client_id' => $request->client_ids[0]]);
+            
 
             // Handle extra tests
             $protocol->extraTests()->delete(); // Remove existing

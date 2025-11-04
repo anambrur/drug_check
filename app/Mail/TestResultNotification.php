@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\File;
 
 class TestResultNotification extends Mailable
 {
@@ -18,14 +19,14 @@ class TestResultNotification extends Mailable
     public $emailData;
     public $recipientType;
     public $pdfContent;
-    public $uploadedPdf;
+    public $databasePdf;
 
-    public function __construct(array $emailData, string $recipientType, $pdfContent = null, $uploadedPdf = null)
+    public function __construct(array $emailData, string $recipientType, $pdfContent = null, $databasePdf = null)
     {
         $this->emailData = $emailData;
         $this->recipientType = $recipientType;
         $this->pdfContent = $pdfContent;
-        $this->uploadedPdf = $uploadedPdf;
+        $this->databasePdf = $databasePdf;
     }
 
     public function envelope(): Envelope
@@ -65,7 +66,7 @@ class TestResultNotification extends Mailable
     {
         $attachments = [];
 
-        // Add generated PDF if exists and is valid
+        // Add generated PDF certificate if exists and is valid
         if ($this->pdfContent && is_string($this->pdfContent)) {
             $attachments[] = Attachment::fromData(
                 fn() => $this->pdfContent,
@@ -73,10 +74,10 @@ class TestResultNotification extends Mailable
             )->withMime('application/pdf');
         }
 
-        // Add uploaded PDF if exists and is valid
-        if ($this->uploadedPdf && $this->uploadedPdf->isValid()) {
-            $attachments[] = Attachment::fromPath($this->uploadedPdf->getRealPath())
-                ->as($this->uploadedPdf->getClientOriginalName())
+        // Add database PDF if exists and is valid file path
+        if ($this->databasePdf && is_string($this->databasePdf) && File::exists($this->databasePdf)) {
+            $attachments[] = Attachment::fromPath($this->databasePdf)
+                ->as('test_result_report.pdf')
                 ->withMime('application/pdf');
         }
 

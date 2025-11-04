@@ -2,38 +2,44 @@
 
 namespace App\Services;
 
+use Illuminate\Support\FacadesLog;
 use App\Mail\TestStoreNotification;
 use Illuminate\Support\Facades\Log;
 use App\Mail\TestResultNotification;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Admin\ContactInfoWidget;
 
 class NotificationService
 {
-    public function sendTestNotification($mailData, string $recipientType, $pdfContent = null, $uploadedPdf = null): bool
+    public function sendTestNotification($mailData, string $recipientType, $pdfContent = null, $databasePdf = null): bool
     {
         try {
             if (!in_array($recipientType, ['company', 'employee'])) {
-                throw new \InvalidArgumentException("Invalid recipient type");
+                throw new \InvalidArgumentException("Invalid recipient type: " . $recipientType);
             }
+
             if ($recipientType === 'company' && empty($mailData->clientProfile->der_contact_email)) {
-                throw new \RuntimeException("Company DER email not found");
+                throw new \RuntimeException("Company DER email not found for company: " . ($mailData->clientProfile->company_name ?? 'Unknown'));
             }
 
             if ($recipientType === 'employee' && empty($mailData->employee->email)) {
-                throw new \RuntimeException("Employee email not found");
+                throw new \RuntimeException("Employee email not found for: " . ($mailData->employee->first_name ?? 'Unknown'));
             }
 
             $contact_info_widget = ContactInfoWidget::first();
+
             // Calculate overall result
             $overallResult = $mailData->resultPanel->contains('result', 'positive')
                 ? 'Positive'
                 : 'Negative';
 
+            
+
             // Prepare email data
             $emailData = [
-                'has_attachments' => $pdfContent || $uploadedPdf,
-                'has_custom_attachment' => (bool)$uploadedPdf,
+                'has_attachments' => $pdfContent || $databasePdf,
+                'has_database_pdf' => (bool)$databasePdf,
                 'company_name' => $mailData->clientProfile->company_name ?? 'Company',
                 'address' => $mailData->clientProfile->address ?? '',
                 'city' => $mailData->clientProfile->city ?? '',
@@ -76,35 +82,25 @@ class NotificationService
                 ? $mailData->clientProfile->der_contact_email
                 : $mailData->employee->email;
 
+
             // Send email
-            // Mail::to($recipient)->send(new TestResultNotification($emailData, $recipientType,$pdfContent));
-
-            // dd($pdfContent , $uploadedPdf);
-
-            // Ensure we have valid PDF content or null
-            $pdfContent = $pdfContent ?: null;
-            $uploadedPdf = $uploadedPdf ?: null;
-
-
             Mail::to($recipient)->send(new TestResultNotification(
                 $emailData,
                 $recipientType,
                 $pdfContent,
-                $uploadedPdf
+                $databasePdf
             ));
-
-
-
-            Log::info("Successfully sent notification to {$recipientType}: {$recipient}");
+            
             return true;
         } catch (\InvalidArgumentException $e) {
-            Log::warning($e->getMessage());
+            Log::error("Invalid argument: " . $e->getMessage());
             return false;
         } catch (\RuntimeException $e) {
-            Log::warning($e->getMessage());
+            Log::error("Runtime error: " . $e->getMessage());
             return false;
         } catch (\Exception $e) {
             Log::error("Failed to send {$recipientType} notification: " . $e->getMessage());
+            Log::error("Error details: " . $e->getTraceAsString());
             return false;
         }
     }

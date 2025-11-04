@@ -146,6 +146,13 @@
         .mb-1 {
             margin-bottom: 0.25rem;
         }
+
+        .attachments {
+            background-color: #e9f7fe;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
     </style>
 </head>
 
@@ -156,7 +163,6 @@
         <p>Hello {{ $type === 'company' ? $data['company_name'] : $data['employee_name'] }},</p>
 
         <p>Skyros Drug Checks Inc has added new test results to your portal.</p>
-
 
         @if (!empty($data['additional_text']))
             <h3>Additional Information:</h3>
@@ -180,7 +186,6 @@
                     </div>
                 @endif
 
-
                 <div class="client-info">
                     <h4>{{ $data['company_name'] ?? '' }}</h4>
                     <p class="mb-1">{{ $data['address'] ?? '' }}</p>
@@ -191,16 +196,9 @@
                     </p>
                     <p>{{ $data['phone'] ?? '' }}</p>
                 </div>
-
             </div>
 
             <div class="col-md-6">
-                {{-- @if (isset($data['header_image']))
-                    <div class="text-right">
-                        <img src="{{ $data['header_image'] }}" alt="Company Logo" class="header-image rounded">
-                    </div>
-                @endif --}}
-
                 <div style="display: flex; margin-top: 20px;">
                     <div style="flex: 1;">
                         <div class="view_results_blue">
@@ -267,7 +265,6 @@
 
         <hr>
 
-
         @if (isset($data['test_panels']) && count($data['test_panels']) > 0)
             <h3>Test Panel Results</h3>
             <table class="result-table">
@@ -294,25 +291,19 @@
             </table>
         @endif
 
-
-        {{-- @if (isset($data['has_attachments']) && $data['has_attachments'])
+        {{-- Show attachments information --}}
+        @if (isset($data['has_attachments']) && $data['has_attachments'])
             <div class="attachments mt-3">
-                <h4>Attachments:</h4>
+                <h4>📎 Attachments:</h4>
                 <ul>
-                    <li>Test Results Certificate (PDF)</li>
-                    @if (isset($data['has_custom_attachment']) && $data['has_custom_attachment'])
-                        <li>Additional Document (PDF)</li>
+                    @if (isset($data['has_database_pdf']) && $data['has_database_pdf'])
+                        <li><strong>Test_Result_Report.pdf</strong> - Detailed test results report</li>
                     @endif
+                    <li><strong>Certificate.pdf</strong> - Test completion certificate</li>
                 </ul>
+                <p><small>These files are attached to this email.</small></p>
             </div>
-        @endif --}}
-
-
-
-
-
-
-
+        @endif
 
         <div class="footer">
             <p>Thank you,</p>

@@ -52,6 +52,7 @@ class Portfolio extends Model
         'order',
         'price',
         'code',
+        'test_code'
     ];
 
     public function portfolio_category()

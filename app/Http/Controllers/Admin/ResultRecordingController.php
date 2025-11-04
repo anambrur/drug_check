@@ -15,8 +15,10 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Admin\ClientProfile;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\File;
 use App\Models\Admin\ResultRecording;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -156,7 +158,6 @@ class ResultRecordingController extends Controller
             // Send notifications
             $notificationService = new NotificationService();
             $notificationService->sendTestNotificationStore($result, 'company');
-            $notificationService->sendTestNotificationStore($result, 'employee');
 
 
             toastr()->success('content.created_successfully', 'content.success');
@@ -231,6 +232,8 @@ class ResultRecordingController extends Controller
             'time_of_collection' => 'required',
             'note' => 'nullable|string',
             'status' => 'in:positive,negative,refused,excused,cancelled,pending,saved,collection only',
+            'pdf_file' => 'nullable|file|mimes:pdf|max:10240', // 10MB max
+            'remove_pdf' => 'nullable|boolean',
             'panel_results' => 'nullable|array',
             'panel_results.*.result' => 'nullable|in:negative,positive',
             'panel_results.*.panel_id' => 'nullable|exists:panels,id',
@@ -255,8 +258,9 @@ class ResultRecordingController extends Controller
             $collectionDateTime = $input['date_of_collection'] . ' ' .
                 ($input['time_of_collection'] . ':00');
 
-            // Update the main result record
-            $result->update([
+            // Prepare update data
+            // Prepare update data
+            $updateData = [
                 'company_id' => $request->company_id,
                 'reason_for_test' => $request->reason_for_test,
                 'test_admin_id' => $request->test_admin_id,
@@ -269,7 +273,46 @@ class ResultRecordingController extends Controller
                 'time_of_collection' => $request->time_of_collection,
                 'note' => $request->note,
                 'status' => $request->status,
-            ]);
+            ];
+
+            // Handle PDF file upload using your existing system
+            if ($request->hasFile('pdf_file')) {
+                // Get PDF file
+                $pdf = $request->file('pdf_file');
+
+                // Folder path
+                $folder = 'uploads/pdf/result_records/';
+
+                // Create folder if it doesn't exist
+                if (!File::exists(public_path($folder))) {
+                    File::makeDirectory(public_path($folder), 0755, true);
+                }
+
+                // Make PDF file name
+                $pdf_name = time() . '-' . $pdf->getClientOriginalName();
+
+                // Upload file
+                $pdf->move($folder, $pdf_name);
+
+                // Delete old PDF if exists
+                if ($result->pdf_path && File::exists(public_path($result->pdf_path))) {
+                    File::delete(public_path($result->pdf_path));
+                }
+
+                // Set input
+                $updateData['pdf_path'] = $folder . $pdf_name;
+            }
+            // Handle PDF removal
+            elseif ($request->has('remove_pdf') && $request->remove_pdf) {
+                if ($result->pdf_path && File::exists(public_path($result->pdf_path))) {
+                    File::delete(public_path($result->pdf_path));
+                }
+                $updateData['pdf_path'] = null;
+            }
+
+            // Update the main result record
+            $result->update($updateData);
+
 
             // First delete all existing panel results for this record
             ResultPanel::where('result_id', $result->id)->delete();
@@ -298,7 +341,6 @@ class ResultRecordingController extends Controller
             // Send notifications
             $notificationService = new NotificationService();
             $notificationService->sendTestNotification($mail_data, 'company');
-            $notificationService->sendTestNotification($mail_data, 'employee');
 
 
             toastr()->success('content.updated_successfully', 'content.success');
@@ -311,55 +353,57 @@ class ResultRecordingController extends Controller
     }
 
 
-
-
-
     public function sendNotification(Request $request, $id)
     {
         try {
             // Validate input
             $validated = $request->validate([
                 'additional_text' => 'nullable|string|max:1000',
-                'pdf_attachment' => 'nullable|file|mimes:pdf|max:5120',
             ]);
 
             $mailData = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')->where('id', $id)->first();
 
+            if (!$mailData) {
+                throw new \Exception("Test record not found");
+            }
+
             $mailData->additional_text = $validated['additional_text'] ?? null;
 
-            // Generate PDF certificate - ensure this returns binary content or null
+            // Generate PDF certificate
             $pdf = $this->generateCertificatePdf($mailData->clientProfile);
             if (!$pdf) {
                 throw new \Exception("Failed to generate PDF certificate");
             }
 
-            // Handle uploaded PDF if exists
-            $uploadedPdf = null;
-            if ($request->hasFile('pdf_attachment')) {
-                $uploadedPdf = $request->file('pdf_attachment');
+            // Get PDF from database if exists - with better debugging
+            $databasePdf = null;
+            if ($mailData->pdf_path) {
+                $fullPath = public_path($mailData->pdf_path);
+
+                if (File::exists($fullPath)) {
+                    $databasePdf = $fullPath;
+                    Log::info("Database PDF found and will be attached");
+                } else {
+                    Log::warning("Database PDF file not found at path: " . $fullPath);
+                }
+            } else {
+                Log::info("No PDF path found in database for result ID: " . $id);
             }
-
-
 
             $notificationService = new NotificationService();
 
-            if (!$notificationService->sendTestNotification($mailData, 'company', $pdf, $uploadedPdf)) {
-                throw new \Exception("Failed to send company notification");
-            }
-
-            if (!$notificationService->sendTestNotification($mailData, 'employee', $pdf, $uploadedPdf)) {
-                throw new \Exception("Failed to send employee notification");
+            if (!$notificationService->sendTestNotification($mailData, 'company', $pdf, $databasePdf)) {
+                throw new \Exception("Failed to send company notification - check logs for details");
             }
 
             toastr()->success("Notification sent successfully");
             return redirect()->back();
         } catch (ModelNotFoundException $e) {
-            return redirect()->back()
-                ->with('error', 'Test record not found');
+            Log::error("Model not found: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Test record not found');
         } catch (\Exception $e) {
-            // Log::error("Notification sending failed: " . $e->getMessage());
-            return redirect()->back()
-                ->with('error', $e->getMessage());
+            Log::error("Notification sending failed: " . $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
