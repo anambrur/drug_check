@@ -46,7 +46,8 @@ class PermissionSeeder extends Seeder
             'random consortium',
             'dot supervisor training',
             'quest-site',
-            'dot-test',
+            'dot-test', 
+            'report'
             // Add new modules here as needed
         ];
 

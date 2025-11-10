@@ -558,6 +558,52 @@
                 @endcan
 
 
+                @can('report view')
+                    <li
+                        class="nav-item {{ request()->is('admin/report') ||
+                        request()->is('admin/report/mis-reports') ||
+                        request()->is('admin/report/consortium-company-report') ||
+                        request()->is('admin/report/consortium-employee-report') ||
+                        request()->is('admin/employee/*/edit') 
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#reports" aria-expanded="false"
+                            aria-controls="reports">
+                            <i class="fas fa-clipboard-list menu-icon"></i>
+                            <span class="menu-title">Reports</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/report') ||
+                        request()->is('admin/report/mis-reports') ||
+                        request()->is('admin/report/consortium-company-report') ||
+                        request()->is('admin/report/consortium-employee-report') ||
+                        request()->is('admin/employee/*/edit')
+                            ? 'show'
+                            : '' }}"
+                            id="reports">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/report/mis-reports') ? 'active' : '' }}"
+                                        href="{{ url('admin/report/mis-reports') }}">MIS Reports
+                                    </a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/report/consortium-company-report') ? 'active' : '' }}"
+                                        href="{{ url('admin/report/consortium-company-report') }}">Consortium Company Report
+                                    </a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/report/consortium-employee-report') ? 'active' : '' }}"
+                                        href="{{ url('admin/report/consortium-employee-report') }}">Consortium Employee Report
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
+
                 @can('random selection view')
                     <li
                         class="nav-item {{ request()->is('admin/random-selection') ||

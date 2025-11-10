@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\PhotoController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CareerController;
 use App\Http\Controllers\Admin\FooterController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SocialController;
 use App\Http\Controllers\Admin\TawkToController;
 use App\Http\Controllers\Admin\CounterController;
@@ -1225,6 +1226,15 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::patch('contact-message/mark_all', [ContactMessageController::class, 'mark_all_read_update'])->name('contact-message.mark_all_read_update');
     Route::delete('contact-message/{id}', [ContactMessageController::class, 'destroy'])->name('contact-message.destroy');
 });
+
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS',  'permission:contact message view'])->prefix('admin/report')->group(function () {
+    Route::get('/mis-reports', [ReportController::class, 'MISReport'])->name('report.mis-reports');
+    Route::get('/consortium-company-report', [ReportController::class, 'consortiumCompanyReport'])->name('report.consortium-company-report');
+    Route::get('/consortium-employee-report', [ReportController::class, 'consortiumEmployeeReport'])->name('report.consortium-employee-report');
+    Route::get('/mis-reports/download', [ReportController::class, 'MISReportDownload'])->name('report.mis-reports.download');
+});
+
+
 // End Site Admin Panel Route
 
 Route::post('admin/demo-mode', [DemoModeController::class, 'update_demo_mode'])->name('admin.demo_mode');;
