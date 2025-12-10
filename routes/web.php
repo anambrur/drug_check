@@ -1232,6 +1232,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/consortium-company-report', [ReportController::class, 'consortiumCompanyReport'])->name('report.consortium-company-report');
     Route::get('/consortium-employee-report', [ReportController::class, 'consortiumEmployeeReport'])->name('report.consortium-employee-report');
     Route::get('/mis-reports/download', [ReportController::class, 'MISReportDownload'])->name('report.mis-reports.download');
+    Route::get('/email-reports', [ReportController::class, 'emailReport'])->name('report.email-reports');
+    Route::get('/employee-reports', [ReportController::class, 'employeeReport'])->name('report.employee-reports');
+    Route::get('/file-reports', [ReportController::class, 'fileReport'])->name('report.file-reports');
+    Route::get('/result-list', [ReportController::class, 'resultList'])->name('report.result-list');
+    Route::get('/user-list', [ReportController::class, 'userList'])->name('report.user-list');
 });
 
 

@@ -8,27 +8,14 @@
         <div class="col-xl-12 box-margin height-card">
             <div class="card card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h3 class="card-title">Consortium Employees</h3>
+                    <h3 class="card-title">Email Report</h3>
                     <button id="printButton" class="btn btn-primary">
                         <i class="fa fa-print"></i> Print
                     </button>
                 </div>
                 <div id="printable-section">
                     <div class="row print-header">
-                        <div class="col-md-8 print-info">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <p class="mb-0">Date :</p>
-                                    <p class="mb-0">Consortium Name :</p>
-                                    <p>Number of Clients: :</p>
-                                </div>
-                                <div class="col-md-8">
-                                    <p class="mb-0">{{ date('Y-m-d') }}</p>
-                                    <p class="mb-0">{{ $contact_info_widget->description }}</p>
-                                    <p>{{ count($companies) }}</p>
-                                </div>
-                            </div>
-                        </div>
+                        
                         <div class="col-md-4 print-image">
                             <div class="media">
                                 @if (!empty($header_image->section_image))
@@ -48,43 +35,32 @@
                         </div>
                     </div>
 
-                    @foreach ($companies as $company)
-                        <h5 class="mt-5">Company Name: {{ $company->company_name }}</h5>
-                        <hr>
-                        <table id="" class="table dt-responsive w-100">
-                            <thead>
-                                <tr>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
-                                    <th>Employee ID</th>
-                                    <th>Status</th>
-                                    <th>Dot</th>
-                                    <th>Department</th>
-                                    <th>Shift</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($company->employees as $employee)
-                                    <tr>
-                                        <td>{{ $employee->first_name }}</td>
-                                        <td>{{ $employee->last_name }}</td>
-                                        <td>{{ $employee->employee_id }}</td>
-                                        <td>
-                                            @if ($employee->status == 'active')
-                                                <span class="badge badge-success">Active</span>
-                                            @else
-                                                <span class="badge badge-danger">Inactive</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $employee->dot }}</td>
-                                        <td>{{ $employee->department }}</td>
-                                        <td>{{ $employee->shift }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @endforeach
 
+                    <hr>
+                    <table id="" class="table dt-responsive w-100">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($companies as $company)
+                                <tr>
+                                    <td>{{ $company->company_name }}</td>
+                                    <td>{{ $company->der_contact_email }}</td>
+                                    <td>
+                                        @if ($company->status == 'active')
+                                            <span class="badge badge-success">Active</span>
+                                        @else
+                                            <span class="badge badge-danger">Inactive</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

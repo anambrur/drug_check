@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use PDF;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Admin\MRO;
 use Illuminate\Http\Request;
 use App\Models\Admin\Employee;
+use App\Models\Admin\TestAdmin;
+use App\Models\Admin\Laboratory;
 use App\Models\Admin\HeaderImage;
 use App\Models\Admin\ClientProfile;
 use App\Http\Controllers\Controller;
@@ -225,5 +229,53 @@ class ReportController extends Controller
         $header_image = HeaderImage::first();
 
         return view('admin.reports.consortium-employee-report', compact('companies', 'contact_info_widget', 'header_image'));
+    }
+
+    public function emailReport()
+    {
+        $companies = ClientProfile::with('employees')->get();
+        $header_image = HeaderImage::first();
+
+        return view('admin.reports.email-reports', compact('companies', 'header_image'));
+    }
+
+    public function employeeReport()
+    {
+        $employees = Employee::with('clientProfile')->get();
+        $header_image = HeaderImage::first();
+
+        return view('admin.reports.employee-reports', compact('employees', 'header_image'));
+    }
+
+
+    public function fileReport()
+    {
+        $results = ResultRecording::all();
+        $header_image = HeaderImage::first();
+
+        return view('admin.reports.file-reports', compact('results', 'header_image'));
+    }
+
+    public function resultList()
+    {
+        // Retrieving models
+        $header_image = HeaderImage::first();
+        $laboratories = Laboratory::orderBy('id', 'desc')->get();
+        $mros = MRO::orderBy('id', 'desc')->get();
+        $clientProfiles = ClientProfile::with('employees')->orderBy('id', 'desc')->get();
+        $test_admins = TestAdmin::with('laboratory', 'mro', 'panel')->orderBy('id', 'desc')->get();
+
+        $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')->orderBy('id', 'desc')->get();
+
+        // dd($recoding_results);
+        return view('admin.reports.result-list', compact('laboratories', 'header_image',  'mros', 'clientProfiles', 'test_admins', 'recoding_results'));
+    }
+
+    public function userList()
+    {
+        $header_image = HeaderImage::first();
+        $admin_users = User::all();
+
+        return view('admin.reports.user-list', compact('admin_users', 'header_image'));
     }
 }

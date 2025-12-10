@@ -1,5 +1,7 @@
 @extends('layouts.admin.master')
 
+@section('title', 'Consortium Companies Report')
+
 @section('content')
     <!-- Form row -->
     <div class="row">

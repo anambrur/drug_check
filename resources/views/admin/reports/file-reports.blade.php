@@ -1,6 +1,6 @@
 @extends('layouts.admin.master')
 
-@section('title', 'Email Report')
+@section('title', 'File Report')
 
 @section('content')
     <!-- Form row -->
@@ -8,27 +8,14 @@
         <div class="col-xl-12 box-margin height-card">
             <div class="card card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h3 class="card-title">Consortium Employees</h3>
+                    <h3 class="card-title">File Report</h3>
                     <button id="printButton" class="btn btn-primary">
                         <i class="fa fa-print"></i> Print
                     </button>
                 </div>
                 <div id="printable-section">
                     <div class="row print-header">
-                        <div class="col-md-8 print-info">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <p class="mb-0">Date :</p>
-                                    <p class="mb-0">Consortium Name :</p>
-                                    <p>Number of Clients: :</p>
-                                </div>
-                                <div class="col-md-8">
-                                    <p class="mb-0">{{ date('Y-m-d') }}</p>
-                                    <p class="mb-0">{{ $contact_info_widget->description }}</p>
-                                    <p>{{ count($companies) }}</p>
-                                </div>
-                            </div>
-                        </div>
+
                         <div class="col-md-4 print-image">
                             <div class="media">
                                 @if (!empty($header_image->section_image))
@@ -48,43 +35,53 @@
                         </div>
                     </div>
 
-                    @foreach ($companies as $company)
-                        <h5 class="mt-5">Company Name: {{ $company->company_name }}</h5>
-                        <hr>
-                        <table id="" class="table dt-responsive w-100">
+                    <hr>
+                    <div class="table-responsive">
+                        <table id="" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
-                                    <th>Employee ID</th>
-                                    <th>Status</th>
-                                    <th>Dot</th>
-                                    <th>Department</th>
-                                    <th>Shift</th>
+                                    <th>ID</th>
+                                    <th>Date/Time</th>
+                                    <th>Name</th>
+                                    <th>File</th>
+                                    <th>Extention</th>
+                                    <th>Size</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($company->employees as $employee)
+                                @foreach ($results as $result)
                                     <tr>
-                                        <td>{{ $employee->first_name }}</td>
-                                        <td>{{ $employee->last_name }}</td>
-                                        <td>{{ $employee->employee_id }}</td>
+                                        <td>{{ $result->id }}</td>
+                                        <td>{{ $result->created_at }}</td>
+
+                                        @php
+                                            $fullPath = public_path($result->pdf_path);
+                                            $fileName = basename($result->pdf_path);
+                                            $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+                                            $fileSize = file_exists($fullPath) ? filesize($fullPath) : 0;
+
+                                            if ($fileSize >= 1048576) {
+                                                $readableSize = number_format($fileSize / 1048576, 2) . ' MB';
+                                            } else {
+                                                $readableSize = number_format($fileSize / 1024, 2) . ' KB';
+                                            }
+                                        @endphp
+
+                                        <td>{{ $fileName }}</td>
+
                                         <td>
-                                            @if ($employee->status == 'active')
-                                                <span class="badge badge-success">Active</span>
-                                            @else
-                                                <span class="badge badge-danger">Inactive</span>
-                                            @endif
+                                            <a href="{{ asset($result->pdf_path) }}" target="_blank">
+                                                <i class="fa fa-file-pdf text-danger"></i> View PDF
+                                            </a>
                                         </td>
-                                        <td>{{ $employee->dot }}</td>
-                                        <td>{{ $employee->department }}</td>
-                                        <td>{{ $employee->shift }}</td>
+
+                                        <td>{{ strtoupper($extension) }}</td>
+                                        <td>{{ $readableSize }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
-                    @endforeach
-
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 @extends('layouts.admin.master')
 
-@section('title', 'Email Report')
+@section('title', 'Employee Report')
 
 @section('content')
     <!-- Form row -->
@@ -8,27 +8,14 @@
         <div class="col-xl-12 box-margin height-card">
             <div class="card card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h3 class="card-title">Consortium Employees</h3>
+                    <h3 class="card-title">Employee Report</h3>
                     <button id="printButton" class="btn btn-primary">
                         <i class="fa fa-print"></i> Print
                     </button>
                 </div>
                 <div id="printable-section">
                     <div class="row print-header">
-                        <div class="col-md-8 print-info">
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <p class="mb-0">Date :</p>
-                                    <p class="mb-0">Consortium Name :</p>
-                                    <p>Number of Clients: :</p>
-                                </div>
-                                <div class="col-md-8">
-                                    <p class="mb-0">{{ date('Y-m-d') }}</p>
-                                    <p class="mb-0">{{ $contact_info_widget->description }}</p>
-                                    <p>{{ count($companies) }}</p>
-                                </div>
-                            </div>
-                        </div>
+
                         <div class="col-md-4 print-image">
                             <div class="media">
                                 @if (!empty($header_image->section_image))
@@ -48,27 +35,36 @@
                         </div>
                     </div>
 
-                    @foreach ($companies as $company)
-                        <h5 class="mt-5">Company Name: {{ $company->company_name }}</h5>
-                        <hr>
-                        <table id="" class="table dt-responsive w-100">
+                    <hr>
+                    <div class="table-responsive">
+                        <table id="" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
+                                    <th>Client</th>
                                     <th>First Name</th>
                                     <th>Last Name</th>
+                                    <th>Middle Name</th>
                                     <th>Employee ID</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>DOB</th>
                                     <th>Status</th>
                                     <th>Dot</th>
-                                    <th>Department</th>
-                                    <th>Shift</th>
+                                    <th>Created</th>
+                                    <th>Modified</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($company->employees as $employee)
+                                @foreach ($employees as $employee)
                                     <tr>
+                                        <td>{{ $employee->clientProfile->company_name }}</td>
                                         <td>{{ $employee->first_name }}</td>
                                         <td>{{ $employee->last_name }}</td>
+                                        <td>{{ $employee->middle_name }}</td>
                                         <td>{{ $employee->employee_id }}</td>
+                                        <td>{{ $employee->email }}</td>
+                                        <td>{{ $employee->phone }}</td>
+                                        <td>{{ $employee->date_of_birth }}</td>
                                         <td>
                                             @if ($employee->status == 'active')
                                                 <span class="badge badge-success">Active</span>
@@ -77,14 +73,13 @@
                                             @endif
                                         </td>
                                         <td>{{ $employee->dot }}</td>
-                                        <td>{{ $employee->department }}</td>
-                                        <td>{{ $employee->shift }}</td>
+                                        <td>{{ $employee->created_at }}</td>
+                                        <td>{{ $employee->updated_at }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
-                    @endforeach
-
+                    </div>
                 </div>
             </div>
         </div>

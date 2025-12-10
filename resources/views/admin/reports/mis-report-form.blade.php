@@ -1,5 +1,7 @@
 @extends('layouts.admin.master')
 
+@section('title', 'Generate MIS Report (DOT Form F 1385)')
+
 @section('content')
     <div class="container-fluid">
         <div class="row">

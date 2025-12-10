@@ -564,6 +564,11 @@
                         request()->is('admin/report/mis-reports') ||
                         request()->is('admin/report/consortium-company-report') ||
                         request()->is('admin/report/consortium-employee-report') ||
+                        request()->is('admin/report/email-reports') ||
+                        request()->is('admin/report/employee-reports') ||
+                        request()->is('admin/report/file-reports') ||
+                        request()->is('admin/report/result-list') ||
+                        request()->is('admin/report/user-list') ||
                         request()->is('admin/employee/*/edit') 
                             ? 'active'
                             : '' }}">
@@ -577,6 +582,11 @@
                         request()->is('admin/report/mis-reports') ||
                         request()->is('admin/report/consortium-company-report') ||
                         request()->is('admin/report/consortium-employee-report') ||
+                        request()->is('admin/report/email-reports') ||
+                        request()->is('admin/report/employee-reports') ||
+                        request()->is('admin/report/file-reports') ||
+                        request()->is('admin/report/result-list') ||
+                        request()->is('admin/report/user-list') ||
                         request()->is('admin/employee/*/edit')
                             ? 'show'
                             : '' }}"
@@ -595,6 +605,31 @@
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/report/consortium-employee-report') ? 'active' : '' }}"
                                         href="{{ url('admin/report/consortium-employee-report') }}">Consortium Employee Report
+                                    </a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/report/email-reports') ? 'active' : '' }}"
+                                        href="{{ url('admin/report/email-reports') }}">Email Report
+                                    </a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/report/employee-reports') ? 'active' : '' }}"
+                                        href="{{ url('admin/report/employee-reports') }}">Employee Report
+                                    </a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/report/file-reports') ? 'active' : '' }}"
+                                        href="{{ url('admin/report/file-reports') }}">File Report
+                                    </a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/report/result-list') ? 'active' : '' }}"
+                                        href="{{ url('admin/report/result-list') }}">Result List
+                                    </a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/report/user-list') ? 'active' : '' }}"
+                                        href="{{ url('admin/report/user-list') }}">User List
                                     </a>
                                 </li>
                                 
