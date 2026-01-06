@@ -6,14 +6,6 @@
         <div class="col-xl-12 box-margin height-card">
             <div class="card card-body">
                 <h2 class="card-title">Client Profile</h2>
-                @if ($demo_mode == 'on')
-                    <!-- Include Alert Blade -->
-                    @include('admin.demo_mode.demo-mode')
-                @else
-                    <form action="{{ route('client-profile.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                @endif
-
                 <div class="row">
                     <div class="col-md-4">
                         <div class="row">
@@ -50,6 +42,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="col-md-4">
                         <div class="row">
                             <div class="col-md-6">
@@ -78,6 +71,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="col-md-4">
                         <div class="row">
                             <div class="col-md-6">
@@ -101,8 +95,55 @@
                         </div>
                     </div>
 
+                    <div class="col-md-12">
+                        <h2 class="card-title">Consortium and Consortium Certificates</h2>
+
+                        <!-- Certificate status -->
+                        @if ($clientProfile->certificate_path)
+                            <div class="alert alert-success">
+                                Certificate generated on:
+                                {{ $clientProfile->certificate_generated_at->format('F j, Y, g:i a') }}
+                            </div>
+                        @endif
+
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <p class="label_title">Generate Certificate</p>
+                                <form action="{{ route('client-profile.generate_certificate', $clientProfile->id) }}"
+                                    method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-file-certificate"></i> Generate
+                                    </button>
+                                </form>
+                            </div>
+
+                            @if ($clientProfile->certificate_path)
+                                <div class="col-md-4 text-center">
+                                    <p class="label_title">View Certificate</p>
+                                    <a href="{{ route('client-profile.view_certificate', $clientProfile->id) }}"
+                                        target="_blank" class="btn btn-info">
+                                        <i class="fas fa-eye"></i> View in New Tab
+                                    </a>
+                                </div>
+
+                                <div class="col-md-4 text-center">
+                                    <p class="label_title">Download Certificate</p>
+                                    <a href="{{ route('client-profile.download_certificate', $clientProfile->id) }}"
+                                        class="btn btn-success">
+                                        <i class="fas fa-download"></i> Download PDF
+                                    </a>
+                                </div>
+                            @else
+                                <div class="col-md-8 text-center">
+                                    <p class="text-muted">
+                                        <i class="fas fa-info-circle"></i> Generate certificate first to view/download
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
-                </form>
             </div>
         </div>
     </div>

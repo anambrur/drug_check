@@ -73,22 +73,23 @@ class RandomSelectionService
                 ? ceil($fullPoolSize * ($protocol->selection_requirement_value / 100))
                 : $protocol->selection_requirement_value;
 
-            // NOW apply exclusion filter to get available pool
+            // NOW apply exclusion filter - ONLY exclude employees selected by THIS SAME protocol
             $availablePool = $fullEmployeePool;
 
             if ($protocol->exclude_previously_selected) {
                 $exclusionDate = $this->getExclusionDate($protocol->selection_period);
 
-                // Get recently tested employees based on selection_event date, not created_at
-                $recentlyTested = SelectedEmployee::whereIn('employee_id', $fullEmployeePool->pluck('id'))
-                    ->whereHas('selectionEvent', function ($query) use ($exclusionDate) {
-                        $query->where('selection_date', '>', $exclusionDate);
+                // CRITICAL CHANGE: Only exclude employees selected by THIS protocol
+                $recentlyTestedByThisProtocol = SelectedEmployee::whereIn('employee_id', $fullEmployeePool->pluck('id'))
+                    ->whereHas('selectionEvent', function ($query) use ($protocol, $exclusionDate) {
+                        $query->where('selection_protocol_id', $protocol->id) // This line is key
+                            ->where('selection_date', '>', $exclusionDate);
                     })
                     ->pluck('employee_id')
                     ->toArray();
 
-                $availablePool = $fullEmployeePool->reject(function ($employee) use ($recentlyTested) {
-                    return in_array($employee->id, $recentlyTested);
+                $availablePool = $fullEmployeePool->reject(function ($employee) use ($recentlyTestedByThisProtocol) {
+                    return in_array($employee->id, $recentlyTestedByThisProtocol);
                 });
             }
 
@@ -284,6 +285,7 @@ class RandomSelectionService
             $selection = $event->selectedEmployees()->create([
                 'employee_id' => $employee->id,
                 'test_id' => $testId,
+                'selection_protocol_id' => $event->selection_protocol_id,
                 'selection_type' => $type,
                 'random_number' => $randomNumber,
                 'status' => 'pending'

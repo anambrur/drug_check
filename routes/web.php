@@ -135,79 +135,6 @@ use App\Http\Controllers\Admin\PortfolioDetailSectionController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-// Route::get('/test-email', function() {
-//     try {
-//         Mail::raw('This is a test email', function($message) {
-//             $message->to('anambrur@gmail.com')
-//                     ->subject('Simple Test Email');
-//         });
-//         return "Test email sent!";
-//     } catch (\Exception $e) {
-//         return "Error: " . $e->getMessage();
-//     }
-// });
-
-// Route::get('/test-firebase', function () {
-//     try {
-//         $firebaseService = app(App\Services\FirebaseService::class);
-//         $count = $firebaseService->getSitesCount();
-
-//         return response()->json([
-//             'success' => true,
-//             'message' => 'Firebase connection successful!',
-//             'sites_count' => $count
-//         ]);
-//     } catch (\Exception $e) {
-//         return response()->json([
-//             'success' => false,
-//             'message' => 'Firebase connection failed: ' . $e->getMessage()
-//         ], 500);
-//     }
-// });
-
-Route::get('/test-collection-connection', function () {
-    try {
-        $collectionService = app(App\Services\QuestCollectionService::class);
-        $result = $collectionService->testConnection();
-
-        return response()->json($result);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
-        ], 500);
-    }
-});
-
-
-
-Route::get('/test-all-combinations', function () {
-    try {
-        $collectionService = app(App\Services\QuestCollectionService::class);
-        $result = $collectionService->getFullCollectionSiteDetails();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Success! Retrieved ' . count($result['sites']) . ' sites',
-            'sites_count' => count($result['sites'])
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'All combinations failed: ' . $e->getMessage()
-        ], 500);
-    }
-});
-
-
-
-
-
-
-
-
-
-
 
 
 Route::post('/create-payment-intent', function (Request $request) {
@@ -1018,7 +945,24 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('client-profile', [ClientProfileController::class, 'store'])->name('client-profile.store')->middleware('permission:client profile create|client profile create_all');
     Route::get('client-profile/{id}/edit', [ClientProfileController::class, 'edit'])->name('client-profile.edit')->middleware('permission:client profile edit|client profile edit_all');
     Route::get('client-profile/{id}/show', [ClientProfileController::class, 'show'])->name('client-profile.show')->middleware('permission:client profile view|client profile view_all');
+
+    // MOVE CERTIFICATE ROUTES HERE - BEFORE THE GENERAL PUT ROUTE
+    // Certificate routes
+    Route::get('client-profile/{id}/view-certificate', [ClientProfileController::class, 'view_certificate'])
+        ->name('client-profile.view_certificate')
+        ->middleware('permission:client profile view|client profile view_all');
+
+    Route::get('client-profile/{id}/download-certificate', [ClientProfileController::class, 'download_certificate'])
+        ->name('client-profile.download_certificate')
+        ->middleware('permission:client profile view|client profile view_all');
+
+    Route::post('client-profile/{id}/generate-certificate', [ClientProfileController::class, 'generate_certificate'])
+        ->name('client-profile.generate_certificate')
+        ->middleware('permission:client profile edit|client profile edit_all');
+
+    // NOW PUT THE PUT ROUTE
     Route::put('client-profile/{id}', [ClientProfileController::class, 'update'])->name('client-profile.update')->middleware('permission:client profile edit|client profile edit_all');
+
     Route::delete('client-profile/{id}', [ClientProfileController::class, 'destroy'])->name('client-profile.destroy')->middleware('permission:client profile delete|client profile delete_all');
     Route::delete('client-profile', [ClientProfileController::class, 'destroy_checked'])->name('client-profile.destroy_checked')->middleware('permission:client profile delete|client profile delete_all');
 
@@ -1051,13 +995,12 @@ Route::post('/portfolio/{portfolio}/login', [App\Http\Controllers\Auth\CustomLog
 
 Route::get('/collection-sites/search', [QuestDiagnosticsController::class, 'searchCollectionSites'])->name('collection-sites.search');
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:dot-test view'])->prefix('admin')->group(function () {
+    Route::get('dot-test/testEnvVars', [QuestDiagnosticsController::class, 'testEnvVars'])->name('admin.dot-test.testEnvVars');
+    Route::post('dot-test/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])->name('admin.dot-test.submit-order');
     Route::get('dot-test/{portfolioId}', [QuestDiagnosticsController::class, 'dotTest'])->name('dot-test.index');
     Route::post('dot-test/process-payment', [QuestDiagnosticsController::class, 'processPayment'])->name('admin.dot-test.process-payment');
-
     // Updated route with payment intent parameter
     Route::get('dot-test/order-form/{paymentIntent}', [QuestDiagnosticsController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form');
-
-    Route::post('dot-test/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])->name('admin.dot-test.submit-order');
 });
 
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified', 'XSS', 'permission:lab admin view'])->prefix('admin')->group(function () {

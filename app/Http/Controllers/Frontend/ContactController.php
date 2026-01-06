@@ -350,28 +350,6 @@ class ContactController extends Controller
             }
 
 
-
-            // if ($request->hasFile('section_image')) {
-
-            //     // Get image file
-            //     $image = $request->file('section_image');
-
-            //     // Folder path
-            //     $folder = 'uploads/img/blog/thumbnail/';
-
-            //     // Make image name
-            //     $image_name = time() . '-' . $image->getClientOriginalName();
-
-            //     // Original size upload file
-            //     $image->move($folder, $image_name);
-
-            //     // Set input
-            //     $input['section_image'] = $image_name;
-            // } else {
-            //     // Set input
-            //     $input['section_image'] = null;
-            // }
-
             // Store data in the database
             $contactMessage = \App\Models\Admin\ContactMessage::create([
                 'name' => $validatedData['der_name'],

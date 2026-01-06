@@ -21,11 +21,10 @@ class TestResultNotification extends Mailable
     public $pdfContent;
     public $databasePdf;
 
-    public function __construct(array $emailData, string $recipientType, $pdfContent = null, $databasePdf = null)
+    public function __construct(array $emailData, string $recipientType, $databasePdf = null)
     {
         $this->emailData = $emailData;
         $this->recipientType = $recipientType;
-        $this->pdfContent = $pdfContent;
         $this->databasePdf = $databasePdf;
     }
 
@@ -65,14 +64,6 @@ class TestResultNotification extends Mailable
     public function attachments(): array
     {
         $attachments = [];
-
-        // Add generated PDF certificate if exists and is valid
-        if ($this->pdfContent && is_string($this->pdfContent)) {
-            $attachments[] = Attachment::fromData(
-                fn() => $this->pdfContent,
-                'certificate.pdf'
-            )->withMime('application/pdf');
-        }
 
         // Add database PDF if exists and is valid file path
         if ($this->databasePdf && is_string($this->databasePdf) && File::exists($this->databasePdf)) {

@@ -307,7 +307,7 @@
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title" id="notifyModalTitle">Notify Client:
-                                                {{ $result->clientProfile->company_name }} of Test Results and Random
+                                                {{ $result->clientProfile->company_name ?? '' }} of Test Results and Random
                                                 Selections</h5>
                                             <button type="button" class="close" data-dismiss="modal"
                                                 aria-label="Close">
@@ -336,7 +336,7 @@
                                                     <p> <a href="{{ route('result-recording.index') }}">Click here</a> to
                                                         view
                                                         all results for
-                                                        <strong>{{ $result->clientProfile->company_name }}</strong>.
+                                                        <strong>{{ $result->clientProfile->company_name ?? '' }}</strong>.
                                                     </p>
 
                                                     <p>Also:</p>
@@ -348,7 +348,7 @@
                                                     <p><a href="{{ route('result-recording.index') }}">Click here</a> to
                                                         view
                                                         all selections for
-                                                        <strong>{{ $result->clientProfile->company_name }}</strong>.
+                                                        <strong>{{ $result->clientProfile->company_name ?? '' }}</strong>.
                                                     </p>
                                                 </div>
 
@@ -367,7 +367,7 @@
                                                 <hr>
 
                                                 <div class="client-info">
-                                                    <p><strong>Client:</strong> {{ $result->clientProfile->company_name }}
+                                                    <p><strong>Client:</strong> {{ $result->clientProfile->company_name ?? 'N/A' }}
                                                         <strong>Phone:</strong>
                                                         {{ $result->clientProfile->phone ?? 'N/A' }}
                                                     </p>

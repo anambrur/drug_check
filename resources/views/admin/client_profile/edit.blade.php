@@ -280,6 +280,37 @@
                                     @enderror
                                 </div>
                             </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="client_start_date">Client Start Date</label>
+                                    <input id="client_start_date" name="client_start_date" type="date"
+                                        class="form-control @error('client_start_date') is-invalid @enderror"
+                                        placeholder="Enter client start date"
+                                        value="{{ old('client_start_date', $clientProfile->client_start_date) }}">
+                                    @error('client_start_date')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="certificate_start_date">Certificate Start Date</label>
+                                    <input id="certificate_start_date" name="certificate_start_date" type="date"
+                                        class="form-control @error('certificate_start_date') is-invalid @enderror"
+                                        placeholder="Enter certificate start date"
+                                        value="{{ old('certificate_start_date', $clientProfile->certificate_start_date) }}">
+                                    @error('certificate_start_date')
+                                        <span class="invalid-feedback" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
+
+
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="status" class="col-form-label">{{ __('content.status') }}</label>

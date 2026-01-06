@@ -228,20 +228,86 @@ class QuestDiagnosticsController extends Controller
         return $xml->asXML();
     }
 
+    // private function createQuestOrder($orderXml)
+    // {
+    //     $username = env('QUEST_USERNAME', 'cli_SkyrosUAT');
+    //     $password = env('QUEST_PASSWORD', 'kfIVZEUj46uM');
+    //     $url = config('app.env') === 'production' ? $this->prodUrl : $this->devUrl;
+
+    //     // Log the original order XML for debugging
+    //     // Log::info('Original Order XML: ' . $orderXml);
+
+    //     // Build the SOAP request manually
+    //     $soapRequest = $this->buildSoapRequest($username, $password, $orderXml);
+
+    //     // Log the SOAP request for debugging
+    //     Log::info('SOAP Request: ' . $soapRequest);
+
+    //     $ch = curl_init();
+
+    //     curl_setopt_array($ch, [
+    //         CURLOPT_URL => $url,
+    //         CURLOPT_POST => true,
+    //         CURLOPT_POSTFIELDS => $soapRequest,
+    //         CURLOPT_HTTPHEADER => [
+    //             'Content-Type: text/xml; charset=utf-8',
+    //             'SOAPAction: "http://wssim.labone.com/CreateOrder"',
+    //             'Content-Length: ' . strlen($soapRequest)
+    //         ],
+    //         CURLOPT_RETURNTRANSFER => true,
+    //         CURLOPT_TIMEOUT => 30,
+    //         CURLOPT_CONNECTTIMEOUT => 10,
+    //         CURLOPT_SSL_VERIFYPEER => false,
+    //         CURLOPT_SSL_VERIFYHOST => false,
+    //         CURLOPT_VERBOSE => true,
+    //     ]);
+
+    //     // Capture verbose output
+    //     $verbose = fopen('php://temp', 'w+');
+    //     curl_setopt($ch, CURLOPT_STDERR, $verbose);
+
+    //     $response = curl_exec($ch);
+    //     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    //     $error = curl_error($ch);
+
+    //     // Get verbose output
+    //     rewind($verbose);
+    //     $verboseLog = stream_get_contents($verbose);
+    //     fclose($verbose);
+
+    //     curl_close($ch);
+
+    //     // Log::info('HTTP Code: ' . $httpCode);
+    //     // Log::info('cURL Error: ' . $error);
+    //     // Log::info('Raw Response: ' . $response);
+
+    //     if ($error) {
+    //         Log::error('cURL Error: ' . $error);
+    //         throw new \Exception('Failed to connect to Quest Diagnostics: ' . $error);
+    //     }
+
+    //     if ($httpCode !== 200) {
+    //         Log::error('HTTP Error: ' . $httpCode);
+    //         Log::error('Response Body: ' . $response);
+    //         throw new \Exception('Quest Diagnostics returned HTTP ' . $httpCode);
+    //     }
+
+    //     return $this->parseSoapResponse($response);
+    // }
+
+
+
     private function createQuestOrder($orderXml)
     {
         $username = env('QUEST_USERNAME', 'cli_SkyrosUAT');
         $password = env('QUEST_PASSWORD', 'kfIVZEUj46uM');
         $url = config('app.env') === 'production' ? $this->prodUrl : $this->devUrl;
 
-        // Log the original order XML for debugging
-        // Log::info('Original Order XML: ' . $orderXml);
 
         // Build the SOAP request manually
         $soapRequest = $this->buildSoapRequest($username, $password, $orderXml);
 
-        // Log the SOAP request for debugging
-        Log::info('SOAP Request: ' . $soapRequest);
+        Log::info('SOAP Request being sent to: ' . $url);
 
         $ch = curl_init();
 
@@ -252,14 +318,20 @@ class QuestDiagnosticsController extends Controller
             CURLOPT_HTTPHEADER => [
                 'Content-Type: text/xml; charset=utf-8',
                 'SOAPAction: "http://wssim.labone.com/CreateOrder"',
-                'Content-Length: ' . strlen($soapRequest)
+                'Content-Length: ' . strlen($soapRequest),
+                'Connection: Keep-Alive',
+                'Keep-Alive: timeout=30, max=10'
             ],
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 120,
-            CURLOPT_CONNECTTIMEOUT => 60,
+            CURLOPT_TIMEOUT => 60, // Increased to 60 seconds total timeout
+            CURLOPT_CONNECTTIMEOUT => 15, // Increased to 15 seconds connection timeout
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false,
             CURLOPT_VERBOSE => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 5,
+            CURLOPT_ENCODING => '', // Enable compression if supported
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         ]);
 
         // Capture verbose output
@@ -270,6 +342,16 @@ class QuestDiagnosticsController extends Controller
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
 
+        // Get cURL info for debugging
+        $curlInfo = curl_getinfo($ch);
+        Log::info('cURL Info: ', [
+            'total_time' => $curlInfo['total_time'],
+            'connect_time' => $curlInfo['connect_time'],
+            'namelookup_time' => $curlInfo['namelookup_time'],
+            'pretransfer_time' => $curlInfo['pretransfer_time'],
+            'starttransfer_time' => $curlInfo['starttransfer_time'],
+        ]);
+
         // Get verbose output
         rewind($verbose);
         $verboseLog = stream_get_contents($verbose);
@@ -277,21 +359,27 @@ class QuestDiagnosticsController extends Controller
 
         curl_close($ch);
 
-        // Log::info('HTTP Code: ' . $httpCode);
-        // Log::info('cURL Error: ' . $error);
-        // Log::info('Raw Response: ' . $response);
-
         if ($error) {
-            Log::error('cURL Error: ' . $error);
-            throw new \Exception('Failed to connect to Quest Diagnostics: ' . $error);
+            Log::error('cURL Error Details: ' . $error);
+            Log::error('cURL Verbose Log: ' . $verboseLog);
+
+            // Check if this is a timeout or connection issue
+            if (strpos($error, 'timed out') !== false) {
+                throw new \Exception('Quest Diagnostics API timeout. Please try again in a moment.');
+            } elseif (strpos($error, 'Could not resolve host') !== false) {
+                throw new \Exception('Cannot connect to Quest Diagnostics server. Please check your internet connection.');
+            } else {
+                throw new \Exception('Failed to connect to Quest Diagnostics: ' . $error);
+            }
         }
 
         if ($httpCode !== 200) {
             Log::error('HTTP Error: ' . $httpCode);
-            Log::error('Response Body: ' . $response);
+            Log::error('Response Body: ' . substr($response, 0, 1000));
             throw new \Exception('Quest Diagnostics returned HTTP ' . $httpCode);
         }
 
+        Log::info('Quest API Response received, length: ' . strlen($response));
         return $this->parseSoapResponse($response);
     }
 
@@ -322,49 +410,370 @@ class QuestDiagnosticsController extends Controller
 
     private function parseSoapResponse($response)
     {
-        // Log::info('Raw SOAP Response: ' . $response);
+        // Log response size for debugging
+        $responseSize = strlen($response);
+        Log::info('SOAP Response received, size: ' . $responseSize . ' bytes');
+
+        // Circuit breaker tracking
+        static $failureCount = 0;
+        static $lastFailureTime = 0;
+        static $circuitOpen = false;
+
+        // Check circuit breaker
+        if ($circuitOpen) {
+            // If circuit was opened less than 60 seconds ago, fail fast
+            if ((time() - $lastFailureTime) < 60) {
+                Log::warning('Circuit breaker is open - failing fast');
+                return [
+                    'method_id' => 'CREATEORDER',
+                    'client_reference_id' => null,
+                    'reference_test_id' => null,
+                    'quest_order_id' => '0',
+                    'status' => 'FAILURE',
+                    'display_url' => null,
+                    'error' => [
+                        'id' => 'CIRCUIT_BREAKER',
+                        'detail' => 'Service temporarily unavailable due to multiple failures'
+                    ],
+                    '_raw_response' => substr($response, 0, 1000)
+                ];
+            } else {
+                // Circuit has been open for more than 60 seconds, try again
+                $circuitOpen = false;
+                $failureCount = 0;
+            }
+        }
+
+        // Limit response size to prevent DoS/memory issues
+        $maxResponseSize = 5 * 1024 * 1024; // 5MB
+        if ($responseSize > $maxResponseSize) {
+            Log::error('Response exceeds maximum size: ' . $responseSize . ' bytes');
+            $this->incrementFailureCount($failureCount, $lastFailureTime, $circuitOpen);
+            return [
+                'method_id' => 'CREATEORDER',
+                'client_reference_id' => null,
+                'reference_test_id' => null,
+                'quest_order_id' => '0',
+                'status' => 'FAILURE',
+                'display_url' => null,
+                'error' => [
+                    'id' => 'RESPONSE_TOO_LARGE',
+                    'detail' => 'Response size (' . round($responseSize / 1024, 2) . 'KB) exceeds limit'
+                ],
+                '_raw_response' => substr($response, 0, 1000)
+            ];
+        }
+
+        // Clean the response before parsing
+        $response = $this->cleanResponse($response);
+
+        // Track parsing time
+        $startTime = microtime(true);
 
         try {
-            // Extract the content between <CreateOrderResult> tags using regex
-            preg_match('/<CreateOrderResult[^>]*>(.*?)<\/CreateOrderResult>/s', $response, $matches);
+            // Method 1: Try fast SimpleXML parsing first
+            $result = $this->parseWithSimpleXML($response, $startTime);
+            if ($result !== false) {
+                // Success - reset failure count
+                $failureCount = 0;
+                return $result;
+            }
 
-            if (isset($matches[1])) {
-                $resultContent = $matches[1];
-                // Log::info('Extracted Result Content: ' . $resultContent);
+            // Method 2: Try DOMDocument parsing
+            $result = $this->parseWithDOMDocument($response, $startTime);
+            if ($result !== false) {
+                // Success - reset failure count
+                $failureCount = 0;
+                return $result;
+            }
 
-                // Decode HTML entities if the content is encoded
-                if (strpos($resultContent, '&lt;') !== false || strpos($resultContent, '&gt;') !== false) {
-                    $resultContent = html_entity_decode($resultContent, ENT_QUOTES | ENT_XML1, 'UTF-8');
-                    // Log::info('Decoded Result Content: ' . $resultContent);
+            // Method 3: Try optimized regex parsing as last resort
+            $result = $this->parseWithOptimizedRegex($response, $startTime);
+            if ($result !== false) {
+                // Success - reset failure count
+                $failureCount = 0;
+                return $result;
+            }
+
+            // All parsing methods failed
+            throw new \Exception('All parsing methods failed to extract CreateOrderResult');
+        } catch (\Exception $e) {
+            $this->incrementFailureCount($failureCount, $lastFailureTime, $circuitOpen);
+
+            $parsingTime = round(microtime(true) - $startTime, 3);
+            Log::error('SOAP Response Parsing Failed after ' . $parsingTime . 's: ' . $e->getMessage());
+            Log::debug('Response snippet (first 2000 chars): ' . substr($response, 0, 2000));
+
+            // Check if this looks like a specific error response
+            if (
+                strpos($response, 'Invalid order') !== false ||
+                strpos($response, 'Invalid credentials') !== false ||
+                strpos($response, 'Access denied') !== false
+            ) {
+                return [
+                    'method_id' => 'CREATEORDER',
+                    'client_reference_id' => null,
+                    'reference_test_id' => null,
+                    'quest_order_id' => '0',
+                    'status' => 'FAILURE',
+                    'display_url' => null,
+                    'error' => [
+                        'id' => '400',
+                        'detail' => 'Invalid order or credentials. Please check your Quest Diagnostics account configuration.'
+                    ],
+                    '_raw_response' => substr($response, 0, 2000)
+                ];
+            }
+
+            return [
+                'method_id' => 'CREATEORDER',
+                'client_reference_id' => null,
+                'reference_test_id' => null,
+                'quest_order_id' => '0',
+                'status' => 'FAILURE',
+                'display_url' => null,
+                'error' => [
+                    'id' => 'PARSE_ERROR',
+                    'detail' => 'Failed to parse Quest Diagnostics response. Please try again.'
+                ],
+                '_raw_response' => substr($response, 0, 2000)
+            ];
+        }
+    }
+
+    /**
+     * Clean the response XML before parsing
+     */
+    private function cleanResponse($response)
+    {
+        // Remove any null bytes and control characters (except tab, newline, carriage return)
+        $response = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $response);
+
+        // Replace multiple spaces/newlines with single ones to reduce size
+        $response = preg_replace('/\s+/', ' ', $response);
+
+        // Decode HTML entities if present
+        if (strpos($response, '&lt;') !== false || strpos($response, '&gt;') !== false) {
+            $response = html_entity_decode($response, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        }
+
+        return $response;
+    }
+
+    /**
+     * Parse using SimpleXML (fastest method)
+     */
+    private function parseWithSimpleXML($response, $startTime)
+    {
+        set_time_limit(5); // Limit this method to 5 seconds
+
+        try {
+            // Add XML declaration if missing (helps SimpleXML)
+            if (strpos($response, '<?xml') === false) {
+                $response = '<?xml version="1.0" encoding="UTF-8"?>' . $response;
+            }
+
+            // Suppress warnings for invalid XML
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($response);
+            $errors = libxml_get_errors();
+            libxml_clear_errors();
+
+            if (!$xml || !empty($errors)) {
+                return false;
+            }
+
+            // Check if this is a SOAP envelope
+            $namespaces = $xml->getNamespaces(true);
+
+            // Try common SOAP namespaces
+            foreach (['soap', 's', 'SOAP-ENV'] as $nsPrefix) {
+                if (isset($namespaces[$nsPrefix]) || isset($namespaces[''])) {
+                    $ns = $namespaces[$nsPrefix] ?? $namespaces[''];
+                    $body = $xml->children($ns)->Body ?? null;
+
+                    if ($body) {
+                        // Look for CreateOrderResponse in any namespace
+                        foreach ($body->children() as $child) {
+                            if (strpos($child->getName(), 'CreateOrderResponse') !== false) {
+                                $resultElement = $child->children();
+                                $resultContent = (string)$resultElement;
+
+                                $parsingTime = round(microtime(true) - $startTime, 3);
+                                Log::info('Parsed via SimpleXML in ' . $parsingTime . 's');
+
+                                return $this->parseQuestResponse($resultContent);
+                            }
+                        }
+                    }
                 }
+            }
+
+            // Direct check for CreateOrderResult (non-SOAP response)
+            if (isset($xml->CreateOrderResult)) {
+                $resultContent = (string)$xml->CreateOrderResult;
+
+                $parsingTime = round(microtime(true) - $startTime, 3);
+                Log::info('Parsed direct SimpleXML in ' . $parsingTime . 's');
 
                 return $this->parseQuestResponse($resultContent);
             }
 
-            // If regex extraction fails, try the XML parsing approach
-            $response = html_entity_decode($response, ENT_QUOTES | ENT_XML1, 'UTF-8');
-            $xml = simplexml_load_string($response);
+            return false;
+        } catch (\Exception $e) {
+            Log::debug('SimpleXML parsing failed: ' . $e->getMessage());
+            return false;
+        }
+    }
 
-            if ($xml) {
-                $namespaces = $xml->getNamespaces(true);
-                $body = $xml->children('soap', true)->Body;
+    /**
+     * Parse using DOMDocument (more robust)
+     */
+    private function parseWithDOMDocument($response, $startTime)
+    {
+        set_time_limit(7); // Limit this method to 7 seconds
 
-                foreach ($namespaces as $prefix => $ns) {
-                    $body = $body->children($ns);
-                }
+        try {
+            $dom = new \DOMDocument();
+            $dom->preserveWhiteSpace = false;
+            $dom->formatOutput = false;
 
-                if (isset($body->CreateOrderResponse->CreateOrderResult)) {
-                    $resultContent = (string)$body->CreateOrderResponse->CreateOrderResult;
-                    Log::info('Extracted Result Content via XML: ' . $resultContent);
+            // Suppress XML parsing errors
+            $oldErrorReporting = libxml_use_internal_errors(true);
+
+            // Load XML with options
+            $loadSuccess = $dom->loadXML($response, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_PARSEHUGE);
+
+            if (!$loadSuccess) {
+                libxml_use_internal_errors($oldErrorReporting);
+                return false;
+            }
+
+            libxml_use_internal_errors($oldErrorReporting);
+
+            // Create XPath instance
+            $xpath = new \DOMXPath($dom);
+
+            // Register common namespaces
+            $namespaces = [
+                'soap' => 'http://schemas.xmlsoap.org/soap/envelope/',
+                's' => 'http://schemas.xmlsoap.org/soap/envelope/',
+                'SOAP-ENV' => 'http://schemas.xmlsoap.org/soap/envelope/',
+                'wss' => 'http://wssim.labone.com/'
+            ];
+
+            foreach ($namespaces as $prefix => $uri) {
+                $xpath->registerNamespace($prefix, $uri);
+            }
+
+            // Try multiple XPath queries in order of likelihood
+            $queries = [
+                '//soap:Body//CreateOrderResult',
+                '//s:Body//CreateOrderResult',
+                '//SOAP-ENV:Body//CreateOrderResult',
+                '//CreateOrderResult',
+                '//*[contains(local-name(), "CreateOrderResult")]',
+                '//*[local-name()="CreateOrderResult"]',
+                '//Body//*[local-name()="CreateOrderResult"]'
+            ];
+
+            foreach ($queries as $query) {
+                $nodes = $xpath->query($query);
+
+                if ($nodes && $nodes->length > 0) {
+                    $resultContent = $nodes->item(0)->nodeValue;
+
+                    // Check if content needs further decoding
+                    if (strpos($resultContent, '&lt;') !== false) {
+                        $resultContent = html_entity_decode($resultContent, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                    }
+
+                    $parsingTime = round(microtime(true) - $startTime, 3);
+                    Log::info('Parsed via DOMDocument XPath in ' . $parsingTime . 's (query: ' . $query . ')');
+
                     return $this->parseQuestResponse($resultContent);
                 }
             }
 
-            throw new \Exception('Could not extract CreateOrderResult from SOAP response');
+            return false;
         } catch (\Exception $e) {
-            Log::error('SOAP Response Parsing Error: ' . $e->getMessage());
-            Log::error('Full Response: ' . $response);
-            throw new \Exception('Invalid SOAP response format: ' . $e->getMessage());
+            Log::debug('DOMDocument parsing failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Parse using optimized regex (last resort)
+     */
+    private function parseWithOptimizedRegex($response, $startTime)
+    {
+        set_time_limit(3); // Limit this method to 3 seconds
+
+        try {
+            // Optimized regex patterns - ordered by efficiency
+            $patterns = [
+                // Pattern 1: Direct CDATA with minimal backtracking
+                '/<CreateOrderResult[^>]*>\s*<!\[CDATA\[([^]]*)\]\]>\s*<\/CreateOrderResult>/is',
+
+                // Pattern 2: Direct content, non-greedy with lookahead
+                '/<CreateOrderResult[^>]*>\s*(.*?)\s*<\/CreateOrderResult>/is',
+
+                // Pattern 3: With any namespace prefix
+                '/<(\w+:)?CreateOrderResult[^>]*>\s*(.*?)\s*<\/\1?CreateOrderResult>/is',
+
+                // Pattern 4: Inside SOAP Body
+                '/<soap:Body>.*?<CreateOrderResult[^>]*>\s*(.*?)\s*<\/CreateOrderResult>.*?<\/soap:Body>/is',
+
+                // Pattern 5: Case insensitive
+                '/<createorderresult[^>]*>\s*(.*?)\s*<\/createorderresult>/is',
+            ];
+
+            foreach ($patterns as $patternIndex => $pattern) {
+                // Use preg_match with offset to prevent excessive backtracking
+                if (preg_match($pattern, $response, $matches, PREG_OFFSET_CAPTURE)) {
+                    $resultContent = $matches[count($matches) - 1][0]; // Get last match group
+
+                    // Clean up the result
+                    $resultContent = trim($resultContent);
+
+                    // Decode HTML entities if needed
+                    if (strpos($resultContent, '&lt;') !== false) {
+                        $resultContent = html_entity_decode($resultContent, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                    }
+
+                    $parsingTime = round(microtime(true) - $startTime, 3);
+                    Log::info('Parsed via regex pattern ' . ($patternIndex + 1) . ' in ' . $parsingTime . 's');
+
+                    return $this->parseQuestResponse($resultContent);
+                }
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::debug('Regex parsing failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Increment failure count and manage circuit breaker
+     */
+    private function incrementFailureCount(&$failureCount, &$lastFailureTime, &$circuitOpen)
+    {
+        $failureCount++;
+        $lastFailureTime = time();
+
+        // Open circuit if we have 3 failures in 30 seconds
+        if ($failureCount >= 3 && (time() - $lastFailureTime) < 30) {
+            $circuitOpen = true;
+            Log::error('Circuit breaker opened due to ' . $failureCount . ' failures in 30 seconds');
+        }
+
+        // Reset failure count after 2 minutes of no activity
+        if ((time() - $lastFailureTime) > 120) {
+            $failureCount = 0;
+            $circuitOpen = false;
+            Log::info('Circuit breaker reset - failure count cleared');
         }
     }
 
@@ -565,7 +974,7 @@ class QuestDiagnosticsController extends Controller
                 'middle_name' => $formData['middle_name'] ?? null,
                 'primary_id' => $formData['primary_id'],
                 'primary_id_type' => $formData['primary_id_type'] ?? null,
-                'dob' => !empty($formData['dob']) ? \Carbon\Carbon::createFromFormat('m/d/Y', $formData['dob']) : null,
+                'dob' => !empty($formData['dob']) ? \Carbon\Carbon::createFromFormat('Y-m-d', $formData['dob']) : null,
                 'primary_phone' => $formData['primary_phone'],
                 'secondary_phone' => $formData['secondary_phone'] ?? null,
                 'email' => $formData['email'] ?? null,
@@ -587,7 +996,7 @@ class QuestDiagnosticsController extends Controller
                 'contact_name' => $formData['contact_name'] ?? null,
                 'telephone_number' => $formData['telephone_number'] ?? null,
                 // Timing
-                'end_datetime' => !empty($formData['end_datetime']) ? $formData['end_datetime'] : null,
+                'end_datetime' => !empty($formData['end_datetime']) ? \Carbon\Carbon::parse($formData['end_datetime']) : null,
                 'end_datetime_timezone_id' => $formData['end_datetime_timezone_id'] ?? null,
                 // API Logging
                 'request_xml' => $orderXml,
@@ -619,8 +1028,22 @@ class QuestDiagnosticsController extends Controller
         );
     }
 
+    public function testEnvVars()
+    {
+        return response()->json([
+            'QUEST_USERNAME' => env('QUEST_USERNAME', 'NOT_FOUND'),
+            'QUEST_PASSWORD_set' => !empty(env('QUEST_PASSWORD')),
+            'QUEST_PASSWORD_length' => strlen(env('QUEST_PASSWORD', '')),
+            'APP_ENV' => config('app.env'),
+            'all_env_vars' => [
+                'QUEST_USERNAME' => substr(env('QUEST_USERNAME', ''), 0, 3) . '...',
+                'QUEST_PASSWORD' => str_repeat('*', strlen(env('QUEST_PASSWORD', ''))),
+            ]
+        ]);
+    }
 
-    //public function getDocument(Request $request, $questOrderId, $docType)
+
+
     public function getDocument(Request $request, $questOrderId, $docType)
     {
         $username = env('QUEST_USERNAME');
@@ -689,18 +1112,79 @@ class QuestDiagnosticsController extends Controller
         }
     }
 
-    // Keep your existing parseGetDocumentResponse method
+
     private function parseGetDocumentResponse($responseXml)
     {
-        $xml = simplexml_load_string($responseXml);
-        $result = [
-            'status' => (string)$xml->ResponseStatusId,
-            'error_detail' => (string)$xml->ErrorDetail,
-            'doc_type' => (string)$xml->DocType,
-            'doc_format' => (string)$xml->DocFormat,
-            'doc_stream' => (string)$xml->DocStream,
-        ];
-        return $result;
+        try {
+            Log::info('Parsing GetDocument Response:', ['xml' => substr($responseXml, 0, 500)]);
+
+            // Clean the response first
+            $responseXml = trim($responseXml);
+
+            // Check if response is empty
+            if (empty($responseXml)) {
+                return [
+                    'status' => 'Error',
+                    'error_detail' => 'Empty response from Quest',
+                    'doc_type' => '',
+                    'doc_format' => '',
+                    'doc_stream' => ''
+                ];
+            }
+
+            // Try to parse as XML
+            libxml_use_internal_errors(true);
+            $xml = simplexml_load_string($responseXml);
+
+            if ($xml === false) {
+                $errors = libxml_get_errors();
+                libxml_clear_errors();
+
+                $errorMessages = [];
+                foreach ($errors as $error) {
+                    $errorMessages[] = $error->message;
+                }
+
+                Log::error('XML Parse Errors:', $errorMessages);
+
+                return [
+                    'status' => 'Error',
+                    'error_detail' => 'Invalid XML response: ' . implode(', ', $errorMessages),
+                    'doc_type' => '',
+                    'doc_format' => '',
+                    'doc_stream' => ''
+                ];
+            }
+
+            // Check for error response
+            if (isset($xml->ResponseStatusId) && (string)$xml->ResponseStatusId !== 'Success') {
+                return [
+                    'status' => (string)($xml->ResponseStatusId ?? 'Error'),
+                    'error_detail' => (string)($xml->ErrorDetail ?? 'Unknown error'),
+                    'doc_type' => (string)($xml->DocType ?? ''),
+                    'doc_format' => (string)($xml->DocFormat ?? ''),
+                    'doc_stream' => (string)($xml->DocStream ?? '')
+                ];
+            }
+
+            // Success response
+            return [
+                'status' => (string)($xml->ResponseStatusId ?? 'Success'),
+                'error_detail' => (string)($xml->ErrorDetail ?? ''),
+                'doc_type' => (string)($xml->DocType ?? ''),
+                'doc_format' => (string)($xml->DocFormat ?? ''),
+                'doc_stream' => (string)($xml->DocStream ?? '')
+            ];
+        } catch (\Exception $e) {
+            Log::error('ParseGetDocumentResponse Error: ' . $e->getMessage());
+            return [
+                'status' => 'Error',
+                'error_detail' => 'Parse error: ' . $e->getMessage(),
+                'doc_type' => '',
+                'doc_format' => '',
+                'doc_stream' => ''
+            ];
+        }
     }
 
 
@@ -821,34 +1305,6 @@ class QuestDiagnosticsController extends Controller
         );
     }
 
-    // private function debugSoapResponse($soapResponse)
-    // {
-    //     // Check if it's a SOAP envelope
-    //     if (strpos($soapResponse, '<s:Envelope') !== false || strpos($soapResponse, '<soap:Envelope') !== false) {
-    //         Log::info('Detected SOAP envelope');
-
-    //         // Look for encoded XML content
-    //         if (preg_match('/&lt;\?xml.*?&lt;\/QuestMethodResponse&gt;/s', $soapResponse, $matches)) {
-    //             Log::info('Found encoded XML content');
-    //             $decoded = html_entity_decode($matches[0], ENT_QUOTES | ENT_XML1, 'UTF-8');
-    //             Log::info('Decoded content: ' . $decoded);
-    //         }
-
-    //         // Try to extract content
-    //         $content = $this->extractXmlFromSoap($soapResponse);
-    //         if ($content) {
-    //             Log::info('Extracted content: ' . $content);
-    //         } else {
-    //             Log::info('Could not extract content');
-    //             Log::info('Raw response snippet: ' . substr($soapResponse, 0, 500));
-    //         }
-    //     } else {
-    //         Log::info('Not a SOAP envelope');
-    //         Log::info('Response: ' . $soapResponse);
-    //     }
-
-    //     Log::info('=== END DEBUG ===');
-    // }
 
 
 

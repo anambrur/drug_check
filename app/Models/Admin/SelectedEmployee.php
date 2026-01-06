@@ -13,6 +13,7 @@ class SelectedEmployee extends Model
         'selection_event_id',
         'employee_id',
         'test_id',
+        'selection_protocol_id',
         'selection_type',
         'random_number',
         'is_excused',

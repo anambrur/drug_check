@@ -148,7 +148,7 @@
                                     </h5>
                                 </div>
 
-                                
+
                                 <div class="card-body">
                                     <div class="row g-3">
                                         <div class="col-md-6">
@@ -241,11 +241,12 @@
                                         </div>
 
                                         <div class="col-md-6">
-                                            <label for="primary_phone" class="form-label">Primary Phone</label>
+                                            <label for="primary_phone" class="form-label">Primary Phone <span
+                                                    class="text-danger">*</span></label>
                                             <input type="tel"
                                                 class="form-control @error('primary_phone') is-invalid @enderror"
                                                 name="primary_phone"
-                                                value="{{ old('primary_phone', $employee->phone) }}">
+                                                value="{{ old('primary_phone', $employee->phone) }}" required>
                                             @error('primary_phone')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror

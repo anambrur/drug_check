@@ -2,17 +2,15 @@
 
 namespace App\Services;
 
-use Illuminate\Support\FacadesLog;
 use App\Mail\TestStoreNotification;
 use Illuminate\Support\Facades\Log;
 use App\Mail\TestResultNotification;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Admin\ContactInfoWidget;
 
 class NotificationService
 {
-    public function sendTestNotification($mailData, string $recipientType, $pdfContent = null, $databasePdf = null): bool
+    public function sendTestNotification($mailData, string $recipientType,  $databasePdf = null): bool
     {
         try {
             if (!in_array($recipientType, ['company', 'employee'])) {
@@ -38,7 +36,7 @@ class NotificationService
 
             // Prepare email data
             $emailData = [
-                'has_attachments' => $pdfContent || $databasePdf,
+                'has_attachments' => $databasePdf,
                 'has_database_pdf' => (bool)$databasePdf,
                 'company_name' => $mailData->clientProfile->company_name ?? 'Company',
                 'address' => $mailData->clientProfile->address ?? '',
@@ -87,7 +85,6 @@ class NotificationService
             Mail::to($recipient)->send(new TestResultNotification(
                 $emailData,
                 $recipientType,
-                $pdfContent,
                 $databasePdf
             ));
             

@@ -67,6 +67,7 @@ return new class extends Migration
             $table->foreignId('selection_event_id')->constrained('selection_events')->onDelete('cascade');
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->foreignId('test_id')->constrained('test_admins')->onDelete('cascade');
+            $table->foreignId('selection_protocol_id')->nullable()->constrained('selection_protocols')->onDelete('cascade');
             $table->enum('selection_type', ['PRIMARY', 'SUB', 'ALTERNATE', 'EXTRA']);
             $table->integer('random_number');
             $table->boolean('is_excused')->default(false);

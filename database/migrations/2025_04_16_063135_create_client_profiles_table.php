@@ -36,6 +36,9 @@ return new class extends Migration
             $table->string('der_contact_phone', 20)->nullable();
 
             $table->date('client_start_date')->nullable();
+            $table->date('certificate_start_date')->nullable();
+            $table->string('certificate_path')->nullable();
+            $table->timestamp('certificate_generated_at')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });

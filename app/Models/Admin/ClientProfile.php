@@ -32,7 +32,17 @@ class ClientProfile extends Model
         'der_contact_email',
         'der_contact_phone',
         'client_start_date',
+        'certificate_start_date',
+        'certificate_path',
+        'certificate_generated_at',
         'status',
+    ];
+
+    protected $casts = [
+        'certificate_generated_at' => 'datetime',
+        'client_start_date' => 'date',
+        'certificate_start_date' => 'date',
+        // Add other date fields if needed
     ];
 
     public function user()
