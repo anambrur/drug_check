@@ -136,6 +136,12 @@ use App\Http\Controllers\Admin\PortfolioDetailSectionController;
 |
 */
 
+Route::get('/optimize-clear', function () {
+    Artisan::call('optimize:clear');
+
+    return 'Optimize cache cleared successfully!';
+});
+
 
 Route::post('/create-payment-intent', function (Request $request) {
     Stripe::setApiKey(env('STRIPE_SECRET'));
