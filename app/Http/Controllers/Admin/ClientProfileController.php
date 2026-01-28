@@ -208,6 +208,12 @@ class ClientProfileController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            // Convert empty strings to null for date fields
+            $request->merge([
+                'client_start_date' => $request->client_start_date ?: null,
+                'certificate_start_date' => $request->certificate_start_date ?: null,
+            ]);
+
             // Validate input
             $validator = Validator::make($request->all(), [
                 'company_name'            => 'required|string|max:255',
@@ -248,6 +254,8 @@ class ClientProfileController extends Controller
 
             // Prepare input
             $input = $request->all();
+            $input['client_start_date'] = $request->client_start_date ?: null;
+            $input['certificate_start_date'] = $request->certificate_start_date ?: null;
 
             // Update record
             $clientProfile->update($input);
