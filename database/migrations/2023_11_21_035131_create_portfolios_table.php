@@ -25,7 +25,8 @@ return new class extends Migration
             $table->integer('order')->default(0);
             $table->integer('price')->default(0);
             $table->text('code')->nullable();
-            $table->text('quest_code')->nullable();
+            $table->text('lab_account')->nullable();
+            $table->text('test_code')->nullable();
             $table->enum('status', ['published', 'draft'])->default('published');
             $table->timestamps();
         });

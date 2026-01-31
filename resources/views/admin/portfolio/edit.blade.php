@@ -111,10 +111,20 @@
 
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="code">Code</label>
+                                        <label for="code">Quest Code</label>
                                         <input type="text" name="code" class="form-control" id="code" value="{{ $portfolio->code }}" placeholder="Enter Code">
                                     </div>
                                 </div>
+
+
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="lab_account">Quest Lab Account</label>
+                                        <input type="text" name="lab_account" class="form-control" id="lab_account" value="{{ $portfolio->lab_account }}" placeholder="Enter Lab Account">
+                                    </div>
+                                </div>
+
+
                                 
                                 <div class="col-md-12">
                                     <div class="form-group">

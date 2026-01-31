@@ -212,7 +212,7 @@
                             @csrf
                             <input type="hidden" name="portfolio_id" value="{{ $paymentData['portfolio']->id }}">
                             <input type="hidden" name="payment_intent_id" value="{{ $paymentData['payment_intent_id'] }}">
-                            <input type="hidden" name="lab_account" value="{{ env('QUEST_LAB_ACCOUNT') }}">
+                            <input type="hidden" name="lab_account" value="{{ $paymentData['portfolio']->quest_lab_account }}">
                             <input type="hidden" name="is_physical"
                                 value="{{ str_contains(strtolower($paymentData['portfolio']->title), 'physical') ? 'true' : 'false' }}">
                             <input type="hidden" name="is_ebat"

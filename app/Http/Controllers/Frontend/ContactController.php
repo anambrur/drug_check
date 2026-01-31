@@ -222,6 +222,7 @@ class ContactController extends Controller
             'payment_intent_id' => 'nullable|string',
             'test_name' => 'nullable|string',
             'code' => 'nullable|string',
+            'lab_account' => 'nullable|string',
         ]);
 
 
@@ -295,6 +296,7 @@ class ContactController extends Controller
                     'title' => $validatedData['test_name'] ?? 'Test',
                     'price' => $price,
                     'quest_unit_code' => $validatedData['code'] ?? null,
+                    'quest_lab_account' => $validatedData['lab_account'] ?? null,
                     // Add any other portfolio fields you need
                 ],
                 // Add any other needed fields

@@ -230,6 +230,7 @@
                                     <input type="hidden" name="test_name" id="test_name"
                                         value="{{ $portfolio->title }}">
                                     <input type="hidden" name="code" value="{{ $portfolio->code }}">
+                                    <input type="hidden" name="lab_account" value="{{ $portfolio->lab_account }}">
 
                                     <!-- ========== Personal Information Section ========== -->
                                     <div class="mb-5">
