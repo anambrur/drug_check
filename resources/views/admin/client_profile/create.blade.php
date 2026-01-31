@@ -36,7 +36,7 @@
 
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label for="account_no">Lab Account Number <span class="text-red">*</span></label>
+                                    <label for="account_no">Lab Account Number</label>
                                     <input id="account_no" name="account_no" type="text"
                                         class="form-control @error('account_no') is-invalid @enderror"
                                         placeholder="Enter Lab account number" value="{{ old('account_no') }}" required>

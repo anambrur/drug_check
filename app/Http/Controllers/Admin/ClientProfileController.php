@@ -73,7 +73,7 @@ class ClientProfileController extends Controller
             // Form validation
             $validator = Validator::make($request->all(), [
                 'company_name'            => 'required|string|max:255',
-                'account_no'              => 'required',
+                'account_no'              => 'nullable|string|max:255',
                 'short_description'       => 'nullable|string',
                 'address'                 => 'required|string',
                 'city'                    => 'required|string',
@@ -217,7 +217,7 @@ class ClientProfileController extends Controller
             // Validate input
             $validator = Validator::make($request->all(), [
                 'company_name'            => 'required|string|max:255',
-                'account_no'              => 'required',
+                'account_no'              => 'nullable|string|max:255',
                 'short_description'       => 'nullable|string',
                 'address'                 => 'required|string',
                 'city'                    => 'required|string',
