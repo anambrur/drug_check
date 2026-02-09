@@ -38,13 +38,16 @@
                         @endif
                     </div>
                 </div>
+                @php
+                    // dd($menus);
+                @endphp
 
                 <div class="col-lg-6 col-xl-6 col-md-10 wow fadeInUp">
                     <div class="hero-inner text-center" style="padding-top: 120px;">
                         @foreach ($menus as $menu)
                             @if ($menu->menu_name !== 'Home' && $menu->menu_name !== 'About' && $menu->menu_name !== 'Contact')
                                 <div class="mb-3">
-                                    <a href="{{ url($menu->uri) }}" class="primary-btn py-2">
+                                    <a href="{{ url($menu->url) }}" class="primary-btn py-2">
                                         <span class="text">{{ $menu->menu_name }}</span>
                                     </a>
                                 </div>
