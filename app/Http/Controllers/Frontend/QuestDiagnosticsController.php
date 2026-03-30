@@ -485,7 +485,6 @@ class QuestDiagnosticsController extends Controller
 
     public function submitOrder(Request $request)
     {
-        dd($request->all());
         $validator = Validator::make($request->all(), [
             'payment_intent_id'           => ['required', 'string', 'max:255'],
             'first_name'                  => ['required', 'string', 'max:20'],
@@ -969,7 +968,7 @@ class QuestDiagnosticsController extends Controller
             CURLOPT_POSTFIELDS     => $soapBody,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => config('services.quest.timeouts.request', 60),
-            CURLOPT_CONNECTTIMEOUT => config('services.quest.timeouts.connect', 15),
+            CURLOPT_CONNECTTIMEOUT => config('services.quest.timeouts.connect', 60),
             CURLOPT_SSL_VERIFYPEER => $sslVerify,
             CURLOPT_SSL_VERIFYHOST => $sslVerify ? 2 : 0,
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
@@ -1263,6 +1262,7 @@ class QuestDiagnosticsController extends Controller
                 'end_datetime'                => !empty($data['end_datetime']) ? Carbon::parse($data['end_datetime']) : null,
                 'end_datetime_timezone_id'    => !empty($data['end_datetime_timezone_id']) ? (int) $data['end_datetime_timezone_id'] : null,
                 // API logging
+                'response_url'                => $this->nullIfEmpty($data['response_url'] ?? null),
                 'request_xml'                 => $orderXml,
                 'create_response_xml'         => $apiResponse['_raw_response']         ?? null,
                 'create_response_status'      => $apiResponse['status'],

@@ -437,8 +437,8 @@
                         class="nav-item {{ request()->is('admin/quest-order*') 
                             ? 'active'
                             : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#quest-sites" aria-expanded="false"
-                            aria-controls="quest-sites">
+                        <a class="nav-link" data-toggle="collapse" href="#quest-orders" aria-expanded="false"
+                            aria-controls="quest-orders">
                             <i class="fas fa-location-arrow menu-icon"></i>
                             <span class="menu-title">Quest Order</span>
                             <i class="ti-angle-right"></i>
@@ -446,8 +446,14 @@
                         <div class="collapse {{ request()->is('admin/quest-order*') 
                             ? 'show'
                             : '' }}"
-                            id="quest-sites">
+                            id="quest-orders">
                             <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-order') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-order') }}">Quest Order
+                                    </a>
+                                </li>
                                 <li class="nav-item"> 
                                     <a
                                         class="nav-link {{ request()->is('admin/quest-order/create') ? 'active' : '' }}"

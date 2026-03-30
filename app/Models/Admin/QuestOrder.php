@@ -81,6 +81,7 @@ class QuestOrder extends Model
         'expired_at',
 
         // API Logs
+        'response_url',
         'request_xml',
         'create_response_xml',
         'create_response_status',

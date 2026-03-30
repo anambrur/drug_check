@@ -99,6 +99,7 @@ return new class extends Migration
             $table->timestamp('expired_at')->nullable();
 
             // API Interaction Logging
+            $table->string('response_url')->nullable();
             $table->text('request_xml')->nullable();
             $table->text('create_response_xml')->nullable();
             $table->string('create_response_status');

@@ -56,7 +56,7 @@ return [
 
         // cURL timeout settings (seconds)
         'timeouts' => [
-            'connect' => 15,
+            'connect' => 60,
             'request' => 60,
         ],
 
