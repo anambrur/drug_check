@@ -78,6 +78,7 @@
                                     <th>{{ __('content.category_name') }}</th>
                                     <th>{{ __('content.price') }}(<span>$</span>)</th>
                                     <th>Code</th>
+                                    <th>Quest Lab Account</th>
                                     <th>{{ __('content.order') }}</th>
                                     <th class="custom-width-action">{{ __('content.action') }}</th>
                                 </tr>
@@ -86,6 +87,7 @@
                                 <tbody>
                                 @php $desc = count($portfolios); $asc=0; @endphp
                                 @foreach ($portfolios as $portfolio)
+                                
                                     <tr>
                                         <td>
                                             <input  name="check_list[]" type="checkbox" value="{{ $portfolio->id }}" onclick="showHideDeleteButton2(this)"> <span class="d-none">{{ $asc++ }}{{ $desc-- }}</span>
@@ -104,6 +106,7 @@
                                         <td>{{ $portfolio->category_name }}</td>
                                         <td><span>$</span> {{ $portfolio->price }}</td>
                                         <td>{{ $portfolio->code }}</td>
+                                        <td>{{ $portfolio->lab_account ?? 'N/A' }}</td>
                                         <td>{{ $portfolio->order }}</td>
                                         <td>
                                             <div>
