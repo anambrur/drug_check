@@ -136,6 +136,8 @@ use App\Http\Controllers\Admin\PortfolioDetailSectionController;
 |
 */
 
+
+
 Route::get('/optimize-clear', function () {
     Artisan::call('optimize:clear');
 

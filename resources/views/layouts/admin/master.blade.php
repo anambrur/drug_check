@@ -432,6 +432,34 @@
                     </li>
                 @endcan
 
+                @can('quest-order view')
+                    <li
+                        class="nav-item {{ request()->is('admin/quest-order*') 
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#quest-sites" aria-expanded="false"
+                            aria-controls="quest-sites">
+                            <i class="fas fa-location-arrow menu-icon"></i>
+                            <span class="menu-title">Quest Order</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/quest-order*') 
+                            ? 'show'
+                            : '' }}"
+                            id="quest-sites">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-order/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-order/create') }}">Create Order
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
 
                 @can('lab admin view')
                     <li
@@ -1053,7 +1081,7 @@
                         </div>
                     </li>
                 @endcan
-                @can('team view')
+                {{-- @can('team view')
                     <li
                         class="nav-item {{ request()->is('admin/team/style1') ||
                         request()->is('admin/team/create/*') ||
@@ -1185,7 +1213,7 @@
                             </ul>
                         </div>
                     </li>
-                @endcan
+                @endcan --}}
                 @can('contact message view')
                     <li
                         class="nav-item {{ request()->is('admin/contact-message') ? 'active' : '' }}">
@@ -1205,7 +1233,7 @@
                         </div>
                     </li>
                 @endcan
-                @can('subscribe view')
+                {{-- @can('subscribe view')
                     <li class="nav-item {{ request()->is('admin/subscribe/create') ? 'active' : '' }}">
                         <a class="nav-link" data-toggle="collapse" href="#subscribers" aria-expanded="false"
                             aria-controls="subscribers">
@@ -1223,7 +1251,7 @@
                             </ul>
                         </div>
                     </li>
-                @endcan
+                @endcan --}}
                 @can('setting view')
                     <li
                         class="nav-item {{ request()->is('admin/preloader/create') ||
@@ -1456,7 +1484,7 @@
                         </div>
                     </li>
                 @endhasrole
-                @can('language view')
+                {{-- @can('language view')
                     <li
                         class="nav-item  {{ request()->is('admin/language/create') ||
                         request()->is('admin/language/*/edit') ||
@@ -1470,7 +1498,7 @@
                             <span class="menu-title">{{ __('content.languages') }}</span>
                         </a>
                     </li>
-                @endcan
+                @endcan --}}
                 @can('clear cache view')
                     <li class="nav-item {{ request()->is('admin/clear-cache') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ url('admin/clear-cache') }}">

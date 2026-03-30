@@ -39,7 +39,7 @@
                                     <label for="account_no">Lab Account Number</label>
                                     <input id="account_no" name="account_no" type="text"
                                         class="form-control @error('account_no') is-invalid @enderror"
-                                        placeholder="Enter Lab account number" value="{{ old('account_no') }}" required>
+                                        placeholder="Enter Lab account number" value="{{ old('account_no') }}">
                                     @error('account_no')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>

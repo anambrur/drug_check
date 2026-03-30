@@ -22,7 +22,7 @@
             @isset($portfolio_section_style1)
                 <div class="col-md-5">
                     <div class="section-heading-left">
-                        <span>@php echo html_entity_decode($portfolio_section_style1->section_title); @endphp</span>
+                        {{-- <span>@php echo html_entity_decode($portfolio_section_style1->section_title); @endphp</span> --}}
                         <h2>@php echo html_entity_decode($portfolio_section_style1->title); @endphp</h2>
                     </div>
                 </div>
@@ -30,8 +30,8 @@
                 @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
                     <div class="col-md-5">
                         <div class="section-heading-left">
-                            <span>Tests</span>
-                            <h2>Our Services</h2>
+                            {{-- <span>Tests</span> --}}
+                            <h2>Services</h2>
                         </div>
                     </div>
                 @endif

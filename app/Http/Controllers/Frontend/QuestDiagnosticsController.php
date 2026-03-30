@@ -2,143 +2,858 @@
 
 namespace App\Http\Controllers\Frontend;
 
-use Stripe\Stripe;
+use Carbon\Carbon;
 use SimpleXMLElement;
-use Stripe\PaymentIntent;
 use Illuminate\Http\Request;
 use App\Models\Admin\Employee;
 use App\Models\Admin\Portfolio;
 use App\Models\Admin\QuestOrder;
 use App\Models\Admin\ClientProfile;
-use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
 use App\Models\Admin\CollectionSite;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\Controller;
+use Stripe\Stripe;
+use Stripe\PaymentIntent;
 
+/**
+ * QuestDiagnosticsController
+ *
+ * Handles all integration with Quest Diagnostics ESP Web Services.
+ *
+ * =========================================================================
+ * OUTBOUND — we call Quest:
+ *   CreateOrder     → submitOrder()
+ *   GetOrderDetails → getOrderDetails()
+ *   GetDocument     → getDocument()
+ *
+ * INBOUND — Quest calls us (Section 3):
+ *   receiveWebhook()  ← single endpoint registered as ResponseURL
+ *
+ * HOW THE INBOUND (ResponseURL) WORKS:
+ *   The spec (§4.41) allows providing a ResponseURL per order.
+ *   Quest POSTs both OrderStatus and OrderResult payloads to this URL.
+ *   We detect which type arrived by checking which root element is present:
+ *     - <OrderStatusID>  → it is an OrderStatus message  (Section 3.1)
+ *     - <OrderResultID>  → it is an OrderResult message  (Section 3.2)
+ *
+ * NOTE ON AUTHENTICATION:
+ *   The spec method signatures include username/password parameters, but
+ *   the spec gives no values or validation rules for the inbound direction.
+ *   Section 3.1.3 states: "Quest Diagnostics Implementation Team will work
+ *   with provider/vendor to determine how your endpoint defines success or
+ *   failure." Authentication details (if any) are agreed with the Quest
+ *   Implementation Team during onboarding — not specified in the spec itself.
+ *   We therefore do NOT validate credentials here; add that only if the
+ *   Quest team provides specific values for your integration.
+ *
+ * ROUTE SETUP:
+ *   Add to App\Http\Middleware\VerifyCsrfToken::$except:
+ *     'quest/webhook'
+ *
+ *   Route:
+ *     POST  quest/webhook  → receiveWebhook
+ *
+ *   Register this URL with Quest as your ResponseURL (in the order XML or
+ *   at the account level via the Quest Implementation Team).
+ * =========================================================================
+ */
 class QuestDiagnosticsController extends Controller
 {
-    private $devUrl = 'https://qcs-uat.questdiagnostics.com/services/ESPService.asmx';
-    private $prodUrl = 'https://ocs.questdiagnostics.com/services/ESPService.asmx';
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
+
+    private const VALID_DOC_TYPES = [
+        'QPassport',
+        'LabReport',
+        'MROLetter',
+        'Copy1',
+        'Copy2',
+        'ATF',
+        'AlcoholReport',
+        'OHS',
+    ];
+
+    private const CIRCUIT_BREAKER_KEY       = 'quest_circuit_breaker';
+    private const CIRCUIT_FAILURE_THRESHOLD = 3;
+    private const CIRCUIT_RECOVERY_SECONDS  = 60;
+    private const MAX_RESPONSE_BYTES        = 5 * 1024 * 1024;
+
+    // -------------------------------------------------------------------------
+    // Config helpers
+    // -------------------------------------------------------------------------
+
+    private function getApiUrl(): string
+    {
+        return app()->isProduction()
+            ? config('services.quest.urls.production', 'https://qcs.questdiagnostics.com/services/ESPService.asmx')
+            : config('services.quest.urls.staging',    'https://qcs-uat.questdiagnostics.com/services/ESPService.asmx');
+    }
+
+    private function getUsername(): string
+    {
+        return config('services.quest.username')
+            ?? throw new \RuntimeException('QUEST_USERNAME is not configured.');
+    }
+
+    private function getPassword(): string
+    {
+        return config('services.quest.password')
+            ?? throw new \RuntimeException('QUEST_PASSWORD is not configured.');
+    }
+
+    private function getNamespace(): string
+    {
+        return 'http://wssim.labone.com';
+    }
+
+    private function getSoapAction(string $action): string
+    {
+        return '"' . $this->getNamespace() . '/' . $action . '"';
+    }
+
+    // =========================================================================
+    // SECTION 3 — INBOUND WEBHOOK (Quest → Our System via ResponseURL)
+    // =========================================================================
+
+    /**
+     * Single endpoint that receives BOTH OrderStatus and OrderResult pushes
+     * from Quest. Quest posts raw XML (or a SOAP envelope) to the ResponseURL
+     * you included in the order.
+     *
+     * Detection strategy (per spec element names):
+     *   <OrderStatusID> present → OrderStatus message (Section 3.1)
+     *   <OrderResultID> present → OrderResult message (Section 3.2)
+     *
+     * IMPORTANT SPEC BEHAVIOURS:
+     *   - Statuses may arrive out of order or be skipped entirely (§4.31).
+     *   - Multi-panel orders (drug + alcohol) produce SEPARATE messages per
+     *     ScreenType. We always overwrite with whatever Quest sends latest.
+     *   - The known dual-specimen bug (§3.2) can send a result for an order
+     *     ID that doesn't exist in our system — we log and skip gracefully.
+     */
+    public function receiveWebhook(Request $request): \Illuminate\Http\Response
+    {
+        $rawBody = $request->getContent();
+
+        Log::info('Quest inbound webhook received', [
+            'ip'    => $request->ip(),
+            'bytes' => strlen($rawBody),
+        ]);
+
+        // Parse the raw body into a SimpleXMLElement
+        $xml = $this->parseInboundXml($rawBody);
+
+        if ($xml === null) {
+            Log::error('Quest webhook: could not parse inbound XML', [
+                'snippet' => substr($rawBody, 0, 400),
+            ]);
+            // Return 200 anyway — returning an error may cause Quest to retry
+            // with the same unparseable payload indefinitely.
+            return $this->webhookResponse('PARSE_ERROR');
+        }
+
+        // Detect message type by which key element is present
+        if (isset($xml->OrderStatusID)) {
+            // ---- OrderStatus (Section 3.1) ----
+            $status = $this->extractOrderStatus($xml);
+
+            if ($status === null) {
+                return $this->webhookResponse('INVALID_STATUS');
+            }
+
+            try {
+                $this->applyStatusToOrder($status, $rawBody);
+            } catch (\Throwable $e) {
+                Log::error('Quest webhook: failed to apply OrderStatus', [
+                    'error'          => $e->getMessage(),
+                    'quest_order_id' => $status['quest_order_id'],
+                ]);
+            }
+
+            return $this->webhookResponse('SUCCESS');
+        } elseif (isset($xml->OrderResultID)) {
+            // ---- OrderResult (Section 3.2) ----
+            $result = $this->extractOrderResult($xml);
+
+            if ($result === null) {
+                return $this->webhookResponse('INVALID_RESULT');
+            }
+
+            try {
+                $this->applyResultToOrder($result, $rawBody);
+            } catch (\Throwable $e) {
+                Log::error('Quest webhook: failed to apply OrderResult', [
+                    'error'          => $e->getMessage(),
+                    'quest_order_id' => $result['quest_order_id'],
+                ]);
+            }
+
+            return $this->webhookResponse('SUCCESS');
+        }
+
+        // Neither element found — unknown payload shape
+        Log::warning('Quest webhook: unrecognised payload (no OrderStatusID or OrderResultID)', [
+            'snippet' => substr($rawBody, 0, 400),
+        ]);
+
+        return $this->webhookResponse('UNKNOWN_PAYLOAD');
+    }
+
+    // =========================================================================
+    // PRIVATE — Inbound: XML Parsing
+    // =========================================================================
+
+    /**
+     * Parse the raw inbound body into a SimpleXMLElement.
+     *
+     * Quest may POST:
+     *   a) A bare <OrderStatus> or <OrderResult> XML document, or
+     *   b) A SOAP envelope wrapping the XML (when using SOAP endpoints).
+     *
+     * Since ResponseURL receives the raw payload directly, we first try to
+     * extract the inner content from a SOAP wrapper, then fall back to
+     * treating the body as plain XML.
+     */
+    private function parseInboundXml(string $rawBody): ?\SimpleXMLElement
+    {
+        $cleaned = $this->decodeAndCleanInboundXml($rawBody);
+
+        // Try to unwrap a SOAP envelope if one is present
+        $inner = $this->tryExtractSoapInnerXml($cleaned);
+        $xmlString = $inner ?? $cleaned;
+
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($xmlString);
+        libxml_clear_errors();
+
+        return $xml instanceof \SimpleXMLElement ? $xml : null;
+    }
+
+    /**
+     * If the raw body is a SOAP envelope, extract the first meaningful child
+     * inside <soap:Body>. Returns null if it is not a SOAP envelope.
+     */
+    private function tryExtractSoapInnerXml(string $xml): ?string
+    {
+        // Quick check — don't bother parsing if it's clearly not SOAP
+        if (stripos($xml, 'Envelope') === false) {
+            return null;
+        }
+
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $loaded = $dom->loadXML($xml, LIBXML_NOWARNING | LIBXML_NOERROR);
+        libxml_clear_errors();
+
+        if (!$loaded) {
+            return null;
+        }
+
+        $xpath = new \DOMXPath($dom);
+        // Look for the first child element inside any Body element
+        $nodes = $xpath->query('//*[local-name()="Body"]/*[1]');
+
+        if ($nodes && $nodes->length > 0) {
+            return $dom->saveXML($nodes->item(0));
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract OrderStatus fields from a parsed XML element.
+     * Returns null if mandatory fields are missing.
+     */
+    private function extractOrderStatus(\SimpleXMLElement $xml): ?array
+    {
+        $questOrderId = (string) ($xml->QuestOrderID  ?? '');
+        $statusId     = (string) ($xml->OrderStatusID ?? '');
+
+        if (empty($questOrderId) || empty($statusId)) {
+            Log::error('Quest webhook: OrderStatus missing required fields', [
+                'quest_order_id'  => $questOrderId,
+                'order_status_id' => $statusId,
+            ]);
+            return null;
+        }
+
+        return [
+            'quest_order_id'        => $questOrderId,
+            'reference_test_id'     => (string) ($xml->ReferenceTestID      ?? ''),
+            'client_reference_id'   => (string) ($xml->ClientReferenceID    ?? ''),
+            'order_status_id'       => $statusId,
+            'screen_type'           => (string) ($xml->ScreenType           ?? ''),
+            'specimen_id'           => (string) ($xml->SpecimenID           ?? ''),
+            'lab_accession_number'  => (string) ($xml->LabAccessionNumber   ?? ''),
+            'collected_datetime'    => $this->parseQuestDatetime($xml->CollectedDateTime   ?? null),
+            'order_status_datetime' => $this->parseQuestDatetime($xml->OrderStatusDateTime ?? null),
+            // Physical sub-block (§4.32) — only present for physical orders
+            'physical_data'         => isset($xml->Physical) ? $this->xmlToArray($xml->Physical) : null,
+        ];
+    }
+
+    /**
+     * Extract OrderResult fields from a parsed XML element.
+     * Returns null if mandatory fields are missing.
+     */
+    private function extractOrderResult(\SimpleXMLElement $xml): ?array
+    {
+        $questOrderId = (string) ($xml->QuestOrderID  ?? '');
+        $resultId     = (string) ($xml->OrderResultID ?? '');
+
+        if (empty($questOrderId) || empty($resultId)) {
+            Log::error('Quest webhook: OrderResult missing required fields', [
+                'quest_order_id'  => $questOrderId,
+                'order_result_id' => $resultId,
+            ]);
+            return null;
+        }
+
+        return [
+            'quest_order_id'        => $questOrderId,
+            'reference_test_id'     => (string) ($xml->ReferenceTestID     ?? ''),
+            'client_reference_id'   => (string) ($xml->ClientReferenceID   ?? ''),
+            'order_result_id'       => $resultId,
+            'screen_type'           => (string) ($xml->ScreenType          ?? ''),
+            'specimen_id'           => (string) ($xml->SpecimenID          ?? ''),
+            'lab_accession_number'  => (string) ($xml->LabAccessionNumber  ?? ''),
+            'collected_datetime'    => $this->parseQuestDatetime($xml->CollectedDateTime   ?? null),
+            'order_result_datetime' => $this->parseQuestDatetime($xml->OrderResultDateTime ?? null),
+            'physical_data'         => isset($xml->Physical) ? $this->xmlToArray($xml->Physical) : null,
+        ];
+    }
+
+    // =========================================================================
+    // PRIVATE — Inbound: Write to quest_orders
+    // =========================================================================
+
+    /**
+     * Update the quest_orders row with the latest status from Quest.
+     * We never create a new row here — statuses only enrich an existing order.
+     */
+    private function applyStatusToOrder(array $status, string $rawBody): void
+    {
+        $order = QuestOrder::where('quest_order_id', $status['quest_order_id'])->first();
+
+        if (!$order) {
+            // Can happen with the known dual-specimen Quest bug (§3.2)
+            Log::warning('Quest webhook: OrderStatus arrived for unknown quest_order_id', [
+                'quest_order_id' => $status['quest_order_id'],
+                'status_id'      => $status['order_status_id'],
+            ]);
+            return;
+        }
+
+        $order->update([
+            'order_status'             => $status['order_status_id'],
+            'order_status_screen_type' => $status['screen_type']          ?: null,
+            // Preserve existing specimen data if Quest sends nothing new
+            'specimen_id'              => $status['specimen_id']           ?: $order->specimen_id,
+            'lab_accession_number'     => $status['lab_accession_number']  ?: $order->lab_accession_number,
+            'collected_datetime'       => $status['collected_datetime']    ?? $order->collected_datetime,
+            'order_status_datetime'    => $status['order_status_datetime'],
+            'order_status_updated_at'  => now(),
+            'physical_data'            => $status['physical_data']
+                ? json_encode($status['physical_data'])
+                : $order->physical_data,
+            'status_raw_xml'           => substr($rawBody, 0, 65535),
+        ]);
+
+        Log::info('Quest OrderStatus applied', [
+            'id'             => $order->id,
+            'quest_order_id' => $order->quest_order_id,
+            'status'         => $status['order_status_id'],
+            'screen_type'    => $status['screen_type'],
+        ]);
+    }
+
+    /**
+     * Update the quest_orders row with the final result from Quest.
+     */
+    private function applyResultToOrder(array $result, string $rawBody): void
+    {
+        $order = QuestOrder::where('quest_order_id', $result['quest_order_id'])->first();
+
+        if (!$order) {
+            Log::warning('Quest webhook: OrderResult arrived for unknown quest_order_id', [
+                'quest_order_id' => $result['quest_order_id'],
+                'result_id'      => $result['order_result_id'],
+            ]);
+            return;
+        }
+
+        $order->update([
+            'order_result'             => $result['order_result_id'],
+            'order_result_screen_type' => $result['screen_type']          ?: null,
+            'specimen_id'              => $result['specimen_id']           ?: $order->specimen_id,
+            'lab_accession_number'     => $result['lab_accession_number']  ?: $order->lab_accession_number,
+            'collected_datetime'       => $result['collected_datetime']    ?? $order->collected_datetime,
+            'order_result_datetime'    => $result['order_result_datetime'],
+            'order_result_updated_at'  => now(),
+            'physical_data'            => $result['physical_data']
+                ? json_encode($result['physical_data'])
+                : $order->physical_data,
+            'result_raw_xml'           => substr($rawBody, 0, 65535),
+        ]);
+
+        Log::info('Quest OrderResult applied', [
+            'id'             => $order->id,
+            'quest_order_id' => $order->quest_order_id,
+            'result'         => $result['order_result_id'],
+            'screen_type'    => $result['screen_type'],
+        ]);
+    }
+
+    // =========================================================================
+    // PRIVATE — Inbound Helpers
+    // =========================================================================
+
+    /**
+     * Decode HTML entities, strip control characters, and normalise
+     * an inbound XML string so SimpleXML can parse it reliably.
+     */
+    private function decodeAndCleanInboundXml(string $xml): string
+    {
+        $xml = html_entity_decode($xml, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        $xml = str_replace(['&#xD;', "\r"], '', $xml);
+        $xml = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $xml);
+        $xml = trim(preg_replace('/<\?xml[^?]*\?>/', '', $xml));
+
+        return stripos($xml, '<?xml') === false
+            ? '<?xml version="1.0" encoding="UTF-8"?>' . $xml
+            : $xml;
+    }
+
+    /**
+     * Build a simple plain-text response for the webhook.
+     * The spec says Quest's Implementation Team will agree on what
+     * constitutes success/failure — a plain string is sufficient.
+     */
+    private function webhookResponse(string $status): \Illuminate\Http\Response
+    {
+        return response($status, 200, ['Content-Type' => 'text/plain']);
+    }
+
+    // =========================================================================
+    // ORDER FORM
+    // =========================================================================
 
     public function showOrderForm(Request $request)
     {
-        // Retrieve payment data from session or database
-        $paymentData = $request->session()->get('payment_data');
-        $portfolio = $paymentData['portfolio'];
+        $paymentData = $request->session()->get('non_dot_payment_data');
 
-        if (!$paymentData) {
-            return redirect()->back()->with('error', 'Payment data not found. Please complete payment first.');
+        if (!$paymentData || empty($paymentData['portfolio']->portfolio_id)) {
+            return redirect()->back()->with('error', 'Payment data not found. Please complete payment first11233444444.');
         }
 
-        return view(
-            'quest.order-form',
-            array_merge(getFrontendData(), [
-                'paymentData' => $paymentData,
-                'portfolio' => $paymentData['portfolio']
-            ])
-        );
+        $portfolio = Portfolio::findOrFail($paymentData['portfolio']->portfolio_id);
+
+        return view('quest.order-form', array_merge(getFrontendData(), [
+            'paymentData' => $paymentData,
+            'portfolio'   => $portfolio,
+        ]));
     }
+
+    // =========================================================================
+    // DOT ORDER FORM
+    // =========================================================================
+
+    public function showDotOrderForm(Request $request, string $paymentIntent)
+    {
+        $paymentData = $request->session()->get('payment_data');
+
+        if (!$paymentData || $paymentData['payment_intent_id'] !== $paymentIntent) {
+            toastr()->error('Invalid or expired payment session.', 'Error');
+            return redirect()->route('dot-test.index', [
+                'portfolioId' => $paymentData['portfolio_id'] ?? null,
+            ]);
+        }
+
+        $employee  = Employee::with('clientProfile')->findOrFail($paymentData['employee_id']);
+        $portfolio = Portfolio::findOrFail($paymentData['portfolio_id']);
+
+        return view('admin.dot-test.dot-test-order-form', compact('employee', 'paymentData', 'portfolio'));
+    }
+
+    // =========================================================================
+    // SUBMIT ORDER
+    // =========================================================================
 
     public function submitOrder(Request $request)
     {
-        // dd($request->all());
+        dd($request->all());
         $validator = Validator::make($request->all(), [
-            'payment_intent_id' => 'required|string',
-            'first_name' => 'required|string|max:20',
-            'last_name' => 'required|string|max:25',
-            'middle_name' => 'nullable|string|max:20',
-            'email' => 'required|email|max:254',
-            'primary_phone' => 'required|string',
-            'secondary_phone' => 'nullable|string',
-            'primary_id' => 'required|string|max:25',
-            'primary_id_type' => 'nullable|string|max:5',
-            'dob' => 'nullable|date_format:Y-m-d',
-            'zip_code' => 'nullable|string|max:10',
-            'dot_test' => 'required|in:T,F',
-            'testing_authority' => 'required_if:dot_test,T|nullable|in:FMCSA,PHMSA,FAA,FTA,FRA,USCG',
-            'reason_for_test_id' => 'required_if:is_physical,false|integer',
-            'physical_reason_for_test_id' => 'required_if:is_physical,true|nullable|string|max:3',
-            'collection_site_id' => 'nullable|string|max:6',
-            'end_datetime' => 'nullable|date_format:Y-m-d\TH:i',
-            'end_datetime_timezone_id' => 'nullable|integer',
-            'observed_requested' => 'nullable|in:Y,N',
-            'split_specimen_requested' => 'nullable|in:Y,N',
-            'unit_codes' => 'required|array',
-            'unit_codes.*' => 'string|max:15',
-            'lab_account' => 'required|string|max:20',
-            'csl' => 'nullable|string|max:20',
-            'contact_name' => 'required_if:is_ebat,true|nullable|string|max:45',
-            'telephone_number' => 'required_if:is_ebat,true|nullable|string|max:10',
-            'order_comments' => 'nullable|string|max:250',
-            'response_url' => 'nullable|url|max:255',
+            'payment_intent_id'           => ['required', 'string', 'max:255'],
+            'first_name'                  => ['required', 'string', 'max:20'],
+            'last_name'                   => ['required', 'string', 'max:25'],
+            'middle_name'                 => ['nullable', 'string', 'max:20'],
+            'email'                       => ['required', 'email:rfc,dns', 'max:254'],
+            'primary_phone'               => ['required', 'string', 'max:20'],
+            'secondary_phone'             => ['nullable', 'string', 'max:20'],
+            'primary_id'                  => ['required', 'string', 'max:25'],
+            'primary_id_type'             => ['nullable', 'string', 'max:5'],
+            // Accept any parseable date — reformatted to MM/DD/YYYY before sending to Quest
+            'dob'                         => ['nullable', 'date'],
+            'zip_code'                    => ['nullable', 'string', 'max:10'],
+            'dot_test'                    => ['required', 'in:T,F'],
+            'testing_authority'           => ['required_if:dot_test,T', 'nullable', 'in:FMCSA,PHMSA,FAA,FTA,FRA,USCG'],
+            'reason_for_test_id'          => ['required_if:is_physical,false', 'nullable', 'integer'],
+            'physical_reason_for_test_id' => ['required_if:is_physical,true', 'nullable', 'in:NC,RE,FU,OT,SA,PE,RD,SU'],
+            'collection_site_id'          => ['nullable', 'string', 'max:6'],
+            // Accepted as Y-m-d H:i from the form; reformatted to MM/DD/YYYY HH:MM:SS for Quest
+            'end_datetime'                => ['nullable', 'date_format:Y-m-d\TH:i'],
+            'end_datetime_timezone_id'    => ['nullable', 'integer', 'between:1,8'],
+            'observed_requested'          => ['nullable', 'in:Y,N'],
+            'split_specimen_requested'    => ['nullable', 'in:Y,N'],
+            'unit_codes'                  => ['required', 'string', 'max:15'],
+            'csl'                         => ['nullable', 'string', 'max:20'],
+            'contact_name'                => ['required_if:is_ebat,true', 'nullable', 'string', 'max:45'],
+            'telephone_number'            => ['required_if:is_ebat,true', 'nullable', 'string', 'max:10'],
+            'order_comments'              => ['nullable', 'string', 'max:250'],
+            'response_url'                => ['nullable', 'url', 'max:255'],
+            'lab_account'                 => ['required', 'string', 'max:20'],
         ]);
 
         if ($validator->fails()) {
-            toastr()->error($validator->errors()->first(), 'content.error');
-            return back();
+            toastr()->error($validator->errors()->first(), 'Validation Error');
+            return back()->withInput();
         }
 
-        try {
-            $orderXml = $this->buildOrderXml($validator->validated());
-            $response = $this->createQuestOrder($orderXml);
+        $data = $validator->validated();
 
-            if ($response['status'] === 'SUCCESS') {
-                // Store order details in database
-                $questOrder = $this->storeQuestOrder($validator->validated(), $response, $orderXml);
 
-                // Use the Job class instead of the closure
-                // SendQPassportEmail::dispatch(
-                //     $response['quest_order_id'],
-                //     $validator->validated()
-                // )->delay(now()->addSeconds(30));
-
-                return redirect()->route('quest.order-success',  [
-                    'quest_order_id' => $response['quest_order_id'],
-                    'reference_test_id' => $response['reference_test_id']
-                ]);
-            } else {
-                return back()->withInput()->with(
-                    'error',
-                    'Failed to create Quest order: ' . ($response['error']['detail'] ?? 'Unknown error')
-                );
+        if ($request->test_type === 'dot') {
+            $paymentData = $request->session()->get('payment_data');
+            if (!$paymentData || $paymentData['payment_intent_id'] !== $data['payment_intent_id']) {
+                return back()->withInput()->with('error', 'Payment session mismatch. Please restart the order process.');
             }
-        } catch (\Exception $e) {
-            Log::error('Quest order submission failed: ' . $e->getMessage());
-            return back()->withInput()->with(
-                'error',
-                'An error occurred while submitting to Quest Diagnostics. Please try again.'
-            );
+        } else {
+            $paymentData = $request->session()->get('non_dot_payment_data');
+            if (!$paymentData || $paymentData['payment_intent_id'] !== $data['payment_intent_id']) {
+                return back()->withInput()->with('error', 'Payment session mismatch. Please restart the order process.');
+            }
+        }
+
+
+        try {
+            $orderXml    = $this->buildOrderXml($data);
+            $rawResponse = $this->callQuestCreateOrder($orderXml);
+            $result      = $this->parseSoapResponse($rawResponse);
+
+            if ($result['status'] === 'SUCCESS') {
+                $this->storeQuestOrder($data, $result, $orderXml);
+
+                //clear payment session data after successful order creation
+                $request->session()->forget('payment_data');
+                $request->session()->forget('non_dot_payment_data');
+
+
+                return redirect()->route('quest.order-success', [
+                    'quest_order_id'    => $result['quest_order_id'],
+                    'reference_test_id' => $result['reference_test_id'],
+                ]);
+            }
+
+            return back()->withInput()->with('error', 'Failed to create Quest order: ' . ($result['error']['detail'] ?? 'Unknown error.'));
+        } catch (\RuntimeException $e) {
+            Log::error('Quest order submission failed', ['message' => $e->getMessage()]);
+            return back()->withInput()->with('error', $e->getMessage());
         }
     }
 
+    // =========================================================================
+    // ORDER SUCCESS
+    // =========================================================================
 
-    private function buildOrderXml(array $data)
+    public function orderSuccess(Request $request, string $questOrderId)
     {
-        $xml = new SimpleXMLElement('<Order></Order>');
+        $order = QuestOrder::where('quest_order_id', $questOrderId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
-        // Event Info
+        return view('quest.order-success', array_merge(getFrontendData(), [
+            'questOrderId'    => $order->quest_order_id,
+            'referenceTestId' => $order->reference_test_id,
+        ]));
+    }
+
+    // =========================================================================
+    // DOCUMENT DOWNLOAD
+    // =========================================================================
+
+    public function getDocument(Request $request, string $questOrderId, string $docType)
+    {
+        if (!in_array($docType, self::VALID_DOC_TYPES, true)) {
+            return back()->with('error', 'Invalid document type requested.');
+        }
+
+        $order = QuestOrder::where('quest_order_id', $questOrderId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        // Spec §2.5.1: include both identifiers in DocXml
+        $docXml = '<GetDocument>'
+            . '<QuestOrderID>'    . $this->xmlEscape($questOrderId)                   . '</QuestOrderID>'
+            . '<ReferenceTestID>' . $this->xmlEscape($order->reference_test_id ?? '') . '</ReferenceTestID>'
+            . '<DocType>'         . $this->xmlEscape($docType)                        . '</DocType>'
+            . '</GetDocument>';
+
+        $soapBody = '<?xml version="1.0" encoding="utf-8"?>'
+            . '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"'
+            . ' xmlns:wss="http://wssim.labone.com/">'
+            . '<soap:Body>'
+            . '<wss:GetDocument>'
+            . '<wss:username>' . $this->xmlEscape($this->getUsername()) . '</wss:username>'
+            . '<wss:password>' . $this->xmlEscape($this->getPassword()) . '</wss:password>'
+            . '<wss:DocXml><![CDATA[' . $docXml . ']]></wss:DocXml>'
+            . '</wss:GetDocument>'
+            . '</soap:Body>'
+            . '</soap:Envelope>';
+
+        try {
+            $rawResponse = $this->sendCurlRequest($soapBody, $this->getSoapAction('GetDocument'));
+            $result      = $this->parseDocumentResponse($rawResponse);
+
+            if ($result['status'] !== 'Success') {
+                return back()->with('error', 'Failed to retrieve document: ' . $result['error_detail']);
+            }
+
+            $fileContent = base64_decode($result['doc_stream']);
+            $extension   = strtolower($result['doc_format']) === 'pdf' ? 'pdf' : 'tiff';
+            $contentType = $extension === 'pdf' ? 'application/pdf' : 'image/tiff';
+
+            return response($fileContent, 200, [
+                'Content-Type'        => $contentType,
+                'Content-Disposition' => 'attachment; filename="' . $docType . '-' . $questOrderId . '.' . $extension . '"',
+            ]);
+        } catch (\RuntimeException $e) {
+            Log::error('Quest GetDocument failed', ['message' => $e->getMessage()]);
+            return back()->with('error', 'Failed to retrieve document. Please try again.');
+        }
+    }
+
+    // =========================================================================
+    // ORDER DETAILS
+    // =========================================================================
+
+    public function getOrderDetails(Request $request, ?string $questOrderId = null, ?string $referenceTestId = null)
+    {
+        $questOrderId    = $questOrderId    ?: $request->input('quest_order_id', '');
+        $referenceTestId = $referenceTestId ?: $request->input('reference_test_id', '');
+
+        if (empty($questOrderId) && empty($referenceTestId)) {
+            return back()->with('error', 'Quest Order ID or Reference Test ID is required.');
+        }
+
+        $soapBody = '<?xml version="1.0" encoding="utf-8"?>'
+            . '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"'
+            . ' xmlns:wss="http://wssim.labone.com/">'
+            . '<soap:Body>'
+            . '<wss:GetOrderDetails>'
+            . '<wss:username>'        . $this->xmlEscape($this->getUsername())   . '</wss:username>'
+            . '<wss:password>'        . $this->xmlEscape($this->getPassword())   . '</wss:password>'
+            . '<wss:referenceTestId>' . $this->xmlEscape($referenceTestId ?: '') . '</wss:referenceTestId>'
+            . '<wss:questOrderId>'    . $this->xmlEscape($questOrderId    ?: '') . '</wss:questOrderId>'
+            . '</wss:GetOrderDetails>'
+            . '</soap:Body>'
+            . '</soap:Envelope>';
+
+        try {
+            $rawResponse = $this->sendCurlRequest($soapBody, $this->getSoapAction('GetOrderDetails'));
+            $result      = $this->parseSoapResponse($rawResponse);
+
+            if ($result['status'] === 'SUCCESS') {
+                session()->flash('order_details', [
+                    'display_url'         => $result['display_url'],
+                    'quest_order_id'      => $result['quest_order_id'],
+                    'reference_test_id'   => $result['reference_test_id'],
+                    'client_reference_id' => $result['client_reference_id'],
+                ]);
+                return redirect()->route('quest.order-details.show');
+            }
+
+            return back()->with('error', 'Failed to retrieve order: ' . ($result['error']['detail'] ?? 'Unknown error.'));
+        } catch (\RuntimeException $e) {
+            Log::error('Quest GetOrderDetails failed', ['message' => $e->getMessage()]);
+            return back()->with('error', 'Failed to retrieve order details. Please try again.');
+        }
+    }
+
+    public function showOrderDetails()
+    {
+        $orderDetails = session('order_details');
+
+        if (!$orderDetails) {
+            return redirect()->route('quest.order-form')->with('error', 'No order details found.');
+        }
+
+        return view('quest.order-details', array_merge(getFrontendData(), compact('orderDetails')));
+    }
+
+    public function getOrderDetailsForm()
+    {
+        return view('quest.order-details-form', getFrontendData());
+    }
+
+    // =========================================================================
+    // DOT TEST
+    // =========================================================================
+
+    public function dotTest(?int $portfolioId = null)
+    {
+        $portfolio = Portfolio::findOrFail($portfolioId);
+        $authUser  = Auth::user();
+        $role      = $authUser->roles()->first();
+
+        $employees = match ($role?->name) {
+            'super-admin' => Employee::with('clientProfile')->where('status', 'active')->get(),
+            'company'     => Employee::with('clientProfile')
+                ->where('status', 'active')
+                ->where('client_profile_id', ClientProfile::where('user_id', $authUser->id)->value('id'))
+                ->get(),
+            default => collect(),
+        };
+
+        return view('admin.dot-test.index', compact('portfolio', 'authUser', 'employees'));
+    }
+
+    // =========================================================================
+    // PAYMENT PROCESSING
+    // =========================================================================
+
+    public function processPayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'portfolio_id' => ['required', 'integer', 'exists:portfolios,id'],
+            'price'        => ['required', 'numeric', 'min:1'],
+            'employee_id'  => ['required', 'integer', 'exists:employees,id'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $validated = $validator->validated();
+            $portfolio = Portfolio::findOrFail($validated['portfolio_id']);
+
+            Stripe::setApiKey(
+                config('services.stripe.secret') ?? throw new \RuntimeException('Stripe secret key is not configured.')
+            );
+
+            $paymentIntent = PaymentIntent::create([
+                'amount'                    => (int) $validated['price'],
+                'currency'                  => 'usd',
+                'metadata'                  => [
+                    'portfolio_id' => $portfolio->id,
+                    'test_name'    => $portfolio->title,
+                    'employee_id'  => $validated['employee_id'],
+                ],
+                'automatic_payment_methods' => ['enabled' => true],
+            ]);
+
+            $request->session()->put('payment_data', [
+                'payment_intent_id' => $paymentIntent->id,
+                'portfolio_id'      => $portfolio->id,
+                'amount'            => $validated['price'] / 100,
+                'test_name'         => $portfolio->title,
+                'quest_unit_code'   => $portfolio->quest_unit_code,
+                'employee_id'       => $validated['employee_id'],
+            ]);
+
+            return response()->json([
+                'success'           => true,
+                'client_secret'     => $paymentIntent->client_secret,
+                'payment_intent_id' => $paymentIntent->id,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Stripe payment processing failed', ['message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Payment processing failed. Please try again.'], 500);
+        }
+    }
+
+    // =========================================================================
+    // COLLECTION SITE SEARCH
+    // =========================================================================
+
+    public function searchCollectionSites(Request $request)
+    {
+        $searchTerm = trim($request->get('q', ''));
+
+        if (strlen($searchTerm) < 2) {
+            return response()->json([]);
+        }
+
+        try {
+            $like  = '%' . $searchTerm . '%';
+            $sites = CollectionSite::where(function ($q) use ($like) {
+                $q->where('name',       'LIKE', $like)
+                    ->orWhere('address_1', 'LIKE', $like)
+                    ->orWhere('city',      'LIKE', $like)
+                    ->orWhere('state',     'LIKE', $like)
+                    ->orWhere('zip_code',  'LIKE', $like);
+            })
+                ->orderBy('name')
+                ->limit(30)
+                ->get(['id', 'collection_site_code', 'name', 'address_1', 'city', 'state', 'zip_code']);
+
+            return response()->json(
+                $sites->map(fn($site) => [
+                    'id'                   => $site->id,
+                    'collection_site_code' => $site->collection_site_code,
+                    'text'                 => $this->formatSiteLabel($site),
+                ])
+            );
+        } catch (\Throwable $e) {
+            Log::error('Collection site search failed', ['message' => $e->getMessage()]);
+            return response()->json([], 500);
+        }
+    }
+
+    // =========================================================================
+    // PRIVATE — XML BUILDER
+    // =========================================================================
+
+    private function buildOrderXml(array $data): string
+    {
+        $xml = new SimpleXMLElement('<Order/>');
+
+        // --- EventInfo ---
         $eventInfo = $xml->addChild('EventInfo');
+
+        // Physical orders must NOT include CollectionSiteID (spec §2.1.2)
         if (!empty($data['collection_site_id'])) {
             $eventInfo->addChild('CollectionSiteID', $data['collection_site_id']);
         }
 
         if (!empty($data['email'])) {
-            $emailAddresses = $eventInfo->addChild('EmailAuthorizationAddresses');
-            $emailAddresses->addChild('EmailAddress', $data['email']);
+            $eventInfo->addChild('EmailAuthorizationAddresses')
+                ->addChild('EmailAddress', $data['email']);
         }
 
         if (!empty($data['end_datetime'])) {
-            $eventInfo->addChild('EndDateTime', $data['end_datetime']);
+            // FIX: Spec §4.16 requires MM/DD/YYYY HH:MM:SS — form sends Y-m-d\TH:i
+            try {
+                $eventInfo->addChild(
+                    'EndDateTime',
+                    Carbon::createFromFormat('Y-m-d\TH:i', $data['end_datetime'])->format('m/d/Y H:i:s')
+                );
+            } catch (\Throwable) {
+                Log::warning('Quest: could not reformat end_datetime', ['value' => $data['end_datetime']]);
+            }
             if (!empty($data['end_datetime_timezone_id'])) {
                 $eventInfo->addChild('EndDateTimeTimeZoneID', $data['end_datetime_timezone_id']);
             }
         }
 
-        // Donor Info
+        // --- DonorInfo ---
         $donorInfo = $xml->addChild('DonorInfo');
         $donorInfo->addChild('FirstName', $data['first_name']);
-        $donorInfo->addChild('LastName', $data['last_name']);
+        $donorInfo->addChild('LastName',  $data['last_name']);
 
         if (!empty($data['middle_name'])) {
             $donorInfo->addChild('MiddleName', $data['middle_name']);
@@ -151,43 +866,45 @@ class QuestDiagnosticsController extends Controller
         }
 
         if (!empty($data['dob'])) {
-            $donorInfo->addChild('DOB', $data['dob']);
+            // FIX: Spec §4.10 requires MM/DD/YYYY with slashes
+            try {
+                $donorInfo->addChild('DOB', Carbon::parse($data['dob'])->format('m/d/Y'));
+            } catch (\Throwable) {
+                Log::warning('Quest: could not reformat dob', ['value' => $data['dob']]);
+            }
         }
 
-        $donorInfo->addChild('PrimaryPhone', preg_replace('/[^0-9]/', '', $data['primary_phone']));
+        $donorInfo->addChild('PrimaryPhone', $this->digitsOnly($data['primary_phone']));
 
         if (!empty($data['secondary_phone'])) {
-            $donorInfo->addChild('SecondaryPhone', preg_replace('/[^0-9]/', '', $data['secondary_phone']));
+            $donorInfo->addChild('SecondaryPhone', $this->digitsOnly($data['secondary_phone']));
         }
 
         if (!empty($data['zip_code'])) {
-            $postalAddress = $donorInfo->addChild('PostalAddress');
-            $postalAddress->addChild('ZipCode', $data['zip_code']);
+            $donorInfo->addChild('PostalAddress')->addChild('ZipCode', $data['zip_code']);
         }
 
-        // Client Info - Use environment configuration instead of form data
+        // --- ClientInfo ---
         $clientInfo = $xml->addChild('ClientInfo');
+
         if (!empty($data['contact_name'])) {
             $clientInfo->addChild('ContactName', $data['contact_name']);
         }
+
         if (!empty($data['telephone_number'])) {
-            $clientInfo->addChild('TelephoneNumber', preg_replace('/[^0-9]/', '', $data['telephone_number']));
+            // Spec §4.46: exactly 10 digits
+            $clientInfo->addChild('TelephoneNumber', substr($this->digitsOnly($data['telephone_number']), 0, 10));
         }
 
-        // Use LabAccount from form data instead of environment
         $clientInfo->addChild('LabAccount', $data['lab_account']);
 
         if (!empty($data['csl'])) {
             $clientInfo->addChild('CSL', $data['csl']);
         }
 
-        // Test Info
+        // --- TestInfo ---
         $testInfo = $xml->addChild('TestInfo');
-
-        // Generate a client reference ID
-        $clientReferenceId = 'ORDER_' . time() . '_' . rand(1000, 9999);
-        $testInfo->addChild('ClientReferenceID', $clientReferenceId);
-
+        $testInfo->addChild('ClientReferenceID', $this->generateClientReferenceId());
         $testInfo->addChild('DOTTest', $data['dot_test']);
 
         if ($data['dot_test'] === 'T' && !empty($data['testing_authority'])) {
@@ -214,1272 +931,470 @@ class QuestDiagnosticsController extends Controller
             $testInfo->addChild('OrderComments', $data['order_comments']);
         }
 
-        $screenings = $testInfo->addChild('Screenings');
-        $unitCodes = $screenings->addChild('UnitCodes');
-        foreach ($data['unit_codes'] as $unitCode) {
-            $unitCodes->addChild('UnitCode', $unitCode);
-        }
+        $testInfo->addChild('Screenings')
+            ->addChild('UnitCodes')
+            ->addChild('UnitCode', $data['unit_codes']);
 
+        // --- ClientCustom ---
         if (!empty($data['response_url'])) {
-            $clientCustom = $xml->addChild('ClientCustom');
-            $clientCustom->addChild('ResponseURL', $data['response_url']);
+            $xml->addChild('ClientCustom')->addChild('ResponseURL', $data['response_url']);
         }
 
-        return $xml->asXML();
+        return trim(preg_replace('/<\?xml[^?]*\?>/', '', $xml->asXML()));
     }
 
-    // private function createQuestOrder($orderXml)
-    // {
-    //     $username = env('QUEST_USERNAME', 'cli_SkyrosUAT');
-    //     $password = env('QUEST_PASSWORD', 'kfIVZEUj46uM');
-    //     $url = config('app.env') === 'production' ? $this->prodUrl : $this->devUrl;
+    // =========================================================================
+    // PRIVATE — SOAP / HTTP
+    // =========================================================================
 
-    //     // Log the original order XML for debugging
-    //     // Log::info('Original Order XML: ' . $orderXml);
-
-    //     // Build the SOAP request manually
-    //     $soapRequest = $this->buildSoapRequest($username, $password, $orderXml);
-
-    //     // Log the SOAP request for debugging
-    //     Log::info('SOAP Request: ' . $soapRequest);
-
-    //     $ch = curl_init();
-
-    //     curl_setopt_array($ch, [
-    //         CURLOPT_URL => $url,
-    //         CURLOPT_POST => true,
-    //         CURLOPT_POSTFIELDS => $soapRequest,
-    //         CURLOPT_HTTPHEADER => [
-    //             'Content-Type: text/xml; charset=utf-8',
-    //             'SOAPAction: "http://wssim.labone.com/CreateOrder"',
-    //             'Content-Length: ' . strlen($soapRequest)
-    //         ],
-    //         CURLOPT_RETURNTRANSFER => true,
-    //         CURLOPT_TIMEOUT => 30,
-    //         CURLOPT_CONNECTTIMEOUT => 10,
-    //         CURLOPT_SSL_VERIFYPEER => false,
-    //         CURLOPT_SSL_VERIFYHOST => false,
-    //         CURLOPT_VERBOSE => true,
-    //     ]);
-
-    //     // Capture verbose output
-    //     $verbose = fopen('php://temp', 'w+');
-    //     curl_setopt($ch, CURLOPT_STDERR, $verbose);
-
-    //     $response = curl_exec($ch);
-    //     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    //     $error = curl_error($ch);
-
-    //     // Get verbose output
-    //     rewind($verbose);
-    //     $verboseLog = stream_get_contents($verbose);
-    //     fclose($verbose);
-
-    //     curl_close($ch);
-
-    //     // Log::info('HTTP Code: ' . $httpCode);
-    //     // Log::info('cURL Error: ' . $error);
-    //     // Log::info('Raw Response: ' . $response);
-
-    //     if ($error) {
-    //         Log::error('cURL Error: ' . $error);
-    //         throw new \Exception('Failed to connect to Quest Diagnostics: ' . $error);
-    //     }
-
-    //     if ($httpCode !== 200) {
-    //         Log::error('HTTP Error: ' . $httpCode);
-    //         Log::error('Response Body: ' . $response);
-    //         throw new \Exception('Quest Diagnostics returned HTTP ' . $httpCode);
-    //     }
-
-    //     return $this->parseSoapResponse($response);
-    // }
-
-
-
-    private function createQuestOrder($orderXml)
+    private function callQuestCreateOrder(string $orderXml): string
     {
-        $username = env('QUEST_USERNAME', 'cli_SkyrosUAT');
-        $password = env('QUEST_PASSWORD', 'kfIVZEUj46uM');
-        $url = config('app.env') === 'production' ? $this->prodUrl : $this->devUrl;
+        return $this->sendCurlRequest(
+            $this->buildSoapEnvelope($orderXml),
+            $this->getSoapAction('CreateOrder')
+        );
+    }
 
+    private function sendCurlRequest(string $soapBody, string $soapAction): string
+    {
+        $this->checkCircuitBreaker();
 
-        // Build the SOAP request manually
-        $soapRequest = $this->buildSoapRequest($username, $password, $orderXml);
-
-        Log::info('SOAP Request being sent to: ' . $url);
+        $sslVerify = config('services.quest.ssl.verify_peer', true);
+        $caBundle  = config('services.quest.ssl.ca_bundle');
 
         $ch = curl_init();
-
         curl_setopt_array($ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $soapRequest,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: text/xml; charset=utf-8',
-                'SOAPAction: "http://wssim.labone.com/CreateOrder"',
-                'Content-Length: ' . strlen($soapRequest),
-                'Connection: Keep-Alive',
-                'Keep-Alive: timeout=30, max=10'
-            ],
+            CURLOPT_URL            => $this->getApiUrl(),
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $soapBody,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 60, // Increased to 60 seconds total timeout
-            CURLOPT_CONNECTTIMEOUT => 15, // Increased to 15 seconds connection timeout
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => false,
-            CURLOPT_VERBOSE => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 5,
-            CURLOPT_ENCODING => '', // Enable compression if supported
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_TIMEOUT        => config('services.quest.timeouts.request', 60),
+            CURLOPT_CONNECTTIMEOUT => config('services.quest.timeouts.connect', 15),
+            CURLOPT_SSL_VERIFYPEER => $sslVerify,
+            CURLOPT_SSL_VERIFYHOST => $sslVerify ? 2 : 0,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: text/xml; charset=utf-8',
+                'SOAPAction: ' . $soapAction,
+                'Content-Length: ' . strlen($soapBody),
+                'Connection: Keep-Alive',
+            ],
         ]);
 
-        // Capture verbose output
-        $verbose = fopen('php://temp', 'w+');
-        curl_setopt($ch, CURLOPT_STDERR, $verbose);
+        if ($sslVerify && $caBundle) {
+            curl_setopt($ch, CURLOPT_CAINFO, $caBundle);
+        }
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-
-        // Get cURL info for debugging
-        $curlInfo = curl_getinfo($ch);
-        Log::info('cURL Info: ', [
-            'total_time' => $curlInfo['total_time'],
-            'connect_time' => $curlInfo['connect_time'],
-            'namelookup_time' => $curlInfo['namelookup_time'],
-            'pretransfer_time' => $curlInfo['pretransfer_time'],
-            'starttransfer_time' => $curlInfo['starttransfer_time'],
-        ]);
-
-        // Get verbose output
-        rewind($verbose);
-        $verboseLog = stream_get_contents($verbose);
-        fclose($verbose);
-
+        $timing   = curl_getinfo($ch);
+        $error    = curl_error($ch);
         curl_close($ch);
 
-        if ($error) {
-            Log::error('cURL Error Details: ' . $error);
-            Log::error('cURL Verbose Log: ' . $verboseLog);
+        Log::debug('Quest cURL timing', [
+            'action'        => $soapAction,
+            'total_time'    => $timing['total_time'],
+            'connect_time'  => $timing['connect_time'],
+            'starttransfer' => $timing['starttransfer_time'],
+        ]);
 
-            // Check if this is a timeout or connection issue
-            if (strpos($error, 'timed out') !== false) {
-                throw new \Exception('Quest Diagnostics API timeout. Please try again in a moment.');
-            } elseif (strpos($error, 'Could not resolve host') !== false) {
-                throw new \Exception('Cannot connect to Quest Diagnostics server. Please check your internet connection.');
-            } else {
-                throw new \Exception('Failed to connect to Quest Diagnostics: ' . $error);
-            }
+        if ($error) {
+            $this->recordCircuitFailure();
+            throw new \RuntimeException(match (true) {
+                str_contains($error, 'timed out')              => 'Quest API timeout. Please try again.',
+                str_contains($error, 'Could not resolve host') => 'Cannot reach the Quest Diagnostics server.',
+                default                                        => 'Quest API connection failed: ' . $error,
+            });
         }
 
         if ($httpCode !== 200) {
-            Log::error('HTTP Error: ' . $httpCode);
-            Log::error('Response Body: ' . substr($response, 0, 1000));
-            throw new \Exception('Quest Diagnostics returned HTTP ' . $httpCode);
+            $this->recordCircuitFailure();
+            Log::error('Quest API non-200', ['action' => $soapAction, 'status' => $httpCode, 'body' => substr($response, 0, 400)]);
+            throw new \RuntimeException("Quest Diagnostics returned HTTP {$httpCode}.");
         }
 
-        Log::info('Quest API Response received, length: ' . strlen($response));
-        return $this->parseSoapResponse($response);
-    }
-
-    private function buildSoapRequest($username, $password, $orderXml)
-    {
-        $orderXml = preg_replace('/<\?xml.*?\?>/', '', $orderXml);
-        $orderXml = trim($orderXml);
-
-        return '<?xml version="1.0" encoding="utf-8"?>
-        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
-                    xmlns:wss="http://wssim.labone.com/">
-        <soap:Body>
-            <wss:CreateOrder>
-            <wss:username>' . $this->escapeXml($username) . '</wss:username>
-            <wss:password>' . $this->escapeXml($password) . '</wss:password>
-            <wss:orderXml><![CDATA[' . $orderXml . ']]></wss:orderXml>
-            </wss:CreateOrder>
-        </soap:Body>
-        </soap:Envelope>';
-    }
-
-    // Add this helper method to properly escape XML content
-    private function escapeXml($string)
-    {
-        return htmlspecialchars($string, ENT_XML1, 'UTF-8');
-    }
-
-
-    private function parseSoapResponse($response)
-    {
-        // Log response size for debugging
-        $responseSize = strlen($response);
-        Log::info('SOAP Response received, size: ' . $responseSize . ' bytes');
-
-        // Circuit breaker tracking
-        static $failureCount = 0;
-        static $lastFailureTime = 0;
-        static $circuitOpen = false;
-
-        // Check circuit breaker
-        if ($circuitOpen) {
-            // If circuit was opened less than 60 seconds ago, fail fast
-            if ((time() - $lastFailureTime) < 60) {
-                Log::warning('Circuit breaker is open - failing fast');
-                return [
-                    'method_id' => 'CREATEORDER',
-                    'client_reference_id' => null,
-                    'reference_test_id' => null,
-                    'quest_order_id' => '0',
-                    'status' => 'FAILURE',
-                    'display_url' => null,
-                    'error' => [
-                        'id' => 'CIRCUIT_BREAKER',
-                        'detail' => 'Service temporarily unavailable due to multiple failures'
-                    ],
-                    '_raw_response' => substr($response, 0, 1000)
-                ];
-            } else {
-                // Circuit has been open for more than 60 seconds, try again
-                $circuitOpen = false;
-                $failureCount = 0;
-            }
-        }
-
-        // Limit response size to prevent DoS/memory issues
-        $maxResponseSize = 5 * 1024 * 1024; // 5MB
-        if ($responseSize > $maxResponseSize) {
-            Log::error('Response exceeds maximum size: ' . $responseSize . ' bytes');
-            $this->incrementFailureCount($failureCount, $lastFailureTime, $circuitOpen);
-            return [
-                'method_id' => 'CREATEORDER',
-                'client_reference_id' => null,
-                'reference_test_id' => null,
-                'quest_order_id' => '0',
-                'status' => 'FAILURE',
-                'display_url' => null,
-                'error' => [
-                    'id' => 'RESPONSE_TOO_LARGE',
-                    'detail' => 'Response size (' . round($responseSize / 1024, 2) . 'KB) exceeds limit'
-                ],
-                '_raw_response' => substr($response, 0, 1000)
-            ];
-        }
-
-        // Clean the response before parsing
-        $response = $this->cleanResponse($response);
-
-        // Track parsing time
-        $startTime = microtime(true);
-
-        try {
-            // Method 1: Try fast SimpleXML parsing first
-            $result = $this->parseWithSimpleXML($response, $startTime);
-            if ($result !== false) {
-                // Success - reset failure count
-                $failureCount = 0;
-                return $result;
-            }
-
-            // Method 2: Try DOMDocument parsing
-            $result = $this->parseWithDOMDocument($response, $startTime);
-            if ($result !== false) {
-                // Success - reset failure count
-                $failureCount = 0;
-                return $result;
-            }
-
-            // Method 3: Try optimized regex parsing as last resort
-            $result = $this->parseWithOptimizedRegex($response, $startTime);
-            if ($result !== false) {
-                // Success - reset failure count
-                $failureCount = 0;
-                return $result;
-            }
-
-            // All parsing methods failed
-            throw new \Exception('All parsing methods failed to extract CreateOrderResult');
-        } catch (\Exception $e) {
-            $this->incrementFailureCount($failureCount, $lastFailureTime, $circuitOpen);
-
-            $parsingTime = round(microtime(true) - $startTime, 3);
-            Log::error('SOAP Response Parsing Failed after ' . $parsingTime . 's: ' . $e->getMessage());
-            Log::debug('Response snippet (first 2000 chars): ' . substr($response, 0, 2000));
-
-            // Check if this looks like a specific error response
-            if (
-                strpos($response, 'Invalid order') !== false ||
-                strpos($response, 'Invalid credentials') !== false ||
-                strpos($response, 'Access denied') !== false
-            ) {
-                return [
-                    'method_id' => 'CREATEORDER',
-                    'client_reference_id' => null,
-                    'reference_test_id' => null,
-                    'quest_order_id' => '0',
-                    'status' => 'FAILURE',
-                    'display_url' => null,
-                    'error' => [
-                        'id' => '400',
-                        'detail' => 'Invalid order or credentials. Please check your Quest Diagnostics account configuration.'
-                    ],
-                    '_raw_response' => substr($response, 0, 2000)
-                ];
-            }
-
-            return [
-                'method_id' => 'CREATEORDER',
-                'client_reference_id' => null,
-                'reference_test_id' => null,
-                'quest_order_id' => '0',
-                'status' => 'FAILURE',
-                'display_url' => null,
-                'error' => [
-                    'id' => 'PARSE_ERROR',
-                    'detail' => 'Failed to parse Quest Diagnostics response. Please try again.'
-                ],
-                '_raw_response' => substr($response, 0, 2000)
-            ];
-        }
-    }
-
-    /**
-     * Clean the response XML before parsing
-     */
-    private function cleanResponse($response)
-    {
-        // Remove any null bytes and control characters (except tab, newline, carriage return)
-        $response = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $response);
-
-        // Replace multiple spaces/newlines with single ones to reduce size
-        $response = preg_replace('/\s+/', ' ', $response);
-
-        // Decode HTML entities if present
-        if (strpos($response, '&lt;') !== false || strpos($response, '&gt;') !== false) {
-            $response = html_entity_decode($response, ENT_QUOTES | ENT_XML1, 'UTF-8');
-        }
-
+        $this->resetCircuitBreaker();
         return $response;
     }
 
-    /**
-     * Parse using SimpleXML (fastest method)
-     */
-    private function parseWithSimpleXML($response, $startTime)
+    private function buildSoapEnvelope(string $orderXml): string
     {
-        set_time_limit(5); // Limit this method to 5 seconds
-
-        try {
-            // Add XML declaration if missing (helps SimpleXML)
-            if (strpos($response, '<?xml') === false) {
-                $response = '<?xml version="1.0" encoding="UTF-8"?>' . $response;
-            }
-
-            // Suppress warnings for invalid XML
-            libxml_use_internal_errors(true);
-            $xml = simplexml_load_string($response);
-            $errors = libxml_get_errors();
-            libxml_clear_errors();
-
-            if (!$xml || !empty($errors)) {
-                return false;
-            }
-
-            // Check if this is a SOAP envelope
-            $namespaces = $xml->getNamespaces(true);
-
-            // Try common SOAP namespaces
-            foreach (['soap', 's', 'SOAP-ENV'] as $nsPrefix) {
-                if (isset($namespaces[$nsPrefix]) || isset($namespaces[''])) {
-                    $ns = $namespaces[$nsPrefix] ?? $namespaces[''];
-                    $body = $xml->children($ns)->Body ?? null;
-
-                    if ($body) {
-                        // Look for CreateOrderResponse in any namespace
-                        foreach ($body->children() as $child) {
-                            if (strpos($child->getName(), 'CreateOrderResponse') !== false) {
-                                $resultElement = $child->children();
-                                $resultContent = (string)$resultElement;
-
-                                $parsingTime = round(microtime(true) - $startTime, 3);
-                                Log::info('Parsed via SimpleXML in ' . $parsingTime . 's');
-
-                                return $this->parseQuestResponse($resultContent);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Direct check for CreateOrderResult (non-SOAP response)
-            if (isset($xml->CreateOrderResult)) {
-                $resultContent = (string)$xml->CreateOrderResult;
-
-                $parsingTime = round(microtime(true) - $startTime, 3);
-                Log::info('Parsed direct SimpleXML in ' . $parsingTime . 's');
-
-                return $this->parseQuestResponse($resultContent);
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            Log::debug('SimpleXML parsing failed: ' . $e->getMessage());
-            return false;
-        }
+        return '<?xml version="1.0" encoding="utf-8"?>'
+            . '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"'
+            . ' xmlns:wss="http://wssim.labone.com/">'
+            . '<soap:Body>'
+            . '<wss:CreateOrder>'
+            . '<wss:username>' . $this->xmlEscape($this->getUsername()) . '</wss:username>'
+            . '<wss:password>' . $this->xmlEscape($this->getPassword()) . '</wss:password>'
+            . '<wss:orderXml><![CDATA[' . $orderXml . ']]></wss:orderXml>'
+            . '</wss:CreateOrder>'
+            . '</soap:Body>'
+            . '</soap:Envelope>';
     }
 
-    /**
-     * Parse using DOMDocument (more robust)
-     */
-    private function parseWithDOMDocument($response, $startTime)
+    // =========================================================================
+    // PRIVATE — RESPONSE PARSING (outbound Quest responses)
+    // =========================================================================
+
+    private function parseSoapResponse(string $rawResponse): array
     {
-        set_time_limit(7); // Limit this method to 7 seconds
-
-        try {
-            $dom = new \DOMDocument();
-            $dom->preserveWhiteSpace = false;
-            $dom->formatOutput = false;
-
-            // Suppress XML parsing errors
-            $oldErrorReporting = libxml_use_internal_errors(true);
-
-            // Load XML with options
-            $loadSuccess = $dom->loadXML($response, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_PARSEHUGE);
-
-            if (!$loadSuccess) {
-                libxml_use_internal_errors($oldErrorReporting);
-                return false;
-            }
-
-            libxml_use_internal_errors($oldErrorReporting);
-
-            // Create XPath instance
-            $xpath = new \DOMXPath($dom);
-
-            // Register common namespaces
-            $namespaces = [
-                'soap' => 'http://schemas.xmlsoap.org/soap/envelope/',
-                's' => 'http://schemas.xmlsoap.org/soap/envelope/',
-                'SOAP-ENV' => 'http://schemas.xmlsoap.org/soap/envelope/',
-                'wss' => 'http://wssim.labone.com/'
-            ];
-
-            foreach ($namespaces as $prefix => $uri) {
-                $xpath->registerNamespace($prefix, $uri);
-            }
-
-            // Try multiple XPath queries in order of likelihood
-            $queries = [
-                '//soap:Body//CreateOrderResult',
-                '//s:Body//CreateOrderResult',
-                '//SOAP-ENV:Body//CreateOrderResult',
-                '//CreateOrderResult',
-                '//*[contains(local-name(), "CreateOrderResult")]',
-                '//*[local-name()="CreateOrderResult"]',
-                '//Body//*[local-name()="CreateOrderResult"]'
-            ];
-
-            foreach ($queries as $query) {
-                $nodes = $xpath->query($query);
-
-                if ($nodes && $nodes->length > 0) {
-                    $resultContent = $nodes->item(0)->nodeValue;
-
-                    // Check if content needs further decoding
-                    if (strpos($resultContent, '&lt;') !== false) {
-                        $resultContent = html_entity_decode($resultContent, ENT_QUOTES | ENT_XML1, 'UTF-8');
-                    }
-
-                    $parsingTime = round(microtime(true) - $startTime, 3);
-                    Log::info('Parsed via DOMDocument XPath in ' . $parsingTime . 's (query: ' . $query . ')');
-
-                    return $this->parseQuestResponse($resultContent);
-                }
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            Log::debug('DOMDocument parsing failed: ' . $e->getMessage());
-            return false;
+        if (strlen($rawResponse) > self::MAX_RESPONSE_BYTES) {
+            return $this->buildFailureResult('RESPONSE_TOO_LARGE', 'Response exceeded maximum allowed size.', $rawResponse);
         }
+
+        $innerXml = $this->extractInnerXml($this->cleanXml($rawResponse));
+
+        if ($innerXml === null) {
+            Log::error('Quest: could not extract inner XML', ['snippet' => substr($rawResponse, 0, 400)]);
+            return $this->buildFailureResult('SOAP_EXTRACTION_FAILED', 'Could not extract response body.', $rawResponse);
+        }
+
+        return $this->parseQuestMethodResponse($innerXml, $rawResponse);
     }
 
-    /**
-     * Parse using optimized regex (last resort)
-     */
-    private function parseWithOptimizedRegex($response, $startTime)
+    private function parseQuestMethodResponse(string $xml, string $rawResponse = ''): array
     {
-        set_time_limit(3); // Limit this method to 3 seconds
+        $xml = html_entity_decode(trim(preg_replace('/<\?xml[^?]*\?>/', '', $xml)), ENT_QUOTES | ENT_XML1, 'UTF-8');
 
-        try {
-            // Optimized regex patterns - ordered by efficiency
-            $patterns = [
-                // Pattern 1: Direct CDATA with minimal backtracking
-                '/<CreateOrderResult[^>]*>\s*<!\[CDATA\[([^]]*)\]\]>\s*<\/CreateOrderResult>/is',
+        libxml_use_internal_errors(true);
+        $parsed = simplexml_load_string($xml);
+        libxml_clear_errors();
 
-                // Pattern 2: Direct content, non-greedy with lookahead
-                '/<CreateOrderResult[^>]*>\s*(.*?)\s*<\/CreateOrderResult>/is',
-
-                // Pattern 3: With any namespace prefix
-                '/<(\w+:)?CreateOrderResult[^>]*>\s*(.*?)\s*<\/\1?CreateOrderResult>/is',
-
-                // Pattern 4: Inside SOAP Body
-                '/<soap:Body>.*?<CreateOrderResult[^>]*>\s*(.*?)\s*<\/CreateOrderResult>.*?<\/soap:Body>/is',
-
-                // Pattern 5: Case insensitive
-                '/<createorderresult[^>]*>\s*(.*?)\s*<\/createorderresult>/is',
-            ];
-
-            foreach ($patterns as $patternIndex => $pattern) {
-                // Use preg_match with offset to prevent excessive backtracking
-                if (preg_match($pattern, $response, $matches, PREG_OFFSET_CAPTURE)) {
-                    $resultContent = $matches[count($matches) - 1][0]; // Get last match group
-
-                    // Clean up the result
-                    $resultContent = trim($resultContent);
-
-                    // Decode HTML entities if needed
-                    if (strpos($resultContent, '&lt;') !== false) {
-                        $resultContent = html_entity_decode($resultContent, ENT_QUOTES | ENT_XML1, 'UTF-8');
-                    }
-
-                    $parsingTime = round(microtime(true) - $startTime, 3);
-                    Log::info('Parsed via regex pattern ' . ($patternIndex + 1) . ' in ' . $parsingTime . 's');
-
-                    return $this->parseQuestResponse($resultContent);
-                }
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            Log::debug('Regex parsing failed: ' . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Increment failure count and manage circuit breaker
-     */
-    private function incrementFailureCount(&$failureCount, &$lastFailureTime, &$circuitOpen)
-    {
-        $failureCount++;
-        $lastFailureTime = time();
-
-        // Open circuit if we have 3 failures in 30 seconds
-        if ($failureCount >= 3 && (time() - $lastFailureTime) < 30) {
-            $circuitOpen = true;
-            Log::error('Circuit breaker opened due to ' . $failureCount . ' failures in 30 seconds');
-        }
-
-        // Reset failure count after 2 minutes of no activity
-        if ((time() - $lastFailureTime) > 120) {
-            $failureCount = 0;
-            $circuitOpen = false;
-            Log::info('Circuit breaker reset - failure count cleared');
-        }
-    }
-
-
-
-    private function parseQuestResponse($responseXml, $returnRawOnFailure = false)
-    {
-        // $this->debugSoapResponse($responseXml);
-
-        // Store the original raw response
-        $originalResponse = $responseXml;
-
-        // Check if this is a SOAP envelope response
-        if (strpos($responseXml, '<s:Envelope') !== false || strpos($responseXml, '<soap:Envelope') !== false) {
-            // Extract the XML content from the SOAP response
-            $xmlContent = $this->extractXmlFromSoap($responseXml);
-
-            if ($xmlContent) {
-                $responseXml = $xmlContent;
-            } else {
-                // If extraction fails and we want raw response on failure
-                if ($returnRawOnFailure) {
-                    return [
-                        'status' => 'FAILURE',
-                        'error' => [
-                            'id' => 'SOAP_EXTRACTION_FAILED',
-                            'detail' => 'Failed to extract XML from SOAP response',
-                            'raw_response' => $originalResponse
-                        ],
-                        '_raw_response' => $originalResponse
-                    ];
-                }
-
-                // Handle the error response directly
-                if (strpos($responseXml, 'Invalid order') !== false) {
-                    return [
-                        'method_id' => 'GETORDERDETAIL',
-                        'client_reference_id' => null,
-                        'reference_test_id' => null,
-                        'quest_order_id' => '0',
-                        'status' => 'FAILURE',
-                        'display_url' => null,
-                        'error' => [
-                            'id' => '400',
-                            'detail' => 'Invalid order. The order may not exist or may not be accessible with your credentials.',
-                            'raw_response' => $originalResponse
-                        ],
-                        '_raw_response' => $originalResponse
-                    ];
-                }
-
-                throw new \Exception('Failed to extract XML from SOAP response. Raw: ' . substr($originalResponse, 0, 500));
-            }
-        }
-
-        // Decode HTML entities if present
-        $responseXml = html_entity_decode($responseXml);
-
-        // Remove any XML declaration if present
-        $responseXml = preg_replace('/<\?xml.*?\?>/', '', $responseXml);
-        $responseXml = trim($responseXml);
-
-        Log::info('Cleaned Quest Response: ' . $responseXml);
-
-        $xml = simplexml_load_string($responseXml);
-
-        if (!$xml) {
-            Log::error('Failed to parse XML: ' . $responseXml);
-
-            if ($returnRawOnFailure) {
-                return [
-                    'status' => 'FAILURE',
-                    'error' => [
-                        'id' => 'XML_PARSE_ERROR',
-                        'detail' => 'Failed to parse XML response',
-                        'raw_response' => $originalResponse
-                    ],
-                    '_raw_response' => $originalResponse
-                ];
-            }
-
-            throw new \Exception('Invalid XML response from Quest Diagnostics. Raw: ' . substr($originalResponse, 0, 500));
+        if ($parsed === false) {
+            return $this->buildFailureResult('XML_PARSE_ERROR', 'Failed to parse Quest response XML.', $rawResponse);
         }
 
         $result = [
-            'method_id' => (string)$xml->MethodID,
-            'client_reference_id' => (string)$xml->ClientReferenceID,
-            'reference_test_id' => (string)$xml->ReferenceTestID,
-            'quest_order_id' => (string)$xml->QuestOrderID,
-            'status' => (string)$xml->ResponseStatusID,
-            'display_url' => (string)$xml->DisplayURL,
-            'error' => null,
-            '_raw_response' => $originalResponse // Always include raw response
+            'method_id'           => (string) ($parsed->MethodID          ?? ''),
+            'client_reference_id' => (string) ($parsed->ClientReferenceID ?? ''),
+            'reference_test_id'   => (string) ($parsed->ReferenceTestID   ?? ''),
+            'quest_order_id'      => (string) ($parsed->QuestOrderID      ?? '0'),
+            'status'              => (string) ($parsed->ResponseStatusID  ?? 'FAILURE'),
+            'display_url'         => (string) ($parsed->DisplayURL        ?? ''),
+            'error'               => null,
+            '_raw_response'       => $rawResponse,
         ];
 
-        if ($result['status'] === 'FAILURE') {
-            // Handle multiple errors
-            $errors = [];
-            if (isset($xml->Errors) && isset($xml->Errors->Error)) {
-                foreach ($xml->Errors->Error as $error) {
-                    $errors[] = [
-                        'id' => (string)$error->ErrorID,
-                        'detail' => (string)$error->ErrorDetail
-                    ];
-                }
-            }
-
-            $result['error'] = !empty($errors) ? $errors[0] : [
-                'id' => 'Unknown',
-                'detail' => 'Unknown error',
-                'raw_response' => $originalResponse
+        if ($result['status'] === 'FAILURE' && isset($parsed->Errors->Error)) {
+            $error = $parsed->Errors->Error[0];
+            $result['error'] = [
+                'id'     => (string) ($error->ErrorID     ?? 'UNKNOWN'),
+                'detail' => (string) ($error->ErrorDetail ?? 'An unknown error occurred.'),
             ];
         }
 
         return $result;
     }
 
-    private function extractXmlFromSoap($soapResponse)
+    private function extractInnerXml(string $soapResponse): ?string
     {
-        try {
-            // First, try to parse as regular SOAP response
-            $soapXml = simplexml_load_string($soapResponse);
-            if ($soapXml) {
-                // Register the SOAP namespace
-                $soapXml->registerXPathNamespace('s', 'http://schemas.xmlsoap.org/soap/envelope/');
+        $current = $soapResponse;
 
-                // Find the response element
-                $response = $soapXml->xpath('//s:Body/*');
+        for ($depth = 0; $depth < 5; $depth++) {
+            $current = str_replace(['&#xD;', "\r"], '', $current);
+            $next    = $this->extractOneLayer($current);
+            if ($next === null) break;
 
-                if (!empty($response)) {
-                    // Get the result content
-                    $resultElement = $response[0];
-                    $methodName = $resultElement->getName() . 'Result';
+            $next = trim(html_entity_decode(str_replace(['&#xD;', "\r"], '', $next), ENT_QUOTES | ENT_XML1, 'UTF-8'));
+            if ($next === $current) break;
 
-                    if (isset($resultElement->$methodName)) {
-                        $content = (string)$resultElement->$methodName;
+            $current = $next;
+            if ($this->isQuestPayload($current)) return $current;
+        }
 
-                        // Check if the content contains HTML-encoded XML
-                        if (strpos($content, '&lt;?xml') !== false || strpos($content, '&lt;QuestMethodResponse') !== false) {
-                            // Decode HTML entities
-                            $content = html_entity_decode($content, ENT_QUOTES | ENT_XML1, 'UTF-8');
-                        }
+        if ($this->isQuestPayload($current)) return $current;
 
-                        return $content;
+        if (preg_match('/<QuestMethodResponse[\s\S]*?<\/QuestMethodResponse>/i', $current, $m)) {
+            return $m[0];
+        }
+
+        return null;
+    }
+
+    private function isQuestPayload(string $xml): bool
+    {
+        $trimmed = trim(preg_replace('/<\?xml[^?]*\?>\s*/i', '', $xml));
+
+        if (stripos($trimmed, '<s:Envelope') === 0 || stripos($trimmed, '<soap:Envelope') === 0 || stripos($trimmed, '<SOAP-ENV:') === 0) {
+            return false;
+        }
+
+        return stripos($trimmed, '<QuestMethodResponse') === 0 || stripos($trimmed, '<ResponseStatusID') !== false;
+    }
+
+    private function extractOneLayer(string $current): ?string
+    {
+        $fixEncoding = fn(string $s) => preg_replace('/(<\?xml[^?]*encoding\s*=\s*["\'])utf-16(["\'])/i', '${1}utf-8${2}', $s);
+        $addDecl     = fn(string $s) => stripos($s, '<?xml') === false ? '<?xml version="1.0" encoding="UTF-8"?>' . $s : $s;
+
+        // DOMDocument
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;
+        libxml_use_internal_errors(true);
+        $loaded = $dom->loadXML($fixEncoding($addDecl($current)), LIBXML_NOWARNING | LIBXML_NOERROR);
+        libxml_clear_errors();
+
+        if ($loaded) {
+            $xpath = new \DOMXPath($dom);
+            foreach (['soap', 's', 'SOAP-ENV'] as $prefix) {
+                $xpath->registerNamespace($prefix, 'http://schemas.xmlsoap.org/soap/envelope/');
+            }
+            foreach (['//*[local-name()="CreateOrderResult"]', '//*[local-name()="GetOrderDetailsResult"]', '//*[local-name()="GetDocumentResult"]'] as $query) {
+                $nodes = $xpath->query($query);
+                if ($nodes && $nodes->length > 0) return $nodes->item(0)->nodeValue;
+            }
+        }
+
+        // SimpleXML
+        libxml_use_internal_errors(true);
+        $sxml = simplexml_load_string($fixEncoding($addDecl($current)));
+        libxml_clear_errors();
+
+        if ($sxml !== false) {
+            foreach (['http://schemas.xmlsoap.org/soap/envelope/', 'http://tempuri.org/', 'http://wssim.labone.com/'] as $ns) {
+                try {
+                    $body = $sxml->children($ns)->Body ?? null;
+                } catch (\Throwable) {
+                    $body = null;
+                }
+                if (!$body) continue;
+                foreach ($body->children() as $responseNode) {
+                    foreach ($responseNode->children() as $resultNode) {
+                        if (str_ends_with($resultNode->getName(), 'Result')) return (string) $resultNode;
                     }
                 }
             }
-
-            // If the above fails, try regex extraction for nested encoded XML
-            preg_match('/<GetOrderDetailsResult[^>]*>(.*?)<\/GetOrderDetailsResult>/s', $soapResponse, $matches);
-
-            if (isset($matches[1])) {
-                $content = $matches[1];
-
-                // Decode HTML entities if the content contains encoded XML
-                if (strpos($content, '&lt;?xml') !== false || strpos($content, '&lt;QuestMethodResponse') !== false) {
-                    $content = html_entity_decode($content, ENT_QUOTES | ENT_XML1, 'UTF-8');
-                }
-
-                return $content;
-            }
-
-            // Try other possible method names
-            preg_match('/<(CreateOrder|UpdateOrder|CancelOrder|GetOrderDetails)Result[^>]*>(.*?)<\/\1Result>/s', $soapResponse, $matches);
-
-            if (isset($matches[2])) {
-                $content = $matches[2];
-
-                // Decode HTML entities if the content contains encoded XML
-                if (strpos($content, '&lt;?xml') !== false || strpos($content, '&lt;QuestMethodResponse') !== false) {
-                    $content = html_entity_decode($content, ENT_QUOTES | ENT_XML1, 'UTF-8');
-                }
-
-                return $content;
-            }
-
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Error extracting XML from SOAP: ' . $e->getMessage());
-            return null;
         }
+
+        // Regex fallback
+        if (preg_match('/<(?:\w+:)?(?:CreateOrder|GetOrderDetails|GetDocument)Result[^>]*>\s*(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?\s*<\/(?:\w+:)?(?:CreateOrder|GetOrderDetails|GetDocument)Result>/is', $current, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return null;
     }
 
-    // Store the order in the database
-    private function storeQuestOrder($formData, $apiResponse, $orderXml)
+    private function parseDocumentResponse(string $rawResponse): array
     {
-        try {
-            $questOrder = QuestOrder::create([
-                'user_id' => auth()->id(), // If the user is logged in
-                'payment_intent_id' => $formData['payment_intent_id'],
-                // Quest Identifiers
-                'quest_order_id' => $apiResponse['quest_order_id'] ?? null,
-                'reference_test_id' => $apiResponse['reference_test_id'] ?? null,
-                'client_reference_id' => $apiResponse['client_reference_id'] ?? null,
-                // Donor Info
-                'first_name' => $formData['first_name'],
-                'last_name' => $formData['last_name'],
-                'middle_name' => $formData['middle_name'] ?? null,
-                'primary_id' => $formData['primary_id'],
-                'primary_id_type' => $formData['primary_id_type'] ?? null,
-                'dob' => !empty($formData['dob']) ? \Carbon\Carbon::createFromFormat('Y-m-d', $formData['dob']) : null,
-                'primary_phone' => $formData['primary_phone'],
-                'secondary_phone' => $formData['secondary_phone'] ?? null,
-                'email' => $formData['email'] ?? null,
-                'zip_code' => $formData['zip_code'] ?? null,
-                // Test Info
-                'portfolio_name' => $formData['portfolio']->title ?? null, // Assuming you pass the portfolio object
-                'unit_codes' => json_encode($formData['unit_codes']),
-                'dot_test' => $formData['dot_test'],
-                'testing_authority' => $formData['testing_authority'] ?? null,
-                'reason_for_test_id' => $formData['reason_for_test_id'] ?? null,
-                'physical_reason_for_test_id' => $formData['physical_reason_for_test_id'] ?? null,
-                'collection_site_id' => $formData['collection_site_id'] ?? null,
-                'observed_requested' => $formData['observed_requested'] ?? 'N',
-                'split_specimen_requested' => $formData['split_specimen_requested'] ?? 'N',
-                'order_comments' => $formData['order_comments'] ?? null,
-                // Client Info
-                'lab_account' => env('QUEST_LAB_ACCOUNT'),
-                'csl' => $formData['csl'] ?? null,
-                'contact_name' => $formData['contact_name'] ?? null,
-                'telephone_number' => $formData['telephone_number'] ?? null,
-                // Timing
-                'end_datetime' => !empty($formData['end_datetime']) ? \Carbon\Carbon::parse($formData['end_datetime']) : null,
-                'end_datetime_timezone_id' => $formData['end_datetime_timezone_id'] ?? null,
-                // API Logging
-                'request_xml' => $orderXml,
-                'create_response_xml' => $apiResponse['_raw_response'] ?? null, // You might want to store the raw string
-                'create_response_status' => $apiResponse['status'],
-                'create_error' => $apiResponse['error'] ? json_encode($apiResponse['error']) : null,
-            ]);
+        $empty = ['status' => 'Error', 'error_detail' => '', 'doc_type' => '', 'doc_format' => '', 'doc_stream' => ''];
 
-            Log::info('Quest Order Stored in Database', ['id' => $questOrder->id, 'quest_order_id' => $questOrder->quest_order_id]);
-            return $questOrder;
-        } catch (\Exception $e) {
-            Log::error('Failed to store Quest order in database:', [
-                'error' => $e->getMessage(),
-                'quest_response' => $apiResponse
-            ]);
-            // Even if DB storage fails, don't break the user flow. Just log it.
-            return null;
-        }
-    }
+        if (empty(trim($rawResponse))) return array_merge($empty, ['error_detail' => 'Empty response from Quest.']);
 
-    public function orderSuccess($questOrderId, $referenceTestId)
-    {
-        return view(
-            'quest.order-success',
-            array_merge(getFrontendData(),  [
-                'questOrderId' => $questOrderId,
-                'referenceTestId' => $referenceTestId
-            ])
+        $xmlToParse = html_entity_decode(
+            trim(preg_replace('/<\?xml[^?]*\?>/', '', $this->extractInnerXml($this->cleanXml($rawResponse)) ?? $rawResponse)),
+            ENT_QUOTES | ENT_XML1,
+            'UTF-8'
         );
-    }
 
-    public function testEnvVars()
-    {
-        return response()->json([
-            'QUEST_USERNAME' => env('QUEST_USERNAME', 'NOT_FOUND'),
-            'QUEST_PASSWORD_set' => !empty(env('QUEST_PASSWORD')),
-            'QUEST_PASSWORD_length' => strlen(env('QUEST_PASSWORD', '')),
-            'APP_ENV' => config('app.env'),
-            'all_env_vars' => [
-                'QUEST_USERNAME' => substr(env('QUEST_USERNAME', ''), 0, 3) . '...',
-                'QUEST_PASSWORD' => str_repeat('*', strlen(env('QUEST_PASSWORD', ''))),
-            ]
-        ]);
-    }
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($xmlToParse);
+        libxml_clear_errors();
 
+        if ($xml === false) return array_merge($empty, ['error_detail' => 'Could not parse document response XML.']);
 
+        $status = (string) ($xml->ResponseStatusId ?? '');
 
-    public function getDocument(Request $request, $questOrderId, $docType)
-    {
-        $username = env('QUEST_USERNAME');
-        $password = env('QUEST_PASSWORD');
-        $url = config('app.env') === 'production' ? $this->prodUrl : $this->devUrl;
-
-        // Validate the document type
-        $validDocTypes = ['QPassport', 'LabReport', 'MROLetter', 'Copy1', 'Copy2', 'ATF', 'AlcoholReport', 'OHS'];
-
-        if (!in_array($docType, $validDocTypes)) {
-            return back()->with('error', 'Invalid document type requested.');
+        if ($status !== 'Success') {
+            return array_merge($empty, [
+                'status'       => $status ?: 'Error',
+                'error_detail' => (string) ($xml->ErrorDetail ?? 'Unknown document error.'),
+                'doc_type'     => (string) ($xml->DocType     ?? ''),
+                'doc_format'   => (string) ($xml->DocFormat   ?? ''),
+            ]);
         }
 
-        // Build the DocXML string dynamically
-        $docXml = <<<XML
-            <GetDocument>
-                <QuestOrderID>{$questOrderId}</QuestOrderID>
-                <DocType>{$docType}</DocType>
-            </GetDocument>
-            XML;
-
-        try {
-            $client = new \SoapClient($url . '?WSDL', [
-                'trace' => 1,
-                'exceptions' => true,
-                'stream_context' => stream_context_create(['ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                ]])
-            ]);
-
-            // Call the GetDocument method
-            $response = $client->GetDocument([
-                'username' => $username,
-                'password' => $password,
-                'DocXml' => $docXml
-            ]);
-
-            $result = $this->parseGetDocumentResponse($response->GetDocumentResult);
-
-            if ($result['status'] === 'Success') {
-                // $result['doc_stream'] contains the Base64-encoded file
-                $fileContent = base64_decode($result['doc_stream']);
-
-                // Determine file extension based on DocFormat
-                $fileExtension = strtolower($result['doc_format']) === 'pdf' ? 'pdf' : 'tiff';
-
-                // Create a descriptive filename
-                $filename = "{$docType}-{$questOrderId}.{$fileExtension}";
-
-                // Return the file as a download to the browser
-                return response()->make($fileContent, 200, [
-                    'Content-Type' => $result['doc_format'] === 'PDF' ? 'application/pdf' : 'image/tiff',
-                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                ]);
-            } else {
-                Log::error('GetDocument Failed: ', ['error' => $result['error_detail']]);
-                return back()->with('error', 'Failed to retrieve document: ' . $result['error_detail']);
-            }
-        } catch (\SoapFault $e) {
-            Log::error('Quest GetDocument SOAP Error: ' . $e->getMessage());
-            Log::error('SOAP Request: ' . $client->__getLastRequest());
-            Log::error('SOAP Response: ' . $client->__getLastResponse());
-
-            return back()->with('error', 'Failed to retrieve document. Please try again later.');
-        }
+        return [
+            'status'       => 'Success',
+            'error_detail' => '',
+            'doc_type'     => (string) ($xml->DocType   ?? ''),
+            'doc_format'   => (string) ($xml->DocFormat ?? ''),
+            'doc_stream'   => (string) ($xml->DocStream ?? ''),
+        ];
     }
 
+    // =========================================================================
+    // PRIVATE — DATABASE
+    // =========================================================================
 
-    private function parseGetDocumentResponse($responseXml)
+    private function storeQuestOrder(array $data, array $apiResponse, string $orderXml): QuestOrder
     {
         try {
-            Log::info('Parsing GetDocument Response:', ['xml' => substr($responseXml, 0, 500)]);
+            $order = QuestOrder::create([
+                'user_id'                     => auth()->id(),
+                'payment_intent_id'           => $data['payment_intent_id'],
+                'quest_order_id'              => $apiResponse['quest_order_id']      ?? null,
+                'reference_test_id'           => $apiResponse['reference_test_id']   ?? null,
+                'client_reference_id'         => $apiResponse['client_reference_id'] ?? $this->generateClientReferenceId(),
+                // Status/result start null — filled by inbound webhook
+                'order_status'                => null,
+                'order_result'                => null,
+                // Donor
+                // Use nullIfEmpty() pattern: form submits '' for unfilled optional fields;
+                // MySQL strict mode rejects '' for integer and date column types.
+                'first_name'                  => $data['first_name'],
+                'last_name'                   => $data['last_name'],
+                'middle_name'                 => $this->nullIfEmpty($data['middle_name']                 ?? null),
+                'primary_id'                  => $data['primary_id'],
+                'primary_id_type'             => $this->nullIfEmpty($data['primary_id_type']             ?? null),
+                'dob'                         => !empty($data['dob']) ? Carbon::parse($data['dob'])->toDateString() : null,
+                'primary_phone'               => $data['primary_phone'],
+                'secondary_phone'             => $this->nullIfEmpty($data['secondary_phone']             ?? null),
+                'email'                       => $this->nullIfEmpty($data['email']                       ?? null),
+                'zip_code'                    => $this->nullIfEmpty($data['zip_code']                    ?? null),
+                // Test
+                'portfolio_id'                => !empty($data['portfolio_id'])         ? (int) $data['portfolio_id']           : null,
+                'unit_codes'                  => json_encode($data['unit_codes']),
+                'dot_test'                    => $data['dot_test'],
+                'testing_authority'           => $this->nullIfEmpty($data['testing_authority']           ?? null),
+                // Cast integer columns — MySQL strict mode rejects '' for int columns
+                'reason_for_test_id'          => !empty($data['reason_for_test_id'])   ? (int) $data['reason_for_test_id']     : null,
+                'physical_reason_for_test_id' => $this->nullIfEmpty($data['physical_reason_for_test_id'] ?? null),
+                'collection_site_id'          => $this->nullIfEmpty($data['collection_site_id']         ?? null),
+                'observed_requested'          => $this->nullIfEmpty($data['observed_requested']         ?? null) ?? 'N',
+                'split_specimen_requested'    => $this->nullIfEmpty($data['split_specimen_requested']   ?? null) ?? 'N',
+                'order_comments'              => $this->nullIfEmpty($data['order_comments']             ?? null),
+                // Client
+                'lab_account'                 => app()->isProduction() ? $data['lab_account'] : config('services.quest.lab_account'),
+                'csl'                         => $this->nullIfEmpty($data['csl']                        ?? null),
+                'contact_name'                => $this->nullIfEmpty($data['contact_name']               ?? null),
+                'telephone_number'            => $this->nullIfEmpty($data['telephone_number']           ?? null),
+                // Timing — both are nullable integers/timestamps; cast explicitly
+                'end_datetime'                => !empty($data['end_datetime']) ? Carbon::parse($data['end_datetime']) : null,
+                'end_datetime_timezone_id'    => !empty($data['end_datetime_timezone_id']) ? (int) $data['end_datetime_timezone_id'] : null,
+                // API logging
+                'request_xml'                 => $orderXml,
+                'create_response_xml'         => $apiResponse['_raw_response']         ?? null,
+                'create_response_status'      => $apiResponse['status'],
+                'create_error'                => isset($apiResponse['error']) ? json_encode($apiResponse['error']) : null,
+            ]);
 
-            // Clean the response first
-            $responseXml = trim($responseXml);
-
-            // Check if response is empty
-            if (empty($responseXml)) {
-                return [
-                    'status' => 'Error',
-                    'error_detail' => 'Empty response from Quest',
-                    'doc_type' => '',
-                    'doc_format' => '',
-                    'doc_stream' => ''
-                ];
-            }
-
-            // Try to parse as XML
-            libxml_use_internal_errors(true);
-            $xml = simplexml_load_string($responseXml);
-
-            if ($xml === false) {
-                $errors = libxml_get_errors();
-                libxml_clear_errors();
-
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[] = $error->message;
-                }
-
-                Log::error('XML Parse Errors:', $errorMessages);
-
-                return [
-                    'status' => 'Error',
-                    'error_detail' => 'Invalid XML response: ' . implode(', ', $errorMessages),
-                    'doc_type' => '',
-                    'doc_format' => '',
-                    'doc_stream' => ''
-                ];
-            }
-
-            // Check for error response
-            if (isset($xml->ResponseStatusId) && (string)$xml->ResponseStatusId !== 'Success') {
-                return [
-                    'status' => (string)($xml->ResponseStatusId ?? 'Error'),
-                    'error_detail' => (string)($xml->ErrorDetail ?? 'Unknown error'),
-                    'doc_type' => (string)($xml->DocType ?? ''),
-                    'doc_format' => (string)($xml->DocFormat ?? ''),
-                    'doc_stream' => (string)($xml->DocStream ?? '')
-                ];
-            }
-
-            // Success response
-            return [
-                'status' => (string)($xml->ResponseStatusId ?? 'Success'),
-                'error_detail' => (string)($xml->ErrorDetail ?? ''),
-                'doc_type' => (string)($xml->DocType ?? ''),
-                'doc_format' => (string)($xml->DocFormat ?? ''),
-                'doc_stream' => (string)($xml->DocStream ?? '')
-            ];
-        } catch (\Exception $e) {
-            Log::error('ParseGetDocumentResponse Error: ' . $e->getMessage());
-            return [
-                'status' => 'Error',
-                'error_detail' => 'Parse error: ' . $e->getMessage(),
-                'doc_type' => '',
-                'doc_format' => '',
-                'doc_stream' => ''
-            ];
+            Log::info('Quest order stored', ['id' => $order->id, 'quest_order_id' => $order->quest_order_id]);
+            return $order;
+        } catch (\Throwable $e) {
+            Log::error('Quest: failed to store order', ['error' => $e->getMessage()]);
+            throw new \RuntimeException('Your order was accepted by Quest but could not be saved. Please contact support.', 0, $e);
         }
     }
 
+    // =========================================================================
+    // PRIVATE — CIRCUIT BREAKER
+    // =========================================================================
 
-    // Add this method to your QuestDiagnosticsController
-    public function getOrderDetails(Request $request, $questOrderId = null, $referenceTestId = null)
+    private function checkCircuitBreaker(): void
     {
-        $username = env('QUEST_USERNAME');
-        $password = env('QUEST_PASSWORD');
-        $url = config('app.env') === 'production' ? $this->prodUrl : $this->devUrl;
-
-        // If no parameters provided, check request input
-        $questOrderId = $questOrderId ?: $request->input('quest_order_id');
-        $referenceTestId = $referenceTestId ?: $request->input('reference_test_id');
-
-        // Validate that at least one identifier is provided
-        if (empty($questOrderId) && empty($referenceTestId)) {
-            return back()->with('error', 'Quest Order ID or Reference Test ID is required.');
+        $state = $this->getCircuitState();
+        if (!$state['open']) return;
+        if ((time() - $state['last_failure']) < self::CIRCUIT_RECOVERY_SECONDS) {
+            throw new \RuntimeException('Quest Diagnostics is temporarily unavailable. Please try again in a moment.');
         }
+        $this->resetCircuitBreaker();
+    }
 
+    private function recordCircuitFailure(): void
+    {
+        $state = $this->getCircuitState();
+        $state['failures']++;
+        $state['last_failure'] = time();
+        if ($state['failures'] >= self::CIRCUIT_FAILURE_THRESHOLD) {
+            $state['open'] = true;
+            Log::error('Quest circuit breaker opened', ['failures' => $state['failures']]);
+        }
+        $this->saveCircuitState($state);
+    }
+
+    private function resetCircuitBreaker(): void
+    {
+        $this->saveCircuitState(['open' => false, 'failures' => 0, 'last_failure' => 0]);
+    }
+
+    private function getCircuitState(): array
+    {
+        return Cache::get(self::CIRCUIT_BREAKER_KEY, ['open' => false, 'failures' => 0, 'last_failure' => 0]);
+    }
+
+    private function saveCircuitState(array $state): void
+    {
+        Cache::put(self::CIRCUIT_BREAKER_KEY, $state, now()->addHour());
+    }
+
+    // =========================================================================
+    // PRIVATE — UTILITIES
+    // =========================================================================
+
+    private function generateClientReferenceId(): string
+    {
+        return 'ORDER_' . now()->format('Ymd_His') . '_' . random_int(1000, 9999);
+    }
+
+    /**
+     * Convert an empty string to null.
+     *
+     * Laravel's validated() returns null for fields declared nullable when the
+     * user submits nothing, BUT some browsers / JS libraries submit '' instead
+     * of omitting the field. MySQL strict mode rejects '' for integer, date,
+     * and timestamp columns, so we normalise here before every DB write.
+     */
+    private function nullIfEmpty(mixed $value): mixed
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+        return $value;
+    }
+
+    private function digitsOnly(string $value): string
+    {
+        return preg_replace('/[^0-9]/', '', $value);
+    }
+
+    private function xmlEscape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_XML1, 'UTF-8');
+    }
+
+    private function cleanXml(string $xml): string
+    {
+        return preg_replace('/\s+/', ' ', preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $xml));
+    }
+
+    private function buildFailureResult(string $errorId, string $detail, string $rawResponse): array
+    {
+        return [
+            'method_id'           => null,
+            'client_reference_id' => null,
+            'reference_test_id'   => null,
+            'quest_order_id'      => '0',
+            'status'              => 'FAILURE',
+            'display_url'         => null,
+            'error'               => ['id' => $errorId, 'detail' => $detail],
+            '_raw_response'       => substr($rawResponse, 0, 2000),
+        ];
+    }
+
+    private function formatSiteLabel(CollectionSite $site): string
+    {
+        $parts = array_filter([$site->name, implode(', ', array_filter([$site->address_1, $site->city, $site->state, $site->zip_code]))]);
+        return implode(' — ', $parts);
+    }
+
+    private function parseQuestDatetime(mixed $value): ?Carbon
+    {
+        $raw = trim((string) ($value ?? ''));
+        if (empty($raw)) return null;
         try {
-            $client = new \SoapClient($url . '?WSDL', [
-                'trace' => 1,
-                'exceptions' => true,
-                'stream_context' => stream_context_create(['ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                ]])
-            ]);
-
-            // Build the parameters according to the example
-            $params = [
-                'username' => $username,
-                'password' => $password,
-                'referenceTestId' => $referenceTestId,
-                'questOrderId' => $questOrderId,
-                'SpecimenID' => '', // Optional but should be included as empty
-                'AccountNumber' => '' // Optional but should be included as empty
-            ];
-
-            // Remove empty parameters to avoid sending null values
-            $params = array_filter($params, function ($value) {
-                return $value !== null && $value !== '';
-            });
-
-            // Call the GetOrderDetails method with proper parameters
-            $response = $client->GetOrderDetails($params);
-
-            // Get the raw SOAP response for debugging
-            $rawResponse = $client->__getLastResponse();
-            Log::info('Raw SOAP Response: ' . $rawResponse);
-
-            $result = $this->parseQuestResponse($response->GetOrderDetailsResult, true);
-
-            if ($result['status'] === 'SUCCESS') {
-                // Store the order details in session for display
-                session()->flash('order_details', [
-                    'display_url' => $result['display_url'],
-                    'quest_order_id' => $result['quest_order_id'],
-                    'reference_test_id' => $result['reference_test_id'],
-                    'client_reference_id' => $result['client_reference_id']
-                ]);
-
-                return redirect()->route('quest.order-details.show');
-            } else {
-                // Store the raw response for debugging
-                $rawResponseData = [
-                    'raw_request' => $client->__getLastRequest(),
-                    'raw_response' => $rawResponse,
-                    'parsed_error' => $result['error'] ?? null
-                ];
-
-                Log::error('GetOrderDetails Failed: ', $rawResponseData);
-
-                return back()->with([
-                    'error' => 'Failed to retrieve order details: ' . ($result['error']['detail'] ?? 'Unknown error'),
-                    'raw_response' => $rawResponse,
-                    'raw_request' => $client->__getLastRequest()
-                ]);
-            }
-        } catch (\SoapFault $e) {
-            $rawRequest = isset($client) ? $client->__getLastRequest() : 'Client not initialized';
-            $rawResponse = isset($client) ? $client->__getLastResponse() : 'Client not initialized';
-
-            Log::error('Quest GetOrderDetails SOAP Error: ' . $e->getMessage());
-            Log::error('SOAP Request: ' . $rawRequest);
-            Log::error('SOAP Response: ' . $rawResponse);
-
-            return back()->with([
-                'error' => 'Failed to retrieve order details. Please try again later.',
-                'soap_error' => $e->getMessage(),
-                'raw_request' => $rawRequest,
-                'raw_response' => $rawResponse
-            ]);
+            return Carbon::parse($raw);
+        } catch (\Throwable) {
+            return null;
         }
     }
 
-    public function showOrderDetails()
+    private function xmlToArray(\SimpleXMLElement $xml): array
     {
-        $orderDetails = session('order_details');
-
-        if (!$orderDetails) {
-            return redirect()->route('quest.order-form')->with('error', 'No order details found.');
+        $result = [];
+        foreach ($xml->children() as $key => $child) {
+            $result[$key] = count($child->children()) > 0 ? $this->xmlToArray($child) : (string) $child;
         }
-
-        return view(
-            'quest.order-details',
-            array_merge(getFrontendData(), [
-                'orderDetails' => $orderDetails
-            ])
-        );
-    }
-
-    public function getOrderDetailsForm()
-    {
-        return view(
-            'quest.order-details-form',
-            array_merge(getFrontendData(), [])
-        );
-    }
-
-
-
-
-
-    // admin dot test start
-    public function dotTest($portfolioId = null)
-    {
-        $portfolio = Portfolio::findOrFail($portfolioId);
-        $authUser = Auth::user();
-        $role = $authUser->roles()->first();
-
-        $clientProfile = ClientProfile::where('user_id', $authUser->id)->first();
-
-        if ($role->name == 'company') {
-            $employees = Employee::with('clientProfile')->where('status', 'active')->where('client_profile_id', $clientProfile->id)->get();
-        } elseif ($role->name == 'super-admin') {
-            $employees = Employee::with('clientProfile')->where('status', 'active')->get();
-        } else {
-            $employees = [];
-        }
-
-        return view('admin.dot-test.index', compact('portfolio', 'authUser', 'employees'));
-    }
-    public function processPayment(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'portfolio_id' => 'required|exists:portfolios,id',
-            'price' => 'required|numeric',
-            'employee_id' => 'required|exists:employees,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $portfolio = Portfolio::find($request->portfolio_id);
-            $amount = $request->price; // Already in cents from frontend
-
-            Stripe::setApiKey(env('STRIPE_SECRET'));
-
-            $paymentIntent = PaymentIntent::create([
-                'amount' => $amount,
-                'currency' => 'usd',
-                'metadata' => [
-                    'portfolio_id' => $portfolio->id,
-                    'test_name' => $portfolio->title,
-                    'employee_id' => $request->employee_id,
-                ],
-                'automatic_payment_methods' => [
-                    'enabled' => true,
-                ],
-            ]);
-
-            // Store minimal payment session data
-            session([
-                'dot_test_payment_data' => [
-                    'payment_intent_id' => $paymentIntent->id,
-                    'portfolio_id' => $portfolio->id,
-                    'amount' => $amount / 100,
-                    'test_name' => $portfolio->title,
-                    'quest_unit_code' => $portfolio->quest_unit_code,
-                    'employee_id' => $request->employee_id,
-                ]
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'client_secret' => $paymentIntent->client_secret,
-                'payment_intent_id' => $paymentIntent->id,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Payment processing failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment processing failed. Please try again.'
-            ], 500);
-        }
-    }
-
-    public function showDotOrderForm(Request $request, $paymentIntent)
-    {
-        // Retrieve payment data from session
-        $paymentData = session('dot_test_payment_data');
-
-        if (!$paymentData || $paymentData['payment_intent_id'] !== $paymentIntent) {
-            toastr()->error('Invalid or expired payment session. Please complete payment first.', 'Error');
-            return redirect()->route('dot-test.index', ['portfolioId' => $paymentData['portfolio_id'] ?? null]);
-        }
-        // Get employee data from session or database
-        $employee = null;
-        if (isset($paymentData['employee_id'])) {
-            $employee = Employee::with('clientProfile')->find($paymentData['employee_id']);
-        }
-
-        // Get portfolio info
-        $portfolio = Portfolio::find($paymentData['portfolio_id']);
-
-        $collectionSites = CollectionSite::orderBy('name')->get();
-
-        return view('admin.dot-test.dot-test-order-form', compact('employee', 'paymentData', 'portfolio'));
-    }
-
-    // Add this new method for AJAX search
-    public function searchCollectionSites(Request $request)
-    {
-        try {
-            $searchTerm = $request->get('q', '');
-
-            // Validate search term
-            if (strlen($searchTerm) < 2) {
-                return response()->json([]);
-            }
-
-            $sites = CollectionSite::when($searchTerm, function ($query) use ($searchTerm) {
-                $searchTerm = '%' . $searchTerm . '%';
-                $query->where(function ($q) use ($searchTerm) {
-                    $q->where('name', 'LIKE', $searchTerm)
-                        ->orWhere('address_1', 'LIKE', $searchTerm)
-                        ->orWhere('address_2', 'LIKE', $searchTerm)
-                        ->orWhere('city', 'LIKE', $searchTerm)
-                        ->orWhere('zip_code', 'LIKE', $searchTerm)
-                        ->orWhere('state', 'LIKE', $searchTerm);
-                });
-            })
-                ->orderBy('name')
-                ->limit(30) // Reduced limit for better performance
-                ->get(['id', 'collection_site_code', 'name', 'address_1', 'address_2', 'city', 'state', 'zip_code']);
-
-
-            $formattedSites = $sites->map(function ($site) {
-                return [
-                    'id' => $site->id,
-                    'collection_site_code' => $site->collection_site_code,
-                    'text' => $this->formatSiteDisplay($site)
-                ];
-            });
-
-            return response()->json($formattedSites);
-        } catch (\Exception $e) {
-            Log::error('Collection site search error: ' . $e->getMessage());
-            return response()->json([], 500);
-        }
-    }
-
-    private function formatSiteDisplay($site)
-    {
-        $parts = [];
-
-        if ($site->name) {
-            $parts[] = $site->name;
-        }
-
-        $addressParts = [];
-        if ($site->address_1) {
-            $addressParts[] = $site->address_1;
-        }
-        if ($site->city) {
-            $addressParts[] = $site->city;
-        }
-        if ($site->state) {
-            $addressParts[] = $site->state;
-        }
-        if ($site->zip_code) {
-            $addressParts[] = $site->zip_code;
-        }
-
-        if (!empty($addressParts)) {
-            $parts[] = implode(', ', $addressParts);
-        }
-
-        return implode(' - ', $parts);
+        return $result;
     }
 }

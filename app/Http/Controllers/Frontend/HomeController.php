@@ -3,16 +3,12 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Models\Admin\Menu;
-use App\Models\Admin\Social;
 use Illuminate\Http\Request;
-use App\Models\Admin\Package;
 use App\Models\Admin\WhyChoose;
 use App\Models\Admin\Background;
-use App\Models\Admin\HeaderInfo;
 use App\Models\Admin\ExternalUrl;
 use App\Models\Admin\HeaderImage;
 use App\Models\Admin\PageBuilder;
-use Illuminate\Support\Facades\DB;
 use App\Models\Admin\ClearingHouse;
 use App\Models\Admin\PrivacyPolicy;
 use App\Http\Controllers\Controller;
@@ -20,7 +16,6 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Admin\PackageCategory;
 use App\Models\Admin\RandomConsortium;
 use App\Models\Admin\WhyChooseSection;
-use App\Models\Admin\ContactInfoWidget;
 use App\Models\Admin\TermsAndCondition;
 use App\Models\Admin\BackgroundCategory;
 use App\Models\Admin\DotSupervisorTraining;
