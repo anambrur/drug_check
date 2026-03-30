@@ -235,6 +235,7 @@ class ContactController extends Controller
 
         try {
             $validatedData = $request->all();
+
             // Verify Stripe payment
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
@@ -249,22 +250,22 @@ class ContactController extends Controller
             $price = isset($validatedData['price']) ? preg_replace('/[^0-9.]/', '', $validatedData['price']) : null;
 
             // Store data in the database
-            $contactMessage = \App\Models\Admin\ContactMessage::create([
-                'name' => ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''),
-                'email' => $validatedData['email'] ?? null,
-                'phone' => $validatedData['phone'] ?? null,
-                'address' => $validatedData['address'] ?? null,
-                'preferred_location' => $validatedData['preferred_location'] ?? null,
-                'employee_name' => $validatedData['employee_name'] ?? ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''),
-                'company_name' => $validatedData['company_name'] ?? null,
-                'accounting_email' => $validatedData['accounting_email'] ?? null,
-                'date' => $validatedData['date'] ?? null,
-                'gender' => $validatedData['gender'] ?? null,
-                'test_category' => $validatedData['reason_for_testing'] ?? null,
-                'services' => $services,
-                'price' => $price,
-                'read' => 0,
-            ]);
+            // $contactMessage = \App\Models\Admin\ContactMessage::create([
+            //     'name' => ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''),
+            //     'email' => $validatedData['email'] ?? null,
+            //     'phone' => $validatedData['phone'] ?? null,
+            //     'address' => $validatedData['address'] ?? null,
+            //     'preferred_location' => $validatedData['preferred_location'] ?? null,
+            //     'employee_name' => $validatedData['employee_name'] ?? ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''),
+            //     'company_name' => $validatedData['company_name'] ?? null,
+            //     'accounting_email' => $validatedData['accounting_email'] ?? null,
+            //     'date' => $validatedData['date'] ?? null,
+            //     'gender' => $validatedData['gender'] ?? null,
+            //     'test_category' => $validatedData['reason_for_testing'] ?? null,
+            //     'services' => $services,
+            //     'price' => $price,
+            //     'read' => 0,
+            // ]);
 
             $emailTo = ContactInfoWidget::pluck('email')->first();
 
@@ -283,16 +284,15 @@ class ContactController extends Controller
                     $price
                 ));
 
-            // return redirect()->back()->with('success', 'Payment successful, and email sent!');
             // Store payment data in session for the Quest order form
-            $request->session()->put('payment_data', [
+            $request->session()->put('non_dot_payment_data', [
                 'payment_intent_id' => $validatedData['payment_intent_id'],
                 'first_name' => $validatedData['first_name'],
                 'last_name' => $validatedData['last_name'],
                 'email' => $validatedData['email'],
                 'phone' => $validatedData['phone'],
                 'portfolio' => (object)[
-                    'id' => $request->portfolio_id ?? null,
+                    'portfolio_id' => $validatedData['portfolio_id'],
                     'title' => $validatedData['test_name'] ?? 'Test',
                     'price' => $price,
                     'quest_unit_code' => $validatedData['code'] ?? null,

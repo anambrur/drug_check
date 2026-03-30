@@ -1,758 +1,1123 @@
 <!--// Portfolio Single Section Start //-->
 <section class="section" id="portfolio-single-page">
     <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-
-                @if (Auth::user())
-                    @can('portfolio view')
-                        <div class="easier-mode">
-                            @if (Auth::user())
-                                @can('portfolio view')
-                                    <!-- hover effect for mobile devices  -->
-                                    <div class="click-icon d-md-none text-center">
-                                        <button class="custom-btn text-white">
-                                            <i class="fa fa-mobile-alt text-white"></i> {{ __('content.touch') }}
-                                        </button>
-                                    </div>
-                                @endcan
-                            @endif
-                            <div class="easier-section-area">
-                            @endcan
-                @endif
-
-
-
-                @if (Auth::user())
-                    @can('portfolio view')
-                </div>
-                <div class="easier-middle">
-                    @php
-                        $url = request()->path();
-                        $modified_url = str_replace('/', '-bracket-', $url);
-                    @endphp
-                    <form method="POST" action="{{ route('site-url.index') }}" class="d-inline-block">
-                        @csrf
-                        <input type="hidden" name="route" value="portfolio-image.create">
-                        <input type="hidden" name="style" value="{{ $portfolio->id }}">
-                        <input type="hidden" name="site_url" value="{{ $modified_url }}">
-                        <button type="submit" class="custom-btn text-white me-2">
-                            <i class="fa fa-edit text-white"></i> {{ __('content.add_portfolio_image') }}
-                        </button>
-                    </form>
-                </div>
-            </div>
-        @endcan
-        @endif
-
-        @if (Auth::user())
-            @can('portfolio view')
-                <div class="easier-mode">
-                    @if (Auth::user())
-                        @can('portfolio view')
-                            <!-- hover effect for mobile devices  -->
-                            <div class="click-icon d-md-none text-center">
-                                <button class="custom-btn text-white">
-                                    <i class="fa fa-mobile-alt text-white"></i> {{ __('content.touch') }}
-                                </button>
-                            </div>
-                        @endcan
-                    @endif
-                    <div class="easier-section-area">
-                    @endcan
-        @endif
-
-
-
         @isset($portfolio_content)
             <div class="portfolio-single-inner custom-blog-img">
                 <h4>{{ $portfolio->title }}</h4>
                 <div class="author-meta">
-                    {{-- <a href="#"><span
-                            class="far fa-calendar-alt"></span>{{ Carbon\Carbon::parse($portfolio->created_at)->isoFormat('DD') }}
-                        {{ Carbon\Carbon::parse($portfolio->created_at)->isoFormat('MMMM') }}
-                        {{ Carbon\Carbon::parse($portfolio->created_at)->isoFormat('GGGG') }}</a> --}}
                     <a href="#"><span class="far fa-bookmark"></span>{{ $portfolio->category_name }}</a>
                 </div>
                 <p>@php echo html_entity_decode($portfolio_content->description); @endphp</p>
             </div>
-        @else
-            @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
-                <div class="portfolio-single-inner">
-                    <h4>Business Card</h4>
-                    <div class="author-meta">
-                        <a href="#"><span class="far fa-user"></span>By Admin</a>
-                        <a href="#"><span class="far fa-bookmark"></span>Mockup</a>
-                    </div>
-                    <p>It is a long established fact that a reader will be distracted by the readable
-                        content of a page when looking at its layout. The point of using Lorem Ipsum is
-                        that it has a more-or-less normal distribution of letters, as opposed to using
-                        'Content here, content here', making it look like readable English. Many desktop
-                        publishing packages and web page editors now use Lorem Ipsum as their default model
-                        text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy.
-                        Various versions have evolved over the years, sometimes by accident, sometimes on purpose
-                        (injected humour and the like).
-                    </p>
-                    <div class="row">
-                        <div class="col-md-6 col-sm-6 portfolio-grid-img">
-                            <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image" class="img-fluid">
-                        </div>
-                        <div class="col-md-6 col-sm-6 portfolio-grid-img">
-                            <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image" class="img-fluid">
-                        </div>
-                    </div>
-                </div>
-            @endif
         @endisset
 
-        @if (Auth::user())
-            @can('portfolio view')
-        </div>
-        <div class="easier-middle">
-            @php
-                $url = request()->path();
-                $modified_url = str_replace('/', '-bracket-', $url);
-            @endphp
-            <form method="POST" action="{{ route('site-url.index') }}" class="d-inline-block">
-                @csrf
-                <input type="hidden" name="route" value="portfolio-content.create">
-                <input type="hidden" name="style" value="{{ $portfolio->id }}">
-                <input type="hidden" name="site_url" value="{{ $modified_url }}">
-                <button type="submit" class="custom-btn text-white me-2 mb-2">
-                    <i class="fa fa-edit text-white"></i> {{ __('content.edit_portfolio_content') }}
-                </button>
-            </form>
-        </div>
-        </div>
-    @endcan
-    @endif
+        <hr>
 
-    </div>
+        {{-- ════════════════════════════════════════════
+                         NON-DOT: Full Application + Payment Form
+                    ════════════════════════════════════════════ --}}
+        @if ($portfolio->category_name == 'Non DOT Testing')
 
-    <div class="col-lg-12 col-md-12">
-        <div class="widget-sidebar">
-            @if (Auth::user())
-                @can('portfolio view')
-                    <div class="easier-mode">
-                        @if (Auth::user())
-                            @can('portfolio view')
-                                <!-- hover effect for mobile devices  -->
-                                <div class="click-icon d-md-none text-center">
-                                    <button class="custom-btn text-white">
-                                        <i class="fa fa-mobile-alt text-white"></i> {{ __('content.touch') }}
-                                    </button>
+            {{-- ── Google Fonts (same as Quest form) ── --}}
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link
+                href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap"
+                rel="stylesheet">
+
+            <style>
+                /* ── Design tokens (shared with Quest form) ── */
+                :root {
+                    --pf-primary: #1a56db;
+                    --pf-primary-dark: #1044b3;
+                    --pf-primary-light: #e8f0fe;
+                    --pf-primary-glow: rgba(26, 86, 219, .15);
+                    --pf-accent: #06b6d4;
+                    --pf-success: #059669;
+                    --pf-danger: #e11d48;
+                    --pf-surface: #ffffff;
+                    --pf-surface-2: #f8faff;
+                    --pf-border: #e2e8f8;
+                    --pf-text: #0f172a;
+                    --pf-muted: #64748b;
+                    --pf-light: #94a3b8;
+                    --pf-shadow-sm: 0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
+                    --pf-shadow-md: 0 4px 16px rgba(15, 23, 42, .08), 0 2px 6px rgba(15, 23, 42, .05);
+                    --pf-shadow-lg: 0 20px 60px rgba(15, 23, 42, .12), 0 8px 24px rgba(15, 23, 42, .07);
+                    --pf-radius: 14px;
+                    --pf-radius-sm: 9px;
+                    --pf-font-head: 'Sora', sans-serif;
+                    --pf-font-body: 'DM Sans', sans-serif;
+                }
+
+                /* ── Page wrapper ── */
+                #application-form {
+
+                    font-family: var(--pf-font-body);
+                }
+
+                /* ── Outer card ── */
+                .pf-card {
+                    background: var(--pf-surface);
+                    border-radius: 20px;
+                    box-shadow: var(--pf-shadow-lg);
+                    border: 1px solid var(--pf-border);
+                    overflow: hidden;
+                }
+
+                /* ── Header ── */
+                .pf-header {
+                    background: linear-gradient(135deg, #1a56db 0%, #0e3fa3 60%, #0c2f80 100%);
+                    padding: 2.25rem 2.5rem 2rem;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .pf-header::before {
+                    content: '';
+                    position: absolute;
+                    top: -60px;
+                    right: -60px;
+                    width: 220px;
+                    height: 220px;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, .05);
+                }
+
+                .pf-header::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -40px;
+                    left: 30%;
+                    width: 160px;
+                    height: 160px;
+                    border-radius: 50%;
+                    background: rgba(6, 182, 212, .1);
+                }
+
+                .pf-header .pill {
+                    background: rgba(255, 255, 255, .15);
+                    backdrop-filter: blur(6px);
+                    border: 1px solid rgba(255, 255, 255, .2);
+                    color: #fff;
+                    font-family: var(--pf-font-head);
+                    font-size: .7rem;
+                    font-weight: 500;
+                    letter-spacing: .06em;
+                    text-transform: uppercase;
+                    padding: .35rem .9rem;
+                    border-radius: 100px;
+                    display: inline-block;
+                    margin-bottom: .85rem;
+                }
+
+                .pf-header h4 {
+                    font-family: var(--pf-font-head);
+                    font-size: 1.55rem;
+                    font-weight: 700;
+                    color: #fff;
+                    margin-bottom: .35rem;
+                    line-height: 1.3;
+                }
+
+                .pf-header p {
+                    color: rgba(255, 255, 255, .7);
+                    font-size: .9rem;
+                    margin: 0;
+                }
+
+                .pf-header-icon {
+                    width: 48px;
+                    height: 48px;
+                    background: rgba(255, 255, 255, .12);
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.3rem;
+                    color: #fff;
+                    flex-shrink: 0;
+                }
+
+                /* ── Body ── */
+                .pf-body {
+                    padding: 2rem 2.5rem 2.5rem;
+                }
+
+                /* ── Section blocks ── */
+                .pf-section {
+                    border: 1px solid var(--pf-border);
+                    border-radius: var(--pf-radius);
+                    overflow: hidden;
+                    margin-bottom: 1.75rem;
+                    background: var(--pf-surface);
+                    transition: box-shadow .2s;
+                }
+
+                .pf-section:focus-within {
+                    box-shadow: 0 0 0 3px var(--pf-primary-glow);
+                    border-color: rgba(26, 86, 219, .3);
+                }
+
+                .pf-section-head {
+                    background: var(--pf-primary-light);
+                    padding: .9rem 1.5rem;
+                    display: flex;
+                    align-items: center;
+                    gap: .7rem;
+                    border-bottom: 1px solid rgba(26, 86, 219, .1);
+                }
+
+                .pf-section-head .icon-wrap {
+                    width: 30px;
+                    height: 30px;
+                    background: var(--pf-primary);
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #fff;
+                    font-size: .75rem;
+                    flex-shrink: 0;
+                }
+
+                .pf-section-head h6 {
+                    font-family: var(--pf-font-head);
+                    font-size: .9rem;
+                    font-weight: 700;
+                    color: var(--pf-primary-dark);
+                    margin: 0;
+                }
+
+                .pf-section-body {
+                    padding: 1.5rem;
+                }
+
+                /* ── Controls ── */
+                .pf-label {
+                    font-family: var(--pf-font-head);
+                    font-size: .8rem;
+                    font-weight: 600;
+                    color: var(--pf-text);
+                    letter-spacing: .01em;
+                    margin-bottom: .4rem;
+                    display: block;
+                }
+
+                .pf-req {
+                    color: var(--pf-danger);
+                    margin-left: 2px;
+                }
+
+                .pf-opt {
+                    font-size: .68rem;
+                    background: #f1f5f9;
+                    color: var(--pf-muted);
+                    border-radius: 4px;
+                    padding: 1px 6px;
+                    font-weight: 500;
+                    margin-left: 6px;
+                    vertical-align: middle;
+                }
+
+                .pf-control {
+                    width: 100%;
+                    border: 1.5px solid var(--pf-border);
+                    border-radius: var(--pf-radius-sm);
+                    padding: .65rem 1rem;
+                    font-size: .88rem;
+                    font-family: var(--pf-font-body);
+                    color: var(--pf-text);
+                    background: var(--pf-surface);
+                    transition: border-color .2s, box-shadow .2s, background .2s;
+                    box-shadow: var(--pf-shadow-sm);
+                    outline: none;
+                    -webkit-appearance: none;
+                    appearance: none;
+                }
+
+                .pf-control::placeholder {
+                    color: var(--pf-light);
+                }
+
+                .pf-control:focus {
+                    border-color: var(--pf-primary);
+                    box-shadow: 0 0 0 3.5px var(--pf-primary-glow);
+                    background: #fafcff;
+                }
+
+                .pf-control.is-invalid {
+                    border-color: var(--pf-danger);
+                }
+
+                .pf-control.is-valid {
+                    border-color: var(--pf-success);
+                }
+
+                select.pf-control {
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 1rem center;
+                    padding-right: 2.5rem;
+                }
+
+                textarea.pf-control {
+                    resize: vertical;
+                    min-height: 90px;
+                }
+
+                .pf-feedback {
+                    font-size: .77rem;
+                    color: var(--pf-danger);
+                    font-weight: 500;
+                    margin-top: .3rem;
+                }
+
+                .pf-hint {
+                    font-size: .76rem;
+                    color: var(--pf-muted);
+                    margin-top: .3rem;
+                    display: flex;
+                    align-items: center;
+                    gap: .3rem;
+                }
+
+                /* icon prefix */
+                .pf-icon-wrap {
+                    position: relative;
+                }
+
+                .pf-icon-wrap .pf-icon {
+                    position: absolute;
+                    left: .9rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: var(--pf-light);
+                    font-size: .82rem;
+                    pointer-events: none;
+                }
+
+                .pf-icon-wrap .pf-control {
+                    padding-left: 2.4rem;
+                }
+
+                /* readonly price */
+                .pf-price-display {
+                    background: linear-gradient(135deg, var(--pf-primary-light), #e0ecff);
+                    border: 1.5px solid rgba(26, 86, 219, .2);
+                    border-radius: var(--pf-radius-sm);
+                    padding: 1rem 1.5rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+
+                .pf-price-display .label {
+                    font-family: var(--pf-font-head);
+                    font-size: .82rem;
+                    font-weight: 600;
+                    color: var(--pf-muted);
+                }
+
+                .pf-price-display .amount {
+                    font-family: var(--pf-font-head);
+                    font-size: 1.6rem;
+                    font-weight: 700;
+                    color: var(--pf-primary);
+                }
+
+                /* gender radios */
+                .pf-radio-group {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: .75rem;
+                }
+
+                .pf-radio-item {
+                    display: flex;
+                    align-items: center;
+                    gap: .5rem;
+                    border: 1.5px solid var(--pf-border);
+                    border-radius: var(--pf-radius-sm);
+                    padding: .55rem 1.1rem;
+                    cursor: pointer;
+                    transition: all .2s;
+                    font-family: var(--pf-font-head);
+                    font-size: .85rem;
+                    font-weight: 500;
+                    color: var(--pf-muted);
+                    user-select: none;
+                }
+
+                .pf-radio-item input[type="radio"] {
+                    accent-color: var(--pf-primary);
+                    width: 15px;
+                    height: 15px;
+                }
+
+                .pf-radio-item:has(input:checked) {
+                    border-color: var(--pf-primary);
+                    background: var(--pf-primary-light);
+                    color: var(--pf-primary);
+                }
+
+                /* ── Payment panel ── */
+                .pf-payment-panel {
+                    background: #f8faff;
+                    border: 1.5px solid var(--pf-border);
+                    border-radius: var(--pf-radius-sm);
+                    padding: 1.5rem;
+                }
+
+                .pf-card-icons {
+                    display: flex;
+                    align-items: center;
+                    gap: .5rem;
+                    flex-wrap: wrap;
+                }
+
+                .pf-card-icons i {
+                    font-size: 1.6rem;
+                }
+
+                /* Stripe element wrapper */
+                .pf-stripe-wrap {
+                    border: 1.5px solid var(--pf-border);
+                    border-radius: var(--pf-radius-sm);
+                    padding: .7rem 1rem;
+                    background: #fff;
+                    box-shadow: var(--pf-shadow-sm);
+                    transition: border-color .2s, box-shadow .2s;
+                }
+
+                .pf-stripe-wrap.StripeElement--focus {
+                    border-color: var(--pf-primary);
+                    box-shadow: 0 0 0 3.5px var(--pf-primary-glow);
+                }
+
+                .pf-stripe-wrap.StripeElement--invalid {
+                    border-color: var(--pf-danger);
+                }
+
+                /* country select override */
+                #country.pf-control {
+                    height: auto;
+                }
+
+                /* ── Alert ── */
+                .pf-alert {
+                    border-radius: var(--pf-radius-sm);
+                    border: none;
+                    font-size: .875rem;
+                    padding: .9rem 1.1rem;
+                    margin-bottom: 1.25rem;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: .7rem;
+                }
+
+                .pf-alert-danger {
+                    background: rgba(225, 29, 72, .05);
+                    color: #9f1239;
+                    border: 1px solid rgba(225, 29, 72, .2);
+                }
+
+                .pf-alert-success {
+                    background: rgba(5, 150, 105, .05);
+                    color: #065f46;
+                    border: 1px solid rgba(5, 150, 105, .2);
+                }
+
+                .pf-alert-info {
+                    background: rgba(26, 86, 219, .05);
+                    color: var(--pf-primary-dark);
+                    border: 1px solid rgba(26, 86, 219, .2);
+                }
+
+                /* ── Terms checkbox ── */
+                .pf-terms {
+                    border: 1.5px solid var(--pf-border);
+                    border-radius: var(--pf-radius-sm);
+                    padding: 1rem 1.25rem;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: .75rem;
+                    background: var(--pf-surface-2);
+                }
+
+                .pf-terms input[type="checkbox"] {
+                    width: 18px;
+                    height: 18px;
+                    accent-color: var(--pf-primary);
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                }
+
+                .pf-terms-label {
+                    font-size: .85rem;
+                    color: var(--pf-muted);
+                    line-height: 1.5;
+                }
+
+                .pf-terms-label a {
+                    color: var(--pf-primary);
+                    font-weight: 600;
+                    text-decoration: none;
+                }
+
+                .pf-terms-label a:hover {
+                    text-decoration: underline;
+                }
+
+                /* ── Submit button ── */
+                .pf-btn-submit {
+                    background: linear-gradient(135deg, #1a56db 0%, #0e3fa3 100%);
+                    border: none;
+                    border-radius: 12px;
+                    width: 100%;
+                    font-family: var(--pf-font-head);
+                    font-weight: 700;
+                    font-size: 1rem;
+                    color: #fff;
+                    padding: 1rem 2rem;
+                    transition: all .25s;
+                    box-shadow: 0 4px 20px rgba(26, 86, 219, .35);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: .6rem;
+                    cursor: pointer;
+                }
+
+                .pf-btn-submit:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 30px rgba(26, 86, 219, .45);
+                    color: #fff;
+                }
+
+                .pf-btn-submit:active {
+                    transform: translateY(0);
+                }
+
+                .pf-btn-submit:disabled {
+                    opacity: .7;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+
+                /* ── Security badge ── */
+                .pf-secure {
+                    font-size: .78rem;
+                    color: var(--pf-muted);
+                    display: flex;
+                    align-items: center;
+                    gap: .4rem;
+                    justify-content: center;
+                    margin-top: .75rem;
+                }
+
+                .pf-secure i {
+                    color: #059669;
+                }
+
+                /* ── Success modal ── */
+                .pf-success-icon {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    background: #059669;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 1.25rem;
+                    font-size: 2rem;
+                    color: #fff;
+                }
+
+                /* ── Login card ── */
+                .pf-login-card {
+                    border: 1px solid var(--pf-border);
+                    border-radius: var(--pf-radius);
+                    overflow: hidden;
+                    box-shadow: var(--pf-shadow-md);
+                    background: var(--pf-surface);
+                }
+
+                /* ── Responsive ── */
+                @media (max-width:768px) {
+                    .pf-header {
+                        padding: 1.75rem 1.5rem 1.5rem;
+                    }
+
+                    .pf-body {
+                        padding: 1.5rem 1.25rem 2rem;
+                    }
+
+                    .pf-btn-submit {
+                        font-size: .9rem;
+                        padding: .85rem 1.5rem;
+                    }
+                }
+            </style>
+
+            <section id="application-form">
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="">
+                            <div class="pf-card">
+
+                                {{-- Header --}}
+                                <div class="pf-header">
+                                    <div class="d-flex align-items-start justify-content-between gap-3">
+                                        <div>
+                                            <span class="pill">Non-DOT Testing</span>
+                                            <h4>Apply for {{ $portfolio->title }}</h4>
+                                            <p>Complete your details and payment to schedule your test</p>
+                                        </div>
+                                        <div class="pf-header-icon d-none d-sm-flex">
+                                            <i class="fas fa-clipboard-list"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                            @endcan
-                        @endif
-                        <div class="easier-section-area">
-                        @endcan
-            @endif
 
-            @if (Auth::user())
-                @can('portfolio view')
-            </div>
-            <div class="easier-middle">
-                @php
-                    $url = request()->path();
-                    $modified_url = str_replace('/', '-bracket-', $url);
-                @endphp
-                <form method="POST" action="{{ route('site-url.index') }}" class="d-inline-block">
-                    @csrf
-                    <input type="hidden" name="route" value="portfolio-detail.create">
-                    <input type="hidden" name="style" value="{{ $portfolio->id }}">
-                    <input type="hidden" name="site_url" value="{{ $modified_url }}">
-                    <button type="submit" class="custom-btn text-white me-2 mb-2">
-                        <i class="fa fa-edit text-white"></i> {{ __('content.edit_section_title_description') }}
-                    </button>
-                </form>
-                <form method="POST" action="{{ route('site-url.index') }}" class="d-inline-block">
-                    @csrf
-                    <input type="hidden" name="route" value="portfolio-detail.create">
-                    <input type="hidden" name="style" value="{{ $portfolio->id }}">
-                    <input type="hidden" name="site_url" value="{{ $modified_url }}">
-                    <button type="submit" class="custom-btn text-white me-2">
-                        <i class="fa fa-edit text-white"></i> {{ __('content.add_portfolio_detail') }}
-                    </button>
-                </form>
-            </div>
-        </div>
-    @endcan
-    @endif
-
-    <hr>
-
-    @if ($portfolio->category_name == 'Non DOT Testing')
-        <!--// Application Form Section //-->
-        <section class="section" id="application-form">
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div class="col-lg-10">
-                        <div class="card shadow-sm">
-                            <div class="card-body p-5">
-                                <h2 class="text-center mb-4">Apply For {{ $portfolio->title }} Testing</h2>
-
-                                <!-- Status Messages -->
-                                @if (session('success'))
-                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                        <i class="fas fa-check-circle me-2"></i>
-                                        {{ session('success') }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                            aria-label="Close"></button>
-                                    </div>
-                                @endif
-
-                                @if (session('error'))
-                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                        <i class="fas fa-exclamation-circle me-2"></i>
-                                        {{ session('error') }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                            aria-label="Close"></button>
-                                    </div>
-                                @endif
-
-                                @if ($errors->any())
-                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                        <i class="fas fa-exclamation-triangle me-2"></i>
-                                        <strong>Please fix these errors:</strong>
-                                        <ul class="mt-2 mb-0">
-                                            @foreach ($errors->all() as $error)
-                                                <li>{{ $error }}</li>
-                                            @endforeach
-                                        </ul>
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                            aria-label="Close"></button>
-                                    </div>
-                                @endif
-
-                                <form id="payment-form" action="{{ route('send.mail_dot') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="payment_intent_id" id="payment_intent_id">
-                                    <input type="hidden" name="test_name" id="test_name"
-                                        value="{{ $portfolio->title }}">
-                                    <input type="hidden" name="code" value="{{ $portfolio->code }}">
-                                    <input type="hidden" name="lab_account" value="{{ $portfolio->lab_account }}">
-
-                                    <!-- ========== Personal Information Section ========== -->
-                                    <div class="mb-5">
-                                        <h4 class="section-title mb-4">
-                                            <i class="fas fa-user-circle me-2"></i> Personal Information
-                                        </h4>
-
-                                        <div class="row g-3">
-                                            <!-- First Name -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-
-                                                    <input type="text"
-                                                        class="form-control @error('first_name') is-invalid @enderror"
-                                                        name="first_name" id="first_name"
-                                                        value="{{ old('first_name') }}" placeholder="First name"
-                                                        required>
-                                                    <label for="first_name">First Name <span
-                                                            class="text-red">*</span></label>
-                                                    @error('first_name')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Last Name -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input type="text"
-                                                        class="form-control @error('last_name') is-invalid @enderror"
-                                                        name="last_name" id="last_name"
-                                                        value="{{ old('last_name') }}" placeholder="Last name"
-                                                        required>
-                                                    <label for="last_name">Last Name *</label>
-                                                    @error('last_name')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Email -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input type="email"
-                                                        class="form-control @error('email') is-invalid @enderror"
-                                                        name="email" id="email" value="{{ old('email') }}"
-                                                        placeholder="Email address" required>
-                                                    <label for="email">Email Address *</label>
-                                                    @error('email')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Phone -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input type="tel"
-                                                        class="form-control @error('phone') is-invalid @enderror"
-                                                        name="phone" id="phone" value="{{ old('phone') }}"
-                                                        placeholder="Phone number" required>
-                                                    <label for="phone">Phone Number *</label>
-                                                    @error('phone')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Address -->
-                                            <div class="col-12">
-                                                <div class="form-floating">
-                                                    <input type="text"
-                                                        class="form-control @error('address') is-invalid @enderror"
-                                                        name="address" id="address" value="{{ old('address') }}"
-                                                        placeholder="Street address" required>
-                                                    <label for="address">Street Address </label>
-                                                    @error('address')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Gender -->
-                                            <div class="col-12">
-                                                <label class="form-label">Gender *</label>
-                                                <div class="d-flex gap-4">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="gender"
-                                                            id="male" value="Male" @checked(old('gender') == 'Male')
-                                                            required>
-                                                        <label class="form-check-label" for="male">Male</label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="gender"
-                                                            id="female" value="Female"
-                                                            @checked(old('gender') == 'Female')>
-                                                        <label class="form-check-label" for="female">Female</label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="gender"
-                                                            id="other" value="Other"
-                                                            @checked(old('gender') == 'Other')>
-                                                        <label class="form-check-label" for="other">Other</label>
-                                                    </div>
-                                                </div>
-                                                @error('gender')
-                                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                                @enderror
+                                {{-- Alerts --}}
+                                <div class="pf-body pb-0">
+                                    @if (session('success'))
+                                        <div class="pf-alert pf-alert-success" role="alert">
+                                            <i class="fas fa-check-circle mt-1"></i>
+                                            <div>{{ session('success') }}</div>
+                                        </div>
+                                    @endif
+                                    @if (session('error'))
+                                        <div class="pf-alert pf-alert-danger" role="alert">
+                                            <i class="fas fa-exclamation-circle mt-1"></i>
+                                            <div>{{ session('error') }}</div>
+                                        </div>
+                                    @endif
+                                    @if ($errors->any())
+                                        <div class="pf-alert pf-alert-danger" role="alert">
+                                            <i class="fas fa-exclamation-triangle mt-1"></i>
+                                            <div>
+                                                <strong>Please fix these errors:</strong>
+                                                <ul class="mt-1 mb-0 ps-3">
+                                                    @foreach ($errors->all() as $error)
+                                                        <li>{{ $error }}</li>
+                                                    @endforeach
+                                                </ul>
                                             </div>
                                         </div>
-                                    </div>
+                                    @endif
+                                </div>
 
-                                    <!-- ========== Testing Information Section ========== -->
-                                    <div class="mb-5">
-                                        <h4 class="section-title mb-4">
-                                            <i class="fas fa-flask me-2"></i> Testing Information
-                                        </h4>
+                                <div class="pf-body pt-2">
+                                    <form id="payment-form" action="{{ route('send.mail_dot') }}" method="POST">
+                                        @csrf
+                                        <input type="hidden" name="portfolio_id" id="portfolio_id"
+                                            value="{{ $portfolio->id }}">
+                                        <input type="hidden" name="payment_intent_id" id="payment_intent_id">
+                                        <input type="hidden" name="test_name" id="test_name"
+                                            value="{{ $portfolio->title }}">
+                                        <input type="hidden" name="code" value="{{ $portfolio->code }}">
+                                        <input type="hidden" name="lab_account" value="{{ $portfolio->lab_account }}">
 
-                                        <div class="row g-3">
-                                            <!-- Test Date -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input type="date"
-                                                        class="form-control @error('date') is-invalid @enderror"
-                                                        name="date" id="date"
-                                                        value="{{ old('date', date('Y-m-d')) }}" required>
-                                                    <label for="date">Preferred Test Date </label>
-                                                    @error('date')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
+                                        {{-- ── 1. Personal Information ── --}}
+                                        <div class="pf-section">
+                                            <div class="pf-section-head">
+                                                <div class="icon-wrap"><i class="fas fa-user"></i></div>
+                                                <h6>Personal Information</h6>
                                             </div>
+                                            <div class="pf-section-body">
+                                                <div class="row g-3">
 
-                                            <!-- Preferred Location -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input type="text"
-                                                        class="form-control @error('preferred_location') is-invalid @enderror"
-                                                        name="preferred_location" id="preferred_location"
-                                                        value="{{ old('preferred_location') }}"
-                                                        placeholder="Location" required>
-                                                    <label for="preferred_location">Preferred Location </label>
-                                                    @error('preferred_location')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Employer Information -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input type="text"
-                                                        class="form-control @error('employee_name') is-invalid @enderror"
-                                                        name="employee_name" id="employee_name"
-                                                        value="{{ old('employee_name') }}"
-                                                        placeholder="Employer name" required>
-                                                    <label for="employee_name">Employer Name *</label>
-                                                    @error('employee_name')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Company Name -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input type="text"
-                                                        class="form-control @error('company_name') is-invalid @enderror"
-                                                        name="company_name" id="company_name"
-                                                        value="{{ old('company_name') }}" placeholder="Company name">
-                                                    <label for="company_name">Company Name</label>
-                                                    @error('company_name')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Accounting Email -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input type="email"
-                                                        class="form-control @error('accounting_email') is-invalid @enderror"
-                                                        name="accounting_email" id="accounting_email"
-                                                        value="{{ old('accounting_email') }}"
-                                                        placeholder="Accounting email">
-                                                    <label for="accounting_email">Accounting Email</label>
-                                                    @error('accounting_email')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Reason for Testing -->
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <select
-                                                        class="form-select @error('reason_for_testing') is-invalid @enderror"
-                                                        name="reason_for_testing" id="reason_for_testing" required>
-                                                        <option value="" disabled selected>Select a reason
-                                                        </option>
-                                                        <option value="Follow Up Test" @selected(old('reason_for_testing') == 'Follow Up Test')>
-                                                            Follow
-                                                            Up Test</option>
-                                                        <option value="Pre Employment" @selected(old('reason_for_testing') == 'Pre Employment')>Pre
-                                                            Employment</option>
-                                                        <option value="Random" @selected(old('reason_for_testing') == 'Random')>Random
-                                                        </option>
-                                                        <option value="Return to Duty" @selected(old('reason_for_testing') == 'Return to Duty')>
-                                                            Return
-                                                            to Duty</option>
-                                                        <option value="Post Accident" @selected(old('reason_for_testing') == 'Post Accident')>Post
-                                                            Accident</option>
-                                                        <option value="Promotion" @selected(old('reason_for_testing') == 'Promotion')>
-                                                            Promotion
-                                                        </option>
-                                                        <option value="Reasonable Cause/Suspicion"
-                                                            @selected(old('reason_for_testing') == 'Reasonable Cause/Suspicion')>Reasonable Cause/Suspicion
-                                                        </option>
-                                                        <option value="Other" @selected(old('reason_for_testing') == 'Other')>Other
-                                                        </option>
-                                                    </select>
-                                                    <label for="reason_for_testing">Reason for Testing *</label>
-                                                    @error('reason_for_testing')
-                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                    @enderror
-                                                </div>
-                                            </div>
-
-                                            <!-- Price (readonly) -->
-                                            <div class="col-12">
-                                                <div class="form-floating">
-                                                    <input type="text" class="form-control bg-light"
-                                                        name="price" id="price"
-                                                        value="${{ $portfolio->price }}" readonly>
-                                                    <label for="price">Total Amount</label>
-                                                </div>
-                                            </div>
-
-
-                                        </div>
-                                    </div>
-
-                                    <!-- ========== Payment Section ========== -->
-                                    <div class="mb-5">
-                                        <h4 class="section-title mb-4">
-                                            <i class="fas fa-credit-card me-2"></i> Payment Details
-                                        </h4>
-
-                                        <div class="payment-card-container p-4 bg-light rounded-3">
-                                            <!-- Card Type Selection -->
-                                            <div class="mb-4">
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <input type="radio" id="credit-card" name="payment-method"
-                                                        class="me-2" checked>
-                                                    <label for="credit-card" class="me-3">Credit card</label>
-                                                    <div class="card-icons d-flex align-items-center">
-                                                        <i class="fab fa-cc-visa fa-2x me-2"
-                                                            style="color: #1a1f71;"></i>
-                                                        <!-- Visa blue -->
-                                                        <i class="fab fa-cc-mastercard fa-2x me-2"
-                                                            style="color: #eb001b;"></i> <!-- Mastercard red -->
-                                                        <i class="fab fa-cc-amex fa-2x me-2"
-                                                            style="color: #016fd0;"></i>
-                                                        <!-- Amex blue -->
-                                                        <i class="fab fa-cc-discover fa-2x me-2"
-                                                            style="color: #ff6000;"></i> <!-- Discover orange -->
-
-                                                        <i class="fab fa-cc-jcb fa-2x me-2"
-                                                            style="color: #0b4ea2;"></i>
-                                                        <!-- JCB (Blue) -->
-                                                        <i class="fab fa-cc-diners-club fa-2x me-2"
-                                                            style="color: #0079be;"></i> <!-- Diners Club (Blue) -->
+                                                    {{-- First Name --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="first_name">First Name <span
+                                                                class="pf-req">*</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-user pf-icon"></i>
+                                                            <input type="text" id="first_name" name="first_name"
+                                                                class="pf-control @error('first_name') is-invalid @enderror"
+                                                                value="{{ old('first_name') }}" placeholder="e.g. John"
+                                                                required>
+                                                        </div>
+                                                        @error('first_name')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <!-- Cardholder Name -->
-                                            <div class="form-floating mb-3">
-                                                <input type="text"
-                                                    class="form-control @error('cardholder_name') is-invalid @enderror"
-                                                    id="cardholder-name" placeholder="Cardholder Name" required>
-                                                <label for="cardholder-name">Cardholder Name *</label>
-                                            </div>
 
-                                            <!-- Card Elements -->
-                                            <div class="mb-3">
-                                                <label class="form-label">Card Number *</label>
-                                                <div id="card-number" class="form-control p-3"></div>
-                                            </div>
+                                                    {{-- Last Name --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="last_name">Last Name <span
+                                                                class="pf-req">*</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-user pf-icon"></i>
+                                                            <input type="text" id="last_name" name="last_name"
+                                                                class="pf-control @error('last_name') is-invalid @enderror"
+                                                                value="{{ old('last_name') }}" placeholder="e.g. Doe"
+                                                                required>
+                                                        </div>
+                                                        @error('last_name')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
 
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Expiration Date *</label>
-                                                    <div id="card-expiry" class="form-control p-3"></div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">CVC *</label>
-                                                    <div id="card-cvc" class="form-control p-3"></div>
+                                                    {{-- Email --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="email">Email Address <span
+                                                                class="pf-req">*</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-envelope pf-icon"></i>
+                                                            <input type="email" id="email" name="email"
+                                                                class="pf-control @error('email') is-invalid @enderror"
+                                                                value="{{ old('email') }}"
+                                                                placeholder="you@example.com" required>
+                                                        </div>
+                                                        @error('email')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Phone --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="phone">Phone Number <span
+                                                                class="pf-req">*</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-phone pf-icon"></i>
+                                                            <input type="tel" id="phone" name="phone"
+                                                                class="pf-control @error('phone') is-invalid @enderror"
+                                                                value="{{ old('phone') }}"
+                                                                placeholder="(555) 000-0000" required>
+                                                        </div>
+                                                        @error('phone')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Address --}}
+                                                    <div class="col-12">
+                                                        <label class="pf-label" for="address">Street Address <span
+                                                                class="pf-opt">Optional</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-map-marker-alt pf-icon"></i>
+                                                            <input type="text" id="address" name="address"
+                                                                class="pf-control @error('address') is-invalid @enderror"
+                                                                value="{{ old('address') }}"
+                                                                placeholder="123 Main St, City, State">
+                                                        </div>
+                                                        @error('address')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Gender --}}
+                                                    <div class="col-12">
+                                                        <label class="pf-label">Gender <span
+                                                                class="pf-req">*</span></label>
+                                                        <div class="pf-radio-group">
+                                                            <label class="pf-radio-item">
+                                                                <input type="radio" name="gender" value="Male"
+                                                                    @checked(old('gender') == 'Male') required>
+                                                                <i class="fas fa-mars"></i> Male
+                                                            </label>
+                                                            <label class="pf-radio-item">
+                                                                <input type="radio" name="gender" value="Female"
+                                                                    @checked(old('gender') == 'Female')>
+                                                                <i class="fas fa-venus"></i> Female
+                                                            </label>
+                                                            <label class="pf-radio-item">
+                                                                <input type="radio" name="gender" value="Other"
+                                                                    @checked(old('gender') == 'Other')>
+                                                                <i class="fas fa-genderless"></i> Other
+                                                            </label>
+                                                        </div>
+                                                        @error('gender')
+                                                            <div class="pf-feedback mt-1">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <div class="row g-3 mt-2">
-                                                <div class="col-md-6">
-                                                    <label class="form-label">ZIP Code *</label>
-                                                    <div id="postal-code" class="form-control p-3"></div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Country *</label>
-                                                    <div class="form-floating">
-                                                        {{-- <select class="form-select" id="country" name="country"
-                                                        required>
-                                                        <option value="" selected disabled>Select Country
-                                                        </option>
-                                                        <option value="US">United States</option>
-                                                        <option value="CA">Canada</option>
-                                                        <option value="GB">United Kingdom</option>
-                                                        <option value="AU">Australia</option>
-                                                    </select> --}}
-                                                        <select class="form-select" id="country" name="country"
+                                        {{-- ── 2. Testing Information ── --}}
+                                        <div class="pf-section">
+                                            <div class="pf-section-head">
+                                                <div class="icon-wrap"><i class="fas fa-vial"></i></div>
+                                                <h6>Testing Information</h6>
+                                            </div>
+                                            <div class="pf-section-body">
+                                                <div class="row g-3">
+
+                                                    {{-- Preferred Test Date --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="date">Preferred Test Date
+                                                            <span class="pf-opt">Optional</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-calendar pf-icon"></i>
+                                                            <input type="date" id="date" name="date"
+                                                                class="pf-control @error('date') is-invalid @enderror"
+                                                                value="{{ old('date', date('Y-m-d')) }}">
+                                                        </div>
+                                                        @error('date')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Preferred Location --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="preferred_location">Preferred
+                                                            Location <span class="pf-opt">Optional</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-map-pin pf-icon"></i>
+                                                            <input type="text" id="preferred_location"
+                                                                name="preferred_location"
+                                                                class="pf-control @error('preferred_location') is-invalid @enderror"
+                                                                value="{{ old('preferred_location') }}"
+                                                                placeholder="City or zip code">
+                                                        </div>
+                                                        @error('preferred_location')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Employer Name --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="employee_name">Employer Name
+                                                            <span class="pf-req">*</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-user-tie pf-icon"></i>
+                                                            <input type="text" id="employee_name"
+                                                                name="employee_name"
+                                                                class="pf-control @error('employee_name') is-invalid @enderror"
+                                                                value="{{ old('employee_name') }}"
+                                                                placeholder="Enter employer name" required>
+                                                        </div>
+                                                        @error('employee_name')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Company Name --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="company_name">Company Name <span
+                                                                class="pf-opt">Optional</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-building pf-icon"></i>
+                                                            <input type="text" id="company_name"
+                                                                name="company_name"
+                                                                class="pf-control @error('company_name') is-invalid @enderror"
+                                                                value="{{ old('company_name') }}"
+                                                                placeholder="Enter company name">
+                                                        </div>
+                                                        @error('company_name')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Accounting Email --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="accounting_email">Accounting
+                                                            Email
+                                                            <span class="pf-opt">Optional</span></label>
+                                                        <div class="pf-icon-wrap">
+                                                            <i class="fas fa-envelope pf-icon"></i>
+                                                            <input type="email" id="accounting_email"
+                                                                name="accounting_email"
+                                                                class="pf-control @error('accounting_email') is-invalid @enderror"
+                                                                value="{{ old('accounting_email') }}"
+                                                                placeholder="accounts@company.com">
+                                                        </div>
+                                                        @error('accounting_email')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Reason for Testing --}}
+                                                    <div class="col-md-6">
+                                                        <label class="pf-label" for="reason_for_testing">Reason for
+                                                            Testing <span class="pf-req">*</span></label>
+                                                        <select id="reason_for_testing" name="reason_for_testing"
+                                                            class="pf-control @error('reason_for_testing') is-invalid @enderror"
                                                             required>
-                                                            <option value="" selected disabled>Select Country
+                                                            <option value="" disabled selected>Select a reason
+                                                            </option>
+                                                            <option value="Follow Up Test"
+                                                                @selected(old('reason_for_testing') == 'Follow Up Test')>
+                                                                Follow Up Test</option>
+                                                            <option value="Pre Employment"
+                                                                @selected(old('reason_for_testing') == 'Pre Employment')>Pre
+                                                                Employment</option>
+                                                            <option value="Random" @selected(old('reason_for_testing') == 'Random')>Random
+                                                            </option>
+                                                            <option value="Return to Duty"
+                                                                @selected(old('reason_for_testing') == 'Return to Duty')>
+                                                                Return to Duty</option>
+                                                            <option value="Post Accident" @selected(old('reason_for_testing') == 'Post Accident')>
+                                                                Post
+                                                                Accident</option>
+                                                            <option value="Promotion" @selected(old('reason_for_testing') == 'Promotion')>
+                                                                Promotion</option>
+                                                            <option value="Reasonable Cause/Suspicion"
+                                                                @selected(old('reason_for_testing') == 'Reasonable Cause/Suspicion')>Reasonable Cause/Suspicion
+                                                            </option>
+                                                            <option value="Other" @selected(old('reason_for_testing') == 'Other')>Other
                                                             </option>
                                                         </select>
+                                                        @error('reason_for_testing')
+                                                            <div class="pf-feedback">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+
+                                                    {{-- Total Amount --}}
+                                                    <div class="col-12">
+                                                        <div class="pf-price-display">
+                                                            <div>
+                                                                <div class="label">Total Amount Due</div>
+                                                                <div
+                                                                    style="font-size:.75rem;color:var(--pf-muted);margin-top:2px;">
+                                                                    {{ $portfolio->title }}</div>
+                                                            </div>
+                                                            <div class="amount">${{ $portfolio->price }}</div>
+                                                        </div>
+                                                        <input type="hidden" name="price" id="price"
+                                                            value="${{ $portfolio->price }}">
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- ── 3. Payment Details ── --}}
+                                        <div class="pf-section">
+                                            <div class="pf-section-head">
+                                                <div class="icon-wrap"><i class="fas fa-credit-card"></i></div>
+                                                <h6>Payment Details</h6>
+                                            </div>
+                                            <div class="pf-section-body">
+                                                <div class="pf-payment-panel">
+
+                                                    {{-- Accepted cards --}}
+                                                    <div class="d-flex align-items-center gap-3 mb-4 pb-3"
+                                                        style="border-bottom:1px solid var(--pf-border);">
+                                                        <span
+                                                            style="font-family:var(--pf-font-head);font-size:.78rem;font-weight:600;color:var(--pf-muted);">Accepted</span>
+                                                        <div class="pf-card-icons">
+                                                            <i class="fab fa-cc-visa" style="color:#1a1f71;"></i>
+                                                            <i class="fab fa-cc-mastercard"
+                                                                style="color:#eb001b;"></i>
+                                                            <i class="fab fa-cc-amex" style="color:#016fd0;"></i>
+                                                            <i class="fab fa-cc-discover" style="color:#ff6000;"></i>
+                                                            <i class="fab fa-cc-jcb" style="color:#0b4ea2;"></i>
+                                                            <i class="fab fa-cc-diners-club"
+                                                                style="color:#0079be;"></i>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row g-3">
+
+                                                        {{-- Cardholder Name --}}
+                                                        <div class="col-12">
+                                                            <label class="pf-label" for="cardholder-name">Cardholder
+                                                                Name
+                                                                <span class="pf-req">*</span></label>
+                                                            <div class="pf-icon-wrap">
+                                                                <i class="fas fa-id-badge pf-icon"></i>
+                                                                <input type="text" id="cardholder-name"
+                                                                    class="pf-control"
+                                                                    placeholder="Name as it appears on card" required>
+                                                            </div>
+                                                        </div>
+
+                                                        {{-- Card Number --}}
+                                                        <div class="col-12">
+                                                            <label class="pf-label">Card Number <span
+                                                                    class="pf-req">*</span></label>
+                                                            <div id="card-number" class="pf-stripe-wrap"></div>
+                                                        </div>
+
+                                                        {{-- Expiry + CVC --}}
+                                                        <div class="col-md-4">
+                                                            <label class="pf-label">Expiration Date <span
+                                                                    class="pf-req">*</span></label>
+                                                            <div id="card-expiry" class="pf-stripe-wrap"></div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label class="pf-label">CVC <span
+                                                                    class="pf-req">*</span></label>
+                                                            <div id="card-cvc" class="pf-stripe-wrap"></div>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label class="pf-label">ZIP Code <span
+                                                                    class="pf-req">*</span></label>
+                                                            <div id="postal-code" class="pf-stripe-wrap"></div>
+                                                        </div>
+
+                                                        {{-- Country --}}
+                                                        <div class="col-12">
+                                                            <label class="pf-label" for="country">Country <span
+                                                                    class="pf-req">*</span></label>
+                                                            <select id="country" name="country" class="pf-control"
+                                                                required>
+                                                                <option value="" selected disabled>Select Country
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        {{-- Stripe errors --}}
+                                                        <div class="col-12">
+                                                            <div id="card-errors" role="alert"></div>
+                                                        </div>
+
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <!-- Card Errors -->
-                                            <div id="card-errors" class="text-danger mt-3 small" role="alert">
-                                            </div>
-
-                                            <!-- Security Badge -->
-                                            <div class="d-flex align-items-center mt-4 text-muted">
-                                                <i class="fas fa-lock text-success me-2"></i>
-                                                <small>Your payment is secured with 256-bit SSL encryption</small>
-                                            </div>
                                         </div>
-                                    </div>
 
-                                    <!-- ========== Terms and Conditions ========== -->
-                                    <div class="mb-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input @error('terms') is-invalid @enderror"
-                                                type="checkbox" id="terms-check" required>
-                                            <label class="form-check-label" for="terms-check">
-                                                I agree to the <a href="#" data-bs-toggle="modal"
+                                        {{-- ── Terms ── --}}
+                                        <div class="pf-terms mb-4">
+                                            <input type="checkbox" id="terms-check" required>
+                                            <label class="pf-terms-label" for="terms-check">
+                                                I agree to the
+                                                <a href="#" data-bs-toggle="modal"
                                                     data-bs-target="#termsModal">Terms and Conditions</a>
-                                                and <a href="#" data-bs-toggle="modal"
-                                                    data-bs-target="#privacyModal">Privacy Policy</a> *
+                                                and
+                                                <a href="#" data-bs-toggle="modal"
+                                                    data-bs-target="#privacyModal">Privacy Policy</a>.
+                                                By submitting, I authorize this charge to my card.
                                             </label>
-                                            @error('terms')
-                                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                                            @enderror
                                         </div>
-                                    </div>
 
-                                    <!-- ========== Submit Button ========== -->
-                                    <div class="text-center mt-4">
-                                        <button type="button" id="pay-button"
-                                            class="btn btn-primary btn-lg w-100 py-3">
-                                            <span id="pay-button-text">Pay & Schedule Test -
+                                        {{-- ── Submit ── --}}
+                                        <button type="button" id="pay-button" class="pf-btn-submit">
+                                            <i class="fas fa-lock"></i>
+                                            <span id="pay-button-text">Pay & Schedule Test —
                                                 ${{ $portfolio->price }}</span>
                                             <span id="pay-button-loader"
-                                                class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                                                class="spinner-border spinner-border-sm d-none ms-1"></span>
                                         </button>
+                                        <p class="pf-secure">
+                                            <i class="fas fa-shield-alt"></i>
+                                            256-bit SSL encrypted — your payment is fully secured
+                                        </p>
+
+                                    </form>
+                                </div>{{-- /pf-body --}}
+                            </div>{{-- /pf-card --}}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {{-- Payment Success --}}
+            <div class="modal fade" id="paymentSuccessModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content"
+                        style="border-radius:var(--pf-radius);border:1px solid var(--pf-border);text-align:center;">
+                        <div class="modal-body p-5">
+                            <div class="pf-success-icon">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <h4
+                                style="font-family:var(--pf-font-head);font-weight:700;color:var(--pf-text);margin-bottom:.75rem;">
+                                Payment Successful!</h4>
+                            <p style="color:var(--pf-muted);font-size:.9rem;">Thank you! Your test has been scheduled.
+                                Check your email for confirmation.</p>
+                            <button type="button" class="pf-btn-submit mt-3"
+                                style="width:auto;padding:.75rem 2.5rem;" data-bs-dismiss="modal">Continue</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- ── DOT: Login Required ── --}}
+            <!-- DOT Testing - Show login form -->
+            <section class="section" id="application-form">
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="card shadow-sm">
+                                <div class="card-body p-5">
+                                    <h2 class="text-center mb-4">Login Required for DOT Testing</h2>
+
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        DOT testing requires user authentication for security and compliance purposes.
                                     </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Terms and Conditions Modal -->
-        <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        {{-- @include('partials.terms-conditions')  --}}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                                    <!-- Status Messages -->
+                                    @if (session('status'))
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            {{ session('status') }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                                aria-label="Close"></button>
+                                        </div>
+                                    @endif
 
-        <!-- Privacy Policy Modal -->
-        <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        {{-- @include('partials.privacy-policy')  --}}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                                    @if ($errors->any())
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Login failed:</strong>
+                                            <ul class="mt-2 mb-0">
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                                aria-label="Close"></button>
+                                        </div>
+                                    @endif
 
-        <!-- Payment Success Modal -->
-        <div class="modal fade" id="paymentSuccessModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-body text-center p-5">
-                        <div class="mb-4">
-                            <div class="checkmark-circle">
-                                <div class="checkmark draw"></div>
-                            </div>
-                        </div>
-                        <h4 class="mb-3">Payment Successful!</h4>
-                        <p class="mb-4">Thank you for your payment. Your test has been scheduled successfully.</p>
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Continue</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @else
-        <!-- DOT Testing - Show login form -->
-        <section class="section" id="application-form">
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div class="col-lg-8">
-                        <div class="card shadow-sm">
-                            <div class="card-body p-5">
-                                <h2 class="text-center mb-4">Login Required for DOT Testing</h2>
+                                    <!-- Use custom login route with portfolio ID -->
+                                    <form method="POST"
+                                        action="{{ route('portfolio.login.submit', $portfolio->id) }}">
+                                        @csrf
 
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    DOT testing requires user authentication for security and compliance purposes.
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">Email Address</label>
+                                            <input type="email" name="email" value="{{ old('email') }}"
+                                                class="form-control @error('email') is-invalid @enderror"
+                                                id="email" required autofocus>
+                                            @error('email')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="password" class="form-label">Password</label>
+                                            <input type="password" name="password" required
+                                                class="form-control @error('password') is-invalid @enderror"
+                                                id="password">
+                                            @error('password')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" class="form-check-input" id="remember"
+                                                name="remember">
+                                            <label class="form-check-label" for="remember">Remember me</label>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary w-100 py-2">
+                                            <i class="fas fa-sign-in-alt me-2"></i> Login & Continue Application
+                                        </button>
+
+                                        <div class="text-center mt-3">
+                                            @if (Route::has('password.request'))
+                                                <a href="{{ route('password.request') }}"
+                                                    class="text-decoration-none">
+                                                    Forgot your password?
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </form>
                                 </div>
-
-                                <!-- Status Messages -->
-                                @if (session('status'))
-                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                        <i class="fas fa-check-circle me-2"></i>
-                                        {{ session('status') }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                            aria-label="Close"></button>
-                                    </div>
-                                @endif
-
-                                @if ($errors->any())
-                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                        <i class="fas fa-exclamation-triangle me-2"></i>
-                                        <strong>Login failed:</strong>
-                                        <ul class="mt-2 mb-0">
-                                            @foreach ($errors->all() as $error)
-                                                <li>{{ $error }}</li>
-                                            @endforeach
-                                        </ul>
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                            aria-label="Close"></button>
-                                    </div>
-                                @endif
-
-                                <!-- Use custom login route with portfolio ID -->
-                                <form method="POST" action="{{ route('portfolio.login.submit', $portfolio->id) }}">
-                                    @csrf
-
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">Email Address</label>
-                                        <input type="email" name="email" value="{{ old('email') }}"
-                                            class="form-control @error('email') is-invalid @enderror" id="email"
-                                            required autofocus>
-                                        @error('email')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="password" class="form-label">Password</label>
-                                        <input type="password" name="password" required
-                                            class="form-control @error('password') is-invalid @enderror"
-                                            id="password">
-                                        @error('password')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="mb-3 form-check">
-                                        <input type="checkbox" class="form-check-input" id="remember"
-                                            name="remember">
-                                        <label class="form-check-label" for="remember">Remember me</label>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary w-100 py-2">
-                                        <i class="fas fa-sign-in-alt me-2"></i> Login & Continue Application
-                                    </button>
-
-                                    <div class="text-center mt-3">
-                                        @if (Route::has('password.request'))
-                                            <a href="{{ route('password.request') }}" class="text-decoration-none">
-                                                Forgot your password?
-                                            </a>
-                                        @endif
-                                    </div>
-                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-    @endif
-
-    </div>
-    </div>
-    </div>
+            </section>
+        @endif
     </div>
 </section>
 <!--// Portfolio Single Section End //-->
@@ -763,165 +1128,132 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Initialize Stripe
-        const stripe = Stripe("{{ env('STRIPE_PUBLIC') }}");
-        const elements = stripe.elements();
         const form = document.getElementById('payment-form');
         const payButton = document.getElementById('pay-button');
         const payButtonText = document.getElementById('pay-button-text');
         const payButtonLoader = document.getElementById('pay-button-loader');
         const errorContainer = document.getElementById('card-errors');
-        const price = document.getElementById('price') ? document.getElementById('price').value.replace(
-            /[^\d.]/g, '') : '0';
+        if (!form) return; // Only init on Non-DOT page
 
-        // Element styles
-        const elementStyles = {
+        const priceRaw = document.getElementById('price')?.value.replace(/[^\d.]/g, '') || '0';
+
+        // ── Stripe Init ──
+        const stripe = Stripe("{{ env('STRIPE_PUBLIC') }}");
+        const elements = stripe.elements();
+
+        const elStyle = {
             base: {
-                color: '#32325d',
-                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                color: '#0f172a',
+                fontFamily: "'DM Sans', sans-serif",
                 fontSmoothing: 'antialiased',
-                fontSize: '16px',
+                fontSize: '15px',
                 '::placeholder': {
-                    color: '#aab7c4'
+                    color: '#94a3b8'
                 }
             },
             invalid: {
-                color: '#fa755a',
-                iconColor: '#fa755a'
+                color: '#e11d48',
+                iconColor: '#e11d48'
             }
         };
 
-        // Create Stripe elements
         const cardNumber = elements.create('cardNumber', {
-            style: elementStyles,
+            style: elStyle,
             showIcon: true,
-            placeholder: '4242 4242 4242 4242',
-            classes: {
-                base: 'StripeElement',
-                complete: 'StripeElement--complete',
-                focus: 'StripeElement--focus',
-                invalid: 'StripeElement--invalid'
-            }
+            placeholder: '4242 4242 4242 4242'
         });
         const cardExpiry = elements.create('cardExpiry', {
-            style: elementStyles
+            style: elStyle
         });
         const cardCvc = elements.create('cardCvc', {
-            style: elementStyles
+            style: elStyle
         });
         const postalCode = elements.create('postalCode', {
-            style: elementStyles
+            style: elStyle
         });
 
-        // Mount elements
         cardNumber.mount('#card-number');
         cardExpiry.mount('#card-expiry');
         cardCvc.mount('#card-cvc');
         postalCode.mount('#postal-code');
 
-        // Real-time validation
-        const stripeElements = [cardNumber, cardExpiry, cardCvc, postalCode];
-        stripeElements.forEach(element => {
-            element.addEventListener('change', (event) => {
-                if (event.error) {
-                    showError(event.error.message);
-                } else {
-                    clearError();
-                }
+        // Sync Stripe element focus/invalid classes to our wrapper divs
+        [cardNumber, cardExpiry, cardCvc, postalCode].forEach(el => {
+            el.on('focus', () => el._element?.closest('.pf-stripe-wrap')?.classList.add(
+                'StripeElement--focus'));
+            el.on('blur', () => el._element?.closest('.pf-stripe-wrap')?.classList.remove(
+                'StripeElement--focus'));
+            el.on('change', ev => {
+                if (ev.error) showError(ev.error.message);
+                else clearError();
             });
         });
 
-        // Form validation
+        // ── Validation ──
         function validateForm() {
-            const requiredFields = [
-                'first_name', 'last_name', 'email', 'phone',
-                'date', 'reason_for_testing'
-            ];
-
-            let isValid = true;
+            let valid = true;
             clearError();
 
-            // Check required fields
-            requiredFields.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (!field) {
-                    console.error(`Field with ID ${fieldId} not found`);
-                    isValid = false;
-                    return;
-                }
-
-                if (!field.value.trim()) {
-                    markFieldInvalid(field);
-                    isValid = false;
-                } else {
-                    markFieldValid(field);
-                }
+            ['first_name', 'last_name', 'email', 'phone', 'employee_name', 'reason_for_testing'].forEach(id => {
+                const f = document.getElementById(id);
+                if (!f) return;
+                if (!f.value.trim()) {
+                    f.classList.add('is-invalid');
+                    valid = false;
+                } else f.classList.remove('is-invalid');
             });
 
-            // Email validation
             const email = document.getElementById('email');
             if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
-                markFieldInvalid(email);
-                isValid = false;
+                email.classList.add('is-invalid');
+                valid = false;
             }
 
-            // Date validation
-
             const dateField = document.getElementById('date');
-            if (dateField) {
-                const selectedDateStr = dateField.value;
-                const today = new Date();
-                const todayStr = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-
-                if (!selectedDateStr || selectedDateStr < todayStr) {
-                    markFieldInvalid(dateField);
-                    isValid = false;
+            if (dateField?.value) {
+                const today = new Date().toISOString().split('T')[0];
+                if (dateField.value < today) {
+                    dateField.classList.add('is-invalid');
+                    valid = false;
                 }
             }
 
-            // Gender validation
             if (!document.querySelector('input[name="gender"]:checked')) {
-                showError('Please select your gender');
-                isValid = false;
+                showError('Please select your gender.');
+                valid = false;
             }
 
-            // Terms checkbox
-            if (!document.getElementById('terms-check').checked) {
-                showError('You must agree to the terms and conditions');
-                isValid = false;
+            if (!document.getElementById('terms-check')?.checked) {
+                showError('You must agree to the Terms and Conditions.');
+                valid = false;
             }
 
-            return isValid;
+            return valid;
         }
 
-        // Payment handler
-        payButton.addEventListener('click', async (e) => {
-            e.preventDefault();
-
+        // ── Pay click ──
+        payButton.addEventListener('click', async () => {
             if (!validateForm()) return;
-
             setLoading(true);
 
             try {
-                // Create payment intent
-                const response = await fetch("/create-payment-intent", {
-                    method: "POST",
+                const res = await fetch('/create-payment-intent', {
+                    method: 'POST',
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
                             .content
                     },
                     body: JSON.stringify({
-                        price: price,
+                        price: priceRaw,
                         test_name: document.getElementById('test_name').value,
                         country: document.getElementById('country').value
                     })
                 });
 
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'Payment failed');
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Payment failed');
 
-                // Confirm card payment
                 const {
                     paymentIntent,
                     error
@@ -933,8 +1265,8 @@
                             email: document.getElementById('email').value,
                             phone: document.getElementById('phone').value,
                             address: {
-                                line1: document.getElementById('address').value,
-                                postal_code: document.getElementById('postal-code').value,
+                                line1: document.getElementById('address')?.value || '',
+                                postal_code: '',
                                 country: document.getElementById('country').value
                             }
                         }
@@ -944,316 +1276,54 @@
                 if (error) throw error;
 
                 document.getElementById('payment_intent_id').value = paymentIntent.id;
-                showSuccess();
+                payButton.classList.add('pf-btn-success');
+                payButtonText.textContent = 'Payment Successful!';
+                setTimeout(() => form.submit(), 900);
 
-                // Submit form after 1 second to show success state
-                setTimeout(() => form.submit(), 1000);
-
-            } catch (error) {
-                console.error('Payment error:', error);
-                showError(error.message || 'An error occurred during payment');
+            } catch (err) {
+                showError(err.message || 'An error occurred during payment.');
                 setLoading(false);
             }
         });
 
-        // Helper functions
-        function setLoading(isLoading) {
-            payButton.disabled = isLoading;
-            payButtonText.textContent = isLoading ? 'Processing Payment...' : `Pay & Schedule Test - $${price}`;
-            payButtonLoader.classList.toggle('d-none', !isLoading);
+        // ── Helpers ──
+        function setLoading(on) {
+            payButton.disabled = on;
+            payButtonText.textContent = on ? 'Processing…' : `Pay & Schedule Test — $${priceRaw}`;
+            payButtonLoader.classList.toggle('d-none', !on);
         }
 
-        function showError(message) {
-            errorContainer.innerHTML = `<div class="alert alert-danger">${message}</div>`;
-            scrollToElement(errorContainer);
+        function showError(msg) {
+            errorContainer.innerHTML =
+                `<div class="pf-alert pf-alert-danger"><i class="fas fa-exclamation-circle mt-1"></i><div>${msg}</div></div>`;
+            errorContainer.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
         }
 
         function clearError() {
             errorContainer.innerHTML = '';
         }
 
-        function markFieldInvalid(field) {
-            if (field) {
-                field.classList.add('is-invalid');
-                field.classList.remove('is-valid');
-            }
-        }
+        // Remove is-invalid on input
+        form.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('input', () => el.classList.remove('is-invalid'));
+        });
 
-        function markFieldValid(field) {
-            if (field) {
-                field.classList.remove('is-invalid');
-                field.classList.add('is-valid');
-            }
-        }
-
-        function showSuccess() {
-            payButton.classList.remove('btn-primary');
-            payButton.classList.add('btn-success');
-            payButtonText.textContent = 'Payment Successful!';
-        }
-
-        function scrollToElement(element) {
-            if (element) {
-                element.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }
-        }
-
-        // Load countries
+        // ── Load countries ──
         fetch('https://restcountries.com/v3.1/all?fields=name,cca2')
-            .then(res => res.json())
-            .then(data => {
-                const countrySelect = document.getElementById('country');
-                if (!countrySelect) return;
-
-                // Sort countries alphabetically
-                const sortedCountries = data.sort((a, b) => a.name.common.localeCompare(b.name.common));
-
-                sortedCountries.forEach(country => {
-                    const option = document.createElement('option');
-                    option.value = country.cca2;
-                    option.textContent = country.name.common;
-                    countrySelect.appendChild(option);
-                });
-            })
-            .catch(error => {
-                console.error('Error fetching countries:', error);
+            .then(r => r.json())
+            .then(list => {
+                const sel = document.getElementById('country');
+                if (!sel) return;
+                list.sort((a, b) => a.name.common.localeCompare(b.name.common))
+                    .forEach(c => {
+                        const o = document.createElement('option');
+                        o.value = c.cca2;
+                        o.textContent = c.name.common;
+                        sel.appendChild(o);
+                    });
             });
-
     });
 </script>
-
-<style>
-    /* Custom styles for the application form */
-    .section-title {
-        color: #2c3e50;
-        font-weight: 600;
-        border-bottom: 2px solid #e9ecef;
-        padding-bottom: 0.5rem;
-    }
-
-    .payment-card-container {
-        border: 1px solid #dee2e6;
-        border-radius: 0.5rem;
-        background-color: #f8f9fa;
-    }
-
-    .checkmark-circle {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #28a745;
-        margin: 0 auto 20px;
-    }
-
-    .checkmark {
-        width: 40px;
-        height: 40px;
-    }
-
-    .checkmark.draw:after {
-        animation: checkmark 0.8s ease forwards;
-        content: '';
-        display: block;
-        position: relative;
-        left: 10px;
-        top: 15px;
-        width: 15px;
-        height: 30px;
-        border-right: 4px solid white;
-        border-top: 4px solid white;
-        transform: scaleX(-1) rotate(135deg);
-    }
-
-    @keyframes checkmark {
-        0% {
-            height: 0;
-            width: 0;
-            opacity: 1;
-        }
-
-        20% {
-            height: 0;
-            width: 15px;
-            opacity: 1;
-        }
-
-        40% {
-            height: 30px;
-            width: 15px;
-            opacity: 1;
-        }
-
-        100% {
-            height: 30px;
-            width: 15px;
-            opacity: 1;
-        }
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .payment-card-container {
-            padding: 1rem;
-        }
-
-        #pay-button {
-            padding: 0.75rem;
-            font-size: 1rem;
-        }
-    }
-
-    /* Style for country select */
-    #country {
-        height: 50px;
-        padding: 10px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-    }
-
-    /* Make sure the select matches other Stripe elements */
-    .StripeElement+.form-select {
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        padding: 10px 12px;
-        height: 50px;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 576px) {
-        #country {
-            height: 45px;
-            padding: 8px 10px;
-        }
-    }
-
-    .StripeElement {
-        box-sizing: border-box;
-        padding: 10px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        background-color: white;
-    }
-
-    .StripeElement--focus {
-        box-shadow: 0 1px 3px 0 #cfd7df;
-    }
-
-    .StripeElement--invalid {
-        border-color: #fa755a;
-    }
-
-    .StripeElement--webkit-autofill {
-        background-color: #fefde5 !important;
-    }
-
-    /* Responsive adjustments for card elements */
-    @media (max-width: 576px) {
-        .payment-card-container {
-            padding: 15px;
-        }
-
-        #card-number,
-        #card-expiry,
-        #card-cvc,
-        #postal-code {
-            height: 45px !important;
-            padding: 8px 10px !important;
-        }
-    }
-
-    /* Custom styles for the payment section */
-    .section-subtitle {
-        color: #4a5568;
-        font-weight: 600;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 8px;
-        margin-bottom: 20px;
-    }
-
-    .payment-card-container {
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    }
-
-    .payment-card-container:hover {
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Checkmark animation for success modal */
-    .checkmark-circle {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #48bb78;
-        margin: 0 auto 20px;
-    }
-
-    .checkmark {
-        width: 40px;
-        height: 40px;
-    }
-
-    .checkmark.draw:after {
-        animation-duration: 1.2s;
-        animation-timing-function: ease;
-        animation-name: checkmark;
-        transform: scaleX(-1) rotate(135deg);
-        animation-fill-mode: forwards;
-        content: '';
-        display: block;
-        position: relative;
-        left: 10px;
-        top: 15px;
-        width: 15px;
-        height: 30px;
-        border-right: 4px solid white;
-        border-top: 4px solid white;
-    }
-
-    @keyframes checkmark {
-        0% {
-            height: 0;
-            width: 0;
-            opacity: 1;
-        }
-
-        20% {
-            height: 0;
-            width: 15px;
-            opacity: 1;
-        }
-
-        40% {
-            height: 30px;
-            width: 15px;
-            opacity: 1;
-        }
-
-        100% {
-            height: 30px;
-            width: 15px;
-            opacity: 1;
-        }
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .payment-card-container {
-            padding: 20px 15px;
-        }
-
-        #pay-button {
-            padding: 12px;
-            font-size: 16px;
-        }
-    }
-</style>
