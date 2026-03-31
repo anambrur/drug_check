@@ -55,6 +55,16 @@ class ClientProfile extends Model
         return $this->hasMany(Employee::class);
     }
 
+    public function orders()
+    {
+        return $this->hasMany(QuestOrder::class, 'user_id', 'user_id');
+    }
+
+    public function resultRecordings()
+    {
+        return $this->hasMany(ResultRecording::class, 'company_id');
+    }
+
     public function selectionProtocols()
     {
         return $this->hasMany(SelectionProtocol::class);
