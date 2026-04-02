@@ -1044,11 +1044,16 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
 // DOT Test
 // ------------------------------------------------------------------
 Route::middleware($adminBase)->prefix('admin')->group(function () {
-    Route::get('dot-test/testEnvVars', [QuestDiagnosticsController::class, 'testEnvVars'])->name('admin.dot-test.testEnvVars')->middleware('permission:dot-test view');
-    Route::post('dot-test/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])->name('admin.dot-test.submit-order')->middleware('permission:dot-test create');
-    Route::get('dot-test/{portfolioId}', [QuestDiagnosticsController::class, 'dotTest'])->name('dot-test.index')->middleware('permission:dot-test view');
-    Route::post('dot-test/process-payment', [QuestDiagnosticsController::class, 'processPayment'])->name('admin.dot-test.process-payment')->middleware('permission:dot-test create');
-    Route::get('dot-test/order-form/{paymentIntent}', [QuestDiagnosticsController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form')->middleware('permission:dot-test view');
+    // Route::get('dot-test/testEnvVars', [QuestDiagnosticsController::class, 'testEnvVars'])->name('admin.dot-test.testEnvVars')->middleware('permission:dot-test view');
+    // Route::post('dot-test/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])->name('admin.dot-test.submit-order')->middleware('permission:dot-test create');
+    // Route::get('dot-test/{portfolioId}', [QuestDiagnosticsController::class, 'dotTest'])->name('dot-test.index')->middleware('permission:dot-test view');
+    // Route::post('dot-test/process-payment', [QuestDiagnosticsController::class, 'processPayment'])->name('admin.dot-test.process-payment')->middleware('permission:dot-test create');
+    // Route::get('dot-test/order-form/{paymentIntent}', [QuestDiagnosticsController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form')->middleware('permission:dot-test view');
+    Route::get('dot-test/testEnvVars', [QuestDiagnosticsController::class, 'testEnvVars'])->name('admin.dot-test.testEnvVars');
+    Route::post('dot-test/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])->name('admin.dot-test.submit-order');
+    Route::get('dot-test/{portfolioId}', [QuestDiagnosticsController::class, 'dotTest'])->name('dot-test.index');
+    Route::post('dot-test/process-payment', [QuestDiagnosticsController::class, 'processPayment'])->name('admin.dot-test.process-payment');
+    Route::get('dot-test/order-form/{paymentIntent}', [QuestDiagnosticsController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form');
 });
 
 // ------------------------------------------------------------------
