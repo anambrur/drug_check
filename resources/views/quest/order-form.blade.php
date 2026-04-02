@@ -6,6 +6,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
         :root {
@@ -535,8 +536,7 @@
                                     <input type="hidden" name="lab_account"
                                         value="{{ $paymentData['portfolio']->quest_lab_account }}">
                                 @else
-                                    <input type="hidden" name="lab_account"
-                                        value="{{ config('services.quest.lab_account') }}">
+                                    <input type="hidden" name="lab_account" value="{{ config('services.quest.lab_account') }}">
                                 @endif
                                 <input type="hidden" name="is_physical"
                                     value="{{ str_contains(strtolower($portfolio->title), 'physical') ? 'true' : 'false' }}">
@@ -544,10 +544,8 @@
                                     value="{{ str_contains(strtolower($portfolio->title), 'ebat') ? 'true' : 'false' }}">
                                 <input type="hidden" name="unit_codes"
                                     value="{{ $paymentData['portfolio']->quest_unit_code }}">
-                                <input type="hidden" name="test_type"
-                                    value="non_dot">
-                                <input type="hidden" name="response_url"
-                                    value="{{ url('/api/quest/order-status') }}">
+                                <input type="hidden" name="test_type" value="non_dot">
+                                <input type="hidden" name="response_url" value="{{ url('/api/quest/order-status') }}">
 
                                 {{-- ════ PERSONAL INFORMATION ════ --}}
                                 <div class="form-section">
@@ -613,9 +611,8 @@
                                                     <i class="fas fa-id-card input-icon"></i>
                                                     <input type="text"
                                                         class="form-control @error('primary_id') is-invalid @enderror"
-                                                        name="primary_id" id="primary_id"
-                                                        value="{{ old('primary_id') }}" placeholder="Enter ID number"
-                                                        required maxlength="25">
+                                                        name="primary_id" id="primary_id" value="{{ old('primary_id') }}"
+                                                        placeholder="Enter ID number" required maxlength="25">
                                                 </div>
                                                 @error('primary_id')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -644,8 +641,7 @@
                                                 <div class="col-md-6">
                                                     <label for="primary_id_type" class="form-label">Primary ID Type <span
                                                             class="optional-badge">Optional</span></label>
-                                                    <select
-                                                        class="form-select @error('primary_id_type') is-invalid @enderror"
+                                                    <select class="form-select @error('primary_id_type') is-invalid @enderror"
                                                         name="primary_id_type" id="primary_id_type">
                                                         <option value="">Select ID Type</option>
                                                         <option value="DL" @selected(old('primary_id_type') == 'DL')>Driver's
@@ -665,7 +661,7 @@
                                                         class="optional-badge">Optional</span></label>
                                                 <div class="input-icon-wrap">
                                                     <i class="fas fa-calendar input-icon"></i>
-                                                    <input type="date"
+                                                    <input type="text"
                                                         class="form-control datepicker @error('dob') is-invalid @enderror"
                                                         name="dob" id="dob" value="{{ old('dob') }}"
                                                         placeholder="MM/DD/YYYY" autocomplete="off">
@@ -701,8 +697,7 @@
                                                     <input type="tel"
                                                         class="form-control @error('secondary_phone') is-invalid @enderror"
                                                         name="secondary_phone" id="secondary_phone"
-                                                        value="{{ old('secondary_phone') }}"
-                                                        placeholder="(555) 000-0000">
+                                                        value="{{ old('secondary_phone') }}" placeholder="(555) 000-0000">
                                                 </div>
                                                 @error('secondary_phone')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -765,7 +760,8 @@
                                                 </select>
                                                 @error('collection_site_id')
                                                     <div class="text-danger" style="font-size:0.77rem;margin-top:0.3rem;">
-                                                        {{ $message }}</div>
+                                                        {{ $message }}
+                                                    </div>
                                                 @enderror
                                             </div>
 
@@ -773,16 +769,21 @@
                                             <div class="col-md-6" id="testingAuthorityField" style="display:none;">
                                                 <label for="testing_authority" class="form-label">DOT Testing Authority
                                                     <span class="req">*</span></label>
-                                                <select
-                                                    class="form-select @error('testing_authority') is-invalid @enderror"
+                                                <select class="form-select @error('testing_authority') is-invalid @enderror"
                                                     name="testing_authority" id="testing_authority">
                                                     <option value="">Select Authority</option>
-                                                    <option value="FMCSA" @selected(old('testing_authority') == 'FMCSA')>FMCSA</option>
-                                                    <option value="PHMSA" @selected(old('testing_authority') == 'PHMSA')>PHMSA</option>
-                                                    <option value="FAA" @selected(old('testing_authority') == 'FAA')>FAA</option>
-                                                    <option value="FTA" @selected(old('testing_authority') == 'FTA')>FTA</option>
-                                                    <option value="FRA" @selected(old('testing_authority') == 'FRA')>FRA</option>
-                                                    <option value="USCG" @selected(old('testing_authority') == 'USCG')>USCG</option>
+                                                    <option value="FMCSA" @selected(old('testing_authority') == 'FMCSA')>FMCSA
+                                                    </option>
+                                                    <option value="PHMSA" @selected(old('testing_authority') == 'PHMSA')>PHMSA
+                                                    </option>
+                                                    <option value="FAA" @selected(old('testing_authority') == 'FAA')>FAA
+                                                    </option>
+                                                    <option value="FTA" @selected(old('testing_authority') == 'FTA')>FTA
+                                                    </option>
+                                                    <option value="FRA" @selected(old('testing_authority') == 'FRA')>FRA
+                                                    </option>
+                                                    <option value="USCG" @selected(old('testing_authority') == 'USCG')>USCG
+                                                    </option>
                                                 </select>
                                                 @error('testing_authority')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -797,19 +798,23 @@
                                                     <select
                                                         class="form-select @error('reason_for_test_id') is-invalid @enderror"
                                                         name="reason_for_test_id" id="reason_for_test_id" required>
-                                                        <option value="1" @selected(old('reason_for_test_id', '1') == '1')>Pre-Employment
+                                                        <option value="1" @selected(old('reason_for_test_id', '1') == '1')>
+                                                            Pre-Employment
                                                         </option>
-                                                        <option value="2" @selected(old('reason_for_test_id') == '2')>Post Accident
+                                                        <option value="2" @selected(old('reason_for_test_id') == '2')>Post
+                                                            Accident
                                                         </option>
                                                         <option value="3" @selected(old('reason_for_test_id') == '3')>Random
                                                         </option>
                                                         <option value="5" @selected(old('reason_for_test_id') == '5')>Reasonable
                                                             Suspicion / Cause</option>
-                                                        <option value="6" @selected(old('reason_for_test_id') == '6')>Return to Duty
+                                                        <option value="6" @selected(old('reason_for_test_id') == '6')>Return to
+                                                            Duty
                                                         </option>
                                                         <option value="23" @selected(old('reason_for_test_id') == '23')>Follow-Up
                                                         </option>
-                                                        <option value="99" @selected(old('reason_for_test_id') == '99')>Other</option>
+                                                        <option value="99" @selected(old('reason_for_test_id') == '99')>Other
+                                                        </option>
                                                     </select>
                                                     @error('reason_for_test_id')
                                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -824,23 +829,30 @@
                                                         Reason <span class="req">*</span></label>
                                                     <select
                                                         class="form-select @error('physical_reason_for_test_id') is-invalid @enderror"
-                                                        name="physical_reason_for_test_id"
-                                                        id="physical_reason_for_test_id" required>
+                                                        name="physical_reason_for_test_id" id="physical_reason_for_test_id"
+                                                        required>
                                                         <option value="">Select Physical Reason</option>
-                                                        <option value="NC" @selected(old('physical_reason_for_test_id') == 'NC')>New
+                                                        <option value="NC" @selected(old('physical_reason_for_test_id') == 'NC')>
+                                                            New
                                                             Certification</option>
                                                         <option value="RE" @selected(old('physical_reason_for_test_id') == 'RE')>
                                                             Recertification</option>
-                                                        <option value="FU" @selected(old('physical_reason_for_test_id') == 'FU')>Follow-Up
+                                                        <option value="FU" @selected(old('physical_reason_for_test_id') == 'FU')>
+                                                            Follow-Up
                                                         </option>
-                                                        <option value="OT" @selected(old('physical_reason_for_test_id') == 'OT')>Other</option>
-                                                        <option value="SA" @selected(old('physical_reason_for_test_id') == 'SA')>Site Access
+                                                        <option value="OT" @selected(old('physical_reason_for_test_id') == 'OT')>
+                                                            Other</option>
+                                                        <option value="SA" @selected(old('physical_reason_for_test_id') == 'SA')>
+                                                            Site Access
                                                         </option>
-                                                        <option value="PE" @selected(old('physical_reason_for_test_id') == 'PE')>Pre-employment
+                                                        <option value="PE" @selected(old('physical_reason_for_test_id') == 'PE')>
+                                                            Pre-employment
                                                         </option>
-                                                        <option value="RD" @selected(old('physical_reason_for_test_id') == 'RD')>Return to Duty
+                                                        <option value="RD" @selected(old('physical_reason_for_test_id') == 'RD')>
+                                                            Return to Duty
                                                         </option>
-                                                        <option value="SU" @selected(old('physical_reason_for_test_id') == 'SU')>Surveillance
+                                                        <option value="SU" @selected(old('physical_reason_for_test_id') == 'SU')>
+                                                            Surveillance
                                                         </option>
                                                     </select>
                                                     @error('physical_reason_for_test_id')
@@ -875,21 +887,29 @@
                                                     class="form-select @error('end_datetime_timezone_id') is-invalid @enderror"
                                                     name="end_datetime_timezone_id" id="end_datetime_timezone_id">
                                                     <option value="">Select Timezone</option>
-                                                    <option value="1" @selected(old('end_datetime_timezone_id') == '1')>Eastern Time
+                                                    <option value="1" @selected(old('end_datetime_timezone_id') == '1')>
+                                                        Eastern Time
                                                     </option>
-                                                    <option value="2" @selected(old('end_datetime_timezone_id') == '2')>Central Time
+                                                    <option value="2" @selected(old('end_datetime_timezone_id') == '2')>
+                                                        Central Time
                                                     </option>
-                                                    <option value="3" @selected(old('end_datetime_timezone_id') == '3')>Mountain Time
+                                                    <option value="3" @selected(old('end_datetime_timezone_id') == '3')>
+                                                        Mountain Time
                                                     </option>
-                                                    <option value="4" @selected(old('end_datetime_timezone_id') == '4')>Pacific Time
+                                                    <option value="4" @selected(old('end_datetime_timezone_id') == '4')>
+                                                        Pacific Time
                                                     </option>
-                                                    <option value="5" @selected(old('end_datetime_timezone_id') == '5')>Hawaii-Aleutian
+                                                    <option value="5" @selected(old('end_datetime_timezone_id') == '5')>
+                                                        Hawaii-Aleutian
                                                     </option>
-                                                    <option value="6" @selected(old('end_datetime_timezone_id') == '6')>Alaskan Time
+                                                    <option value="6" @selected(old('end_datetime_timezone_id') == '6')>
+                                                        Alaskan Time
                                                     </option>
-                                                    <option value="7" @selected(old('end_datetime_timezone_id') == '7')>Atlantic Time
+                                                    <option value="7" @selected(old('end_datetime_timezone_id') == '7')>
+                                                        Atlantic Time
                                                     </option>
-                                                    <option value="8" @selected(old('end_datetime_timezone_id') == '8')>Guam Time</option>
+                                                    <option value="8" @selected(old('end_datetime_timezone_id') == '8')>Guam
+                                                        Time</option>
                                                 </select>
                                                 <div class="form-text"><i class="fas fa-info-circle"></i> Required if
                                                     expiration date is set</div>
@@ -904,9 +924,11 @@
                                                 <select
                                                     class="form-select @error('observed_requested') is-invalid @enderror"
                                                     name="observed_requested" id="observed_requested">
-                                                    <option value="N" @selected(old('observed_requested', 'N') == 'N')>Not Observed
+                                                    <option value="N" @selected(old('observed_requested', 'N') == 'N')>Not
+                                                        Observed
                                                     </option>
-                                                    <option value="Y" @selected(old('observed_requested') == 'Y')>Observed</option>
+                                                    <option value="Y" @selected(old('observed_requested') == 'Y')>Observed
+                                                    </option>
                                                 </select>
                                                 @error('observed_requested')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -920,9 +942,11 @@
                                                 <select
                                                     class="form-select @error('split_specimen_requested') is-invalid @enderror"
                                                     name="split_specimen_requested" id="split_specimen_requested">
-                                                    <option value="N" @selected(old('split_specimen_requested', 'N') == 'N')>Single Specimen
+                                                    <option value="N" @selected(old('split_specimen_requested', 'N') == 'N')>
+                                                        Single Specimen
                                                     </option>
-                                                    <option value="Y" @selected(old('split_specimen_requested') == 'Y')>Split Specimen
+                                                    <option value="Y" @selected(old('split_specimen_requested') == 'Y')>Split
+                                                        Specimen
                                                     </option>
                                                 </select>
                                                 @error('split_specimen_requested')
@@ -934,8 +958,7 @@
                                             <div class="col-md-6">
                                                 <label for="csl" class="form-label">Client Site Location (CSL) <span
                                                         class="optional-badge">Optional</span></label>
-                                                <input type="text"
-                                                    class="form-control @error('csl') is-invalid @enderror"
+                                                <input type="text" class="form-control @error('csl') is-invalid @enderror"
                                                     name="csl" id="csl"
                                                     value="{{ old('csl', config('services.quest.default_csl')) }}"
                                                     placeholder="Enter CSL" maxlength="20">
@@ -982,8 +1005,10 @@
                                             <div class="col-12">
                                                 <label for="order_comments" class="form-label">Special Instructions <span
                                                         class="optional-badge">Optional</span></label>
-                                                <textarea class="form-control @error('order_comments') is-invalid @enderror" name="order_comments"
-                                                    id="order_comments" placeholder="Any special instructions for the collection site..." maxlength="250">{{ old('order_comments') }}</textarea>
+                                                <textarea class="form-control @error('order_comments') is-invalid @enderror"
+                                                    name="order_comments" id="order_comments"
+                                                    placeholder="Any special instructions for the collection site..."
+                                                    maxlength="250">{{ old('order_comments') }}</textarea>
                                                 @error('order_comments')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -1011,12 +1036,20 @@
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 @endsection
 
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+
+            flatpickr("#dob", {
+                dateFormat: "m-d-Y",   // US format: MM-DD-YYYY
+                defaultDate: "today",
+                maxDate: "today",
+                allowInput: false
+            });
 
             // DOT authority toggle
             const dotTestSelect = document.getElementById('dot_test');
@@ -1050,7 +1083,7 @@
             const isPhysical = "{{ str_contains(strtolower($paymentData['portfolio']->title), 'physical') }}" ===
                 "1";
             if (endDateTime && isPhysical) {
-                endDateTime.addEventListener('change', function() {
+                endDateTime.addEventListener('change', function () {
                     const sel = new Date(this.value);
                     const max = new Date(Date.now() + 168 * 3600 * 1000);
                     if (sel > max) {
@@ -1063,7 +1096,7 @@
             // Form validation UX
             const form = document.getElementById('questOrderForm');
             if (form) {
-                form.addEventListener('submit', function(e) {
+                form.addEventListener('submit', function (e) {
                     let valid = true;
                     form.querySelectorAll('[required]').forEach(f => {
                         if (!f.value.trim()) {
@@ -1087,7 +1120,7 @@
         });
 
         // Select2
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('.select2-collection-sites').select2({
                 placeholder: 'Search by name, address, city, or zip…',
                 allowClear: true,
@@ -1098,13 +1131,13 @@
                     type: 'GET',
                     dataType: 'json',
                     delay: 500,
-                    data: function(p) {
+                    data: function (p) {
                         return {
                             q: p.term,
                             page: p.page || 1
                         };
                     },
-                    processResults: function(data, p) {
+                    processResults: function (data, p) {
                         p.page = p.page || 1;
                         return {
                             results: data.map(s => ({
@@ -1120,7 +1153,7 @@
                     },
                     cache: true
                 },
-                templateResult: function(site) {
+                templateResult: function (site) {
                     if (site.loading) return $('<span>Searching…</span>');
                     return $('<div><strong>' + site.text +
                         '</strong><br><small style="color:#64748b">Code: ' + (site

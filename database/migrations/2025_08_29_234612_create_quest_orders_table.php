@@ -69,7 +69,7 @@ return new class extends Migration
             $table->string('primary_id');
             $table->string('primary_id_type')->nullable();
             $table->date('dob')->nullable();
-            $table->string('primary_phone');
+            $table->string('primary_phone')->nullable();
             $table->string('secondary_phone')->nullable();
             $table->string('email')->nullable();
             $table->string('zip_code')->nullable();

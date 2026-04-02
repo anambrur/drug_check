@@ -249,24 +249,7 @@ class ContactController extends Controller
             $services = isset($validatedData['services']) ? json_encode($validatedData['services']) : json_encode([]);
             $price = isset($validatedData['price']) ? preg_replace('/[^0-9.]/', '', $validatedData['price']) : null;
 
-            // Store data in the database
-            // $contactMessage = \App\Models\Admin\ContactMessage::create([
-            //     'name' => ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''),
-            //     'email' => $validatedData['email'] ?? null,
-            //     'phone' => $validatedData['phone'] ?? null,
-            //     'address' => $validatedData['address'] ?? null,
-            //     'preferred_location' => $validatedData['preferred_location'] ?? null,
-            //     'employee_name' => $validatedData['employee_name'] ?? ($validatedData['first_name'] ?? '') . ' ' . ($validatedData['last_name'] ?? ''),
-            //     'company_name' => $validatedData['company_name'] ?? null,
-            //     'accounting_email' => $validatedData['accounting_email'] ?? null,
-            //     'date' => $validatedData['date'] ?? null,
-            //     'gender' => $validatedData['gender'] ?? null,
-            //     'test_category' => $validatedData['reason_for_testing'] ?? null,
-            //     'services' => $services,
-            //     'price' => $price,
-            //     'read' => 0,
-            // ]);
-
+            
             $emailTo = ContactInfoWidget::pluck('email')->first();
 
             // Send confirmation email - using Mail::to() instead of Mail::raw()

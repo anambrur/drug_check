@@ -6,7 +6,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap"
         rel="stylesheet">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         /* ── Design tokens ── */
         :root {
@@ -538,7 +538,8 @@
                                     <span class="aq-pill">Quest Diagnostics · Admin</span>
                                     <h4>DOT Test Order Form</h4>
                                     <p>Schedule {{ $portfolio->title }} for {{ $employee->first_name }}
-                                        {{ $employee->last_name }}</p>
+                                        {{ $employee->last_name }}
+                                    </p>
                                 </div>
                                 <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
                                     <div class="aq-header-icon d-none d-sm-flex">
@@ -584,8 +585,7 @@
                                 <input type="hidden" name="payment_intent_id"
                                     value="{{ $paymentData['payment_intent_id'] }}">
                                 @if (config('app.env') === 'production')
-                                    <input type="hidden" name="lab_account"
-                                        value="{{ $employee->clientProfile->account_no }}">
+                                    <input type="hidden" name="lab_account" value="{{ $employee->clientProfile->account_no }}">
                                 @else
                                     <input type="hidden" name="lab_account"
                                         value="{{ config('services.quest.dot_lab_account') }}">
@@ -667,8 +667,7 @@
 
                                             {{-- Email --}}
                                             <div class="col-md-6 mt-2">
-                                                <label class="aq-label">Email Address <span
-                                                        class="aq-req">*</span></label>
+                                                <label class="aq-label">Email Address <span class="aq-req">*</span></label>
                                                 <div class="aq-iw">
                                                     <i class="fas fa-envelope aq-icon"></i>
                                                     <input type="email" name="email"
@@ -706,7 +705,7 @@
                                                         class="aq-opt">Optional</span></label>
                                                 <div class="aq-iw">
                                                     <i class="fas fa-calendar aq-icon"></i>
-                                                    <input type="date" name="dob"
+                                                    <input type="text" name="dob" id="dob"
                                                         class="aq-ctrl @error('dob') is-invalid @enderror"
                                                         value="{{ old('dob', $employee->date_of_birth ? \Carbon\Carbon::parse($employee->date_of_birth)->format('Y-m-d') : '') }}"
                                                         max="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
@@ -719,13 +718,13 @@
                                             {{-- Primary Phone --}}
                                             <div class="col-md-6 mt-2">
                                                 <label class="aq-label">Primary Phone <span
-                                                        class="aq-req">*</span></label>
+                                                        class="aq-opt">Optional</span></label>
                                                 <div class="aq-iw">
                                                     <i class="fas fa-phone aq-icon"></i>
                                                     <input type="tel" name="primary_phone"
                                                         class="aq-ctrl @error('primary_phone') is-invalid @enderror"
                                                         value="{{ old('primary_phone', $employee->phone) }}"
-                                                        placeholder="(555) 000-0000" required>
+                                                        placeholder="(555) 000-0000">
                                                 </div>
                                                 @error('primary_phone')
                                                     <div class="aq-feedback">{{ $message }}</div>
@@ -740,8 +739,7 @@
                                                     <i class="fas fa-phone-alt aq-icon"></i>
                                                     <input type="tel" name="secondary_phone"
                                                         class="aq-ctrl @error('secondary_phone') is-invalid @enderror"
-                                                        value="{{ old('secondary_phone') }}"
-                                                        placeholder="(555) 000-0000">
+                                                        value="{{ old('secondary_phone') }}" placeholder="(555) 000-0000">
                                                 </div>
                                                 @error('secondary_phone')
                                                     <div class="aq-feedback">{{ $message }}</div>
@@ -812,12 +810,18 @@
                                                     class="aq-ctrl @error('testing_authority') is-invalid @enderror"
                                                     required>
                                                     <option value="">Select Authority</option>
-                                                    <option value="FMCSA" @selected(old('testing_authority') == 'FMCSA')>FMCSA</option>
-                                                    <option value="PHMSA" @selected(old('testing_authority') == 'PHMSA')>PHMSA</option>
-                                                    <option value="FAA" @selected(old('testing_authority') == 'FAA')>FAA</option>
-                                                    <option value="FTA" @selected(old('testing_authority') == 'FTA')>FTA</option>
-                                                    <option value="FRA" @selected(old('testing_authority') == 'FRA')>FRA</option>
-                                                    <option value="USCG" @selected(old('testing_authority') == 'USCG')>USCG</option>
+                                                    <option value="FMCSA" @selected(old('testing_authority') == 'FMCSA')>FMCSA
+                                                    </option>
+                                                    <option value="PHMSA" @selected(old('testing_authority') == 'PHMSA')>PHMSA
+                                                    </option>
+                                                    <option value="FAA" @selected(old('testing_authority') == 'FAA')>FAA
+                                                    </option>
+                                                    <option value="FTA" @selected(old('testing_authority') == 'FTA')>FTA
+                                                    </option>
+                                                    <option value="FRA" @selected(old('testing_authority') == 'FRA')>FRA
+                                                    </option>
+                                                    <option value="USCG" @selected(old('testing_authority') == 'USCG')>USCG
+                                                    </option>
                                                 </select>
                                                 @error('testing_authority')
                                                     <div class="aq-feedback">{{ $message }}</div>
@@ -832,19 +836,23 @@
                                                     <select name="reason_for_test_id"
                                                         class="aq-ctrl @error('reason_for_test_id') is-invalid @enderror"
                                                         required>
-                                                        <option value="1" @selected(old('reason_for_test_id', '1') == '1')>Pre-Employment
+                                                        <option value="1" @selected(old('reason_for_test_id', '1') == '1')>
+                                                            Pre-Employment
                                                         </option>
-                                                        <option value="2" @selected(old('reason_for_test_id') == '2')>Post Accident
+                                                        <option value="2" @selected(old('reason_for_test_id') == '2')>Post
+                                                            Accident
                                                         </option>
                                                         <option value="3" @selected(old('reason_for_test_id') == '3')>Random
                                                         </option>
                                                         <option value="5" @selected(old('reason_for_test_id') == '5')>Reasonable
                                                             Suspicion/Cause</option>
-                                                        <option value="6" @selected(old('reason_for_test_id') == '6')>Return to Duty
+                                                        <option value="6" @selected(old('reason_for_test_id') == '6')>Return to
+                                                            Duty
                                                         </option>
                                                         <option value="23" @selected(old('reason_for_test_id') == '23')>Follow-Up
                                                         </option>
-                                                        <option value="99" @selected(old('reason_for_test_id') == '99')>Other</option>
+                                                        <option value="99" @selected(old('reason_for_test_id') == '99')>Other
+                                                        </option>
                                                     </select>
                                                     @error('reason_for_test_id')
                                                         <div class="aq-feedback">{{ $message }}</div>
@@ -881,9 +889,11 @@
                                                 <label class="aq-label">Collection Type</label>
                                                 <select name="observed_requested"
                                                     class="aq-ctrl @error('observed_requested') is-invalid @enderror">
-                                                    <option value="N" @selected(old('observed_requested', 'N') == 'N')>Not Observed
+                                                    <option value="N" @selected(old('observed_requested', 'N') == 'N')>Not
+                                                        Observed
                                                     </option>
-                                                    <option value="Y" @selected(old('observed_requested') == 'Y')>Observed</option>
+                                                    <option value="Y" @selected(old('observed_requested') == 'Y')>Observed
+                                                    </option>
                                                 </select>
                                                 @error('observed_requested')
                                                     <div class="aq-feedback">{{ $message }}</div>
@@ -895,9 +905,11 @@
                                                 <label class="aq-label">Specimen Type</label>
                                                 <select name="split_specimen_requested"
                                                     class="aq-ctrl @error('split_specimen_requested') is-invalid @enderror">
-                                                    <option value="N" @selected(old('split_specimen_requested', 'N') == 'N')>Single Specimen
+                                                    <option value="N" @selected(old('split_specimen_requested', 'N') == 'N')>
+                                                        Single Specimen
                                                     </option>
-                                                    <option value="Y" @selected(old('split_specimen_requested') == 'Y')>Split Specimen
+                                                    <option value="Y" @selected(old('split_specimen_requested') == 'Y')>Split
+                                                        Specimen
                                                     </option>
                                                 </select>
                                                 @error('split_specimen_requested')
@@ -929,21 +941,29 @@
                                                 <select name="end_datetime_timezone_id"
                                                     class="aq-ctrl @error('end_datetime_timezone_id') is-invalid @enderror">
                                                     <option value="">Select Timezone</option>
-                                                    <option value="1" @selected(old('end_datetime_timezone_id') == '1')>Eastern Time
+                                                    <option value="1" @selected(old('end_datetime_timezone_id') == '1')>
+                                                        Eastern Time
                                                     </option>
-                                                    <option value="2" @selected(old('end_datetime_timezone_id') == '2')>Central Time
+                                                    <option value="2" @selected(old('end_datetime_timezone_id') == '2')>
+                                                        Central Time
                                                     </option>
-                                                    <option value="3" @selected(old('end_datetime_timezone_id') == '3')>Mountain Time
+                                                    <option value="3" @selected(old('end_datetime_timezone_id') == '3')>
+                                                        Mountain Time
                                                     </option>
-                                                    <option value="4" @selected(old('end_datetime_timezone_id') == '4')>Pacific Time
+                                                    <option value="4" @selected(old('end_datetime_timezone_id') == '4')>
+                                                        Pacific Time
                                                     </option>
-                                                    <option value="5" @selected(old('end_datetime_timezone_id') == '5')>Hawaii-Aleutian
+                                                    <option value="5" @selected(old('end_datetime_timezone_id') == '5')>
+                                                        Hawaii-Aleutian
                                                     </option>
-                                                    <option value="6" @selected(old('end_datetime_timezone_id') == '6')>Alaskan Time
+                                                    <option value="6" @selected(old('end_datetime_timezone_id') == '6')>
+                                                        Alaskan Time
                                                     </option>
-                                                    <option value="7" @selected(old('end_datetime_timezone_id') == '7')>Atlantic Time
+                                                    <option value="7" @selected(old('end_datetime_timezone_id') == '7')>
+                                                        Atlantic Time
                                                     </option>
-                                                    <option value="8" @selected(old('end_datetime_timezone_id') == '8')>Guam Time</option>
+                                                    <option value="8" @selected(old('end_datetime_timezone_id') == '8')>Guam
+                                                        Time</option>
                                                 </select>
                                                 <div class="aq-hint"><i class="fas fa-info-circle"></i> Required if
                                                     expiration date is set</div>
@@ -1004,8 +1024,10 @@
                                                 <div class="aq-iw">
                                                     <i class="fas fa-sticky-note aq-icon"
                                                         style="top:1rem;transform:none;"></i>
-                                                    <textarea name="order_comments" class="aq-ctrl @error('order_comments') is-invalid @enderror"
-                                                        placeholder="Any special instructions for the collection site…" maxlength="250">{{ old('order_comments') }}</textarea>
+                                                    <textarea name="order_comments"
+                                                        class="aq-ctrl @error('order_comments') is-invalid @enderror"
+                                                        placeholder="Any special instructions for the collection site…"
+                                                        maxlength="250">{{ old('order_comments') }}</textarea>
                                                 </div>
                                                 @error('order_comments')
                                                     <div class="aq-feedback">{{ $message }}</div>
@@ -1036,12 +1058,20 @@
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 @endsection
 
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+
+            flatpickr("#dob", {
+                dateFormat: "m-d-Y",   // US format: MM-DD-YYYY
+                defaultDate: "today",
+                maxDate: "today",
+                allowInput: false
+            });
 
             const dotTestSelect = document.getElementById('dot_test');
             const testingAuthorityField = document.getElementById('testingAuthorityField');
@@ -1087,7 +1117,7 @@
             const endDateTime = document.querySelector('input[name="end_datetime"]');
             const isPhysical = {{ $isPhysical ? 'true' : 'false' }};
             if (endDateTime && isPhysical) {
-                endDateTime.addEventListener('change', function() {
+                endDateTime.addEventListener('change', function () {
                     const sel = new Date(this.value);
                     const max = new Date(Date.now() + 168 * 3600 * 1000);
                     if (sel > max) {
@@ -1100,7 +1130,7 @@
             // Clear validation on input
             function clearValidationOnInput() {
                 form.querySelectorAll('input, select, textarea').forEach(el => {
-                    el.addEventListener('input', function() {
+                    el.addEventListener('input', function () {
                         this.classList.remove('is-invalid');
                         // Re-enable submit button when user starts fixing errors
                         if (submitButton && submitButton.disabled) {
@@ -1108,7 +1138,7 @@
                         }
                     });
 
-                    el.addEventListener('change', function() {
+                    el.addEventListener('change', function () {
                         this.classList.remove('is-invalid');
                         if (submitButton && submitButton.disabled) {
                             setSubmitButtonState(true, false);
@@ -1119,7 +1149,7 @@
 
             // ── Form validation with proper submit handling ──
             if (form) {
-                form.addEventListener('submit', function(e) {
+                form.addEventListener('submit', function (e) {
                     let valid = true;
                     const errors = [];
 
@@ -1156,7 +1186,7 @@
                     // Email format validation
                     const emailField = document.querySelector('input[name="email"]');
                     if (emailField && emailField.value && !emailField.value.match(
-                            /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/)) {
+                        /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/)) {
                         valid = false;
                         emailField.classList.add('is-invalid');
                         errors.push('Valid email address is required');
@@ -1229,12 +1259,12 @@
                         }
                     }, 100);
                 @endif
-            }
+                }
 
             // Collection site validation on change
             const collectionSiteSelect = document.getElementById('collection_site_id');
             if (collectionSiteSelect) {
-                collectionSiteSelect.addEventListener('change', function() {
+                collectionSiteSelect.addEventListener('change', function () {
                     this.classList.remove('is-invalid');
                     if (submitButton && submitButton.disabled) {
                         setSubmitButtonState(true, false);
@@ -1244,7 +1274,7 @@
         });
 
         // ── Select2 with proper validation handling ──
-        $(document).ready(function() {
+        $(document).ready(function () {
             const $collectionSelect = $('.select2-collection-sites');
 
             $collectionSelect.select2({
@@ -1257,13 +1287,13 @@
                     type: 'GET',
                     dataType: 'json',
                     delay: 500,
-                    data: function(p) {
+                    data: function (p) {
                         return {
                             q: p.term,
                             page: p.page || 1
                         };
                     },
-                    processResults: function(data, p) {
+                    processResults: function (data, p) {
                         p.page = p.page || 1;
                         return {
                             results: data.map(s => ({
@@ -1279,7 +1309,7 @@
                     },
                     cache: true
                 },
-                templateResult: function(site) {
+                templateResult: function (site) {
                     if (site.loading) return $('<span>Searching…</span>');
                     return $(
                         '<div class="select2-site-result">' +
@@ -1293,11 +1323,11 @@
             });
 
             // Clear Select2 validation on change
-            $collectionSelect.on('change', function() {
+            $collectionSelect.on('change', function () {
                 $(this).removeClass('is-invalid');
                 const submitBtn = document.getElementById('submitButton');
                 if (submitBtn && submitBtn.disabled) {
-                    const setSubmitButtonState = window.setSubmitButtonState || function() {};
+                    const setSubmitButtonState = window.setSubmitButtonState || function () { };
                     // The button state function is defined in the outer scope
                     if (typeof window.setSubmitButtonState === 'function') {
                         window.setSubmitButtonState(true, false);

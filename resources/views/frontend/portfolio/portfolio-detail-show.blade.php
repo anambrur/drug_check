@@ -7,15 +7,15 @@
                 <div class="author-meta">
                     <a href="#"><span class="far fa-bookmark"></span>{{ $portfolio->category_name }}</a>
                 </div>
-                <p>@php echo html_entity_decode($portfolio_content->description); @endphp</p>
+                <p>@php echo html_entity_decode($portfolio_content->description); @endphp </p>
             </div>
         @endisset
 
         <hr>
 
         {{-- ════════════════════════════════════════════
-                         NON-DOT: Full Application + Payment Form
-                    ════════════════════════════════════════════ --}}
+        NON-DOT: Full Application + Payment Form
+        ════════════════════════════════════════════ --}}
         @if ($portfolio->category_name == 'Non DOT Testing')
 
             {{-- ── Google Fonts (same as Quest form) ── --}}
@@ -23,6 +23,9 @@
             <link
                 href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap"
                 rel="stylesheet">
+
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 
             <style>
                 /* ── Design tokens (shared with Quest form) ── */
@@ -668,8 +671,8 @@
                                                             <i class="fas fa-envelope pf-icon"></i>
                                                             <input type="email" id="email" name="email"
                                                                 class="pf-control @error('email') is-invalid @enderror"
-                                                                value="{{ old('email') }}"
-                                                                placeholder="you@example.com" required>
+                                                                value="{{ old('email') }}" placeholder="you@example.com"
+                                                                required>
                                                         </div>
                                                         @error('email')
                                                             <div class="pf-feedback">{{ $message }}</div>
@@ -684,8 +687,8 @@
                                                             <i class="fas fa-phone pf-icon"></i>
                                                             <input type="tel" id="phone" name="phone"
                                                                 class="pf-control @error('phone') is-invalid @enderror"
-                                                                value="{{ old('phone') }}"
-                                                                placeholder="(555) 000-0000" required>
+                                                                value="{{ old('phone') }}" placeholder="(555) 000-0000"
+                                                                required>
                                                         </div>
                                                         @error('phone')
                                                             <div class="pf-feedback">{{ $message }}</div>
@@ -710,8 +713,7 @@
 
                                                     {{-- Gender --}}
                                                     <div class="col-12">
-                                                        <label class="pf-label">Gender <span
-                                                                class="pf-req">*</span></label>
+                                                        <label class="pf-label">Gender <span class="pf-req">*</span></label>
                                                         <div class="pf-radio-group">
                                                             <label class="pf-radio-item">
                                                                 <input type="radio" name="gender" value="Male"
@@ -753,9 +755,11 @@
                                                             <span class="pf-opt">Optional</span></label>
                                                         <div class="pf-icon-wrap">
                                                             <i class="fas fa-calendar pf-icon"></i>
-                                                            <input type="date" id="date" name="date"
+
+                                                            <input type="text" id="date" name="date"
                                                                 class="pf-control @error('date') is-invalid @enderror"
-                                                                value="{{ old('date', date('Y-m-d')) }}">
+                                                                value="{{ old('date', date('m-d-Y')) }}"
+                                                                placeholder="MM-DD-YYYY" readonly>
                                                         </div>
                                                         @error('date')
                                                             <div class="pf-feedback">{{ $message }}</div>
@@ -785,8 +789,7 @@
                                                             <span class="pf-req">*</span></label>
                                                         <div class="pf-icon-wrap">
                                                             <i class="fas fa-user-tie pf-icon"></i>
-                                                            <input type="text" id="employee_name"
-                                                                name="employee_name"
+                                                            <input type="text" id="employee_name" name="employee_name"
                                                                 class="pf-control @error('employee_name') is-invalid @enderror"
                                                                 value="{{ old('employee_name') }}"
                                                                 placeholder="Enter employer name" required>
@@ -802,8 +805,7 @@
                                                                 class="pf-opt">Optional</span></label>
                                                         <div class="pf-icon-wrap">
                                                             <i class="fas fa-building pf-icon"></i>
-                                                            <input type="text" id="company_name"
-                                                                name="company_name"
+                                                            <input type="text" id="company_name" name="company_name"
                                                                 class="pf-control @error('company_name') is-invalid @enderror"
                                                                 value="{{ old('company_name') }}"
                                                                 placeholder="Enter company name">
@@ -846,20 +848,24 @@
                                                             <option value="Pre Employment"
                                                                 @selected(old('reason_for_testing') == 'Pre Employment')>Pre
                                                                 Employment</option>
-                                                            <option value="Random" @selected(old('reason_for_testing') == 'Random')>Random
+                                                            <option value="Random"
+                                                                @selected(old('reason_for_testing') == 'Random')>Random
                                                             </option>
                                                             <option value="Return to Duty"
                                                                 @selected(old('reason_for_testing') == 'Return to Duty')>
                                                                 Return to Duty</option>
-                                                            <option value="Post Accident" @selected(old('reason_for_testing') == 'Post Accident')>
+                                                            <option value="Post Accident"
+                                                                @selected(old('reason_for_testing') == 'Post Accident')>
                                                                 Post
                                                                 Accident</option>
-                                                            <option value="Promotion" @selected(old('reason_for_testing') == 'Promotion')>
+                                                            <option value="Promotion"
+                                                                @selected(old('reason_for_testing') == 'Promotion')>
                                                                 Promotion</option>
                                                             <option value="Reasonable Cause/Suspicion"
                                                                 @selected(old('reason_for_testing') == 'Reasonable Cause/Suspicion')>Reasonable Cause/Suspicion
                                                             </option>
-                                                            <option value="Other" @selected(old('reason_for_testing') == 'Other')>Other
+                                                            <option value="Other"
+                                                                @selected(old('reason_for_testing') == 'Other')>Other
                                                             </option>
                                                         </select>
                                                         @error('reason_for_testing')
@@ -874,7 +880,8 @@
                                                                 <div class="label">Total Amount Due</div>
                                                                 <div
                                                                     style="font-size:.75rem;color:var(--pf-muted);margin-top:2px;">
-                                                                    {{ $portfolio->title }}</div>
+                                                                    {{ $portfolio->title }}
+                                                                </div>
                                                             </div>
                                                             <div class="amount">${{ $portfolio->price }}</div>
                                                         </div>
@@ -902,13 +909,11 @@
                                                             style="font-family:var(--pf-font-head);font-size:.78rem;font-weight:600;color:var(--pf-muted);">Accepted</span>
                                                         <div class="pf-card-icons">
                                                             <i class="fab fa-cc-visa" style="color:#1a1f71;"></i>
-                                                            <i class="fab fa-cc-mastercard"
-                                                                style="color:#eb001b;"></i>
+                                                            <i class="fab fa-cc-mastercard" style="color:#eb001b;"></i>
                                                             <i class="fab fa-cc-amex" style="color:#016fd0;"></i>
                                                             <i class="fab fa-cc-discover" style="color:#ff6000;"></i>
                                                             <i class="fab fa-cc-jcb" style="color:#0b4ea2;"></i>
-                                                            <i class="fab fa-cc-diners-club"
-                                                                style="color:#0079be;"></i>
+                                                            <i class="fab fa-cc-diners-club" style="color:#0079be;"></i>
                                                         </div>
                                                     </div>
 
@@ -921,8 +926,7 @@
                                                                 <span class="pf-req">*</span></label>
                                                             <div class="pf-icon-wrap">
                                                                 <i class="fas fa-id-badge pf-icon"></i>
-                                                                <input type="text" id="cardholder-name"
-                                                                    class="pf-control"
+                                                                <input type="text" id="cardholder-name" class="pf-control"
                                                                     placeholder="Name as it appears on card" required>
                                                             </div>
                                                         </div>
@@ -955,8 +959,7 @@
                                                         <div class="col-12">
                                                             <label class="pf-label" for="country">Country <span
                                                                     class="pf-req">*</span></label>
-                                                            <select id="country" name="country" class="pf-control"
-                                                                required>
+                                                            <select id="country" name="country" class="pf-control" required>
                                                                 <option value="" selected disabled>Select Country
                                                                 </option>
                                                             </select>
@@ -977,11 +980,11 @@
                                             <input type="checkbox" id="terms-check" required>
                                             <label class="pf-terms-label" for="terms-check">
                                                 I agree to the
-                                                <a href="#" data-bs-toggle="modal"
-                                                    data-bs-target="#termsModal">Terms and Conditions</a>
+                                                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and
+                                                    Conditions</a>
                                                 and
-                                                <a href="#" data-bs-toggle="modal"
-                                                    data-bs-target="#privacyModal">Privacy Policy</a>.
+                                                <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy
+                                                    Policy</a>.
                                                 By submitting, I authorize this charge to my card.
                                             </label>
                                         </div>
@@ -1021,8 +1024,8 @@
                                 Payment Successful!</h4>
                             <p style="color:var(--pf-muted);font-size:.9rem;">Thank you! Your test has been scheduled.
                                 Check your email for confirmation.</p>
-                            <button type="button" class="pf-btn-submit mt-3"
-                                style="width:auto;padding:.75rem 2.5rem;" data-bs-dismiss="modal">Continue</button>
+                            <button type="button" class="pf-btn-submit mt-3" style="width:auto;padding:.75rem 2.5rem;"
+                                data-bs-dismiss="modal">Continue</button>
                         </div>
                     </div>
                 </div>
@@ -1068,15 +1071,14 @@
                                     @endif
 
                                     <!-- Use custom login route with portfolio ID -->
-                                    <form method="POST"
-                                        action="{{ route('portfolio.login.submit', $portfolio->id) }}">
+                                    <form method="POST" action="{{ route('portfolio.login.submit', $portfolio->id) }}">
                                         @csrf
 
                                         <div class="mb-3">
                                             <label for="email" class="form-label">Email Address</label>
                                             <input type="email" name="email" value="{{ old('email') }}"
-                                                class="form-control @error('email') is-invalid @enderror"
-                                                id="email" required autofocus>
+                                                class="form-control @error('email') is-invalid @enderror" id="email"
+                                                required autofocus>
                                             @error('email')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -1085,16 +1087,14 @@
                                         <div class="mb-3">
                                             <label for="password" class="form-label">Password</label>
                                             <input type="password" name="password" required
-                                                class="form-control @error('password') is-invalid @enderror"
-                                                id="password">
+                                                class="form-control @error('password') is-invalid @enderror" id="password">
                                             @error('password')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>
 
                                         <div class="mb-3 form-check">
-                                            <input type="checkbox" class="form-check-input" id="remember"
-                                                name="remember">
+                                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
                                             <label class="form-check-label" for="remember">Remember me</label>
                                         </div>
 
@@ -1104,8 +1104,7 @@
 
                                         <div class="text-center mt-3">
                                             @if (Route::has('password.request'))
-                                                <a href="{{ route('password.request') }}"
-                                                    class="text-decoration-none">
+                                                <a href="{{ route('password.request') }}" class="text-decoration-none">
                                                     Forgot your password?
                                                 </a>
                                             @endif
@@ -1125,9 +1124,16 @@
 
 <!-- Stripe.js -->
 <script src="https://js.stripe.com/v3/"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
+        flatpickr("#date", {
+            dateFormat: "m-d-Y",   // US format: MM-DD-YYYY
+            defaultDate: "today",
+            minDate: "today",
+            allowInput: false
+        });
         const form = document.getElementById('payment-form');
         const payButton = document.getElementById('pay-button');
         const payButtonText = document.getElementById('pay-button-text');
@@ -1211,9 +1217,15 @@
 
             const dateField = document.getElementById('date');
             if (dateField?.value) {
-                const today = new Date().toISOString().split('T')[0];
-                if (dateField.value < today) {
+                // Parse MM-DD-YYYY from Flatpickr
+                const parts = dateField.value.split('-');
+                const selectedDate = new Date(parts[2], parts[0] - 1, parts[1]); // Y, M-1, D
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // strip time for fair comparison
+
+                if (selectedDate < today) {
                     dateField.classList.add('is-invalid');
+                    showError('Preferred test date cannot be in the past.');
                     valid = false;
                 }
             }

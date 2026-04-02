@@ -491,7 +491,7 @@ class QuestDiagnosticsController extends Controller
             'last_name'                   => ['required', 'string', 'max:25'],
             'middle_name'                 => ['nullable', 'string', 'max:20'],
             'email'                       => ['required', 'email:rfc,dns', 'max:254'],
-            'primary_phone'               => ['required', 'string', 'max:20'],
+            'primary_phone'               => ['nullable', 'string', 'max:20'],
             'secondary_phone'             => ['nullable', 'string', 'max:20'],
             'primary_id'                  => ['required', 'string', 'max:25'],
             'primary_id_type'             => ['nullable', 'string', 'max:5'],

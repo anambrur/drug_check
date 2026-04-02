@@ -345,10 +345,12 @@ class DashboardController extends Controller
             ->orderBy('month')
             ->get()
             ->mapWithKeys(function ($item) {
-                return [$item->month => [
-                    'orders' => $item->orders_count,
-                    'completed' => $item->completed_count,
-                ]];
+                return [
+                    $item->month => [
+                        'orders' => $item->orders_count,
+                        'completed' => $item->completed_count,
+                    ]
+                ];
             });
     }
 }
