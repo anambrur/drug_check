@@ -48,10 +48,12 @@
 
                     @isset($about_section_style1)
                         @if (!empty($about_section_style1->button_name))
-                            <a href="{{ $about_section_style1->button_url }}" class="primary-btn me-3 mb-3">
-                                <span class="text">{{ $about_section_style1->button_name }}</span>
-                                <span class="icon"><i class="fa fa-arrow-right"></i></span>
-                            </a>
+                            @if (request()->is('/'))
+                                <a href="{{ $about_section_style1->button_url }}" class="primary-btn me-3 mb-3">
+                                    <span class="text">{{ $about_section_style1->button_name }}</span>
+                                    <span class="icon"><i class="fa fa-arrow-right"></i></span>
+                                </a>
+                            @endif
                         @endif
                         @if (!empty($about_section_style1->button_name_2))
                             <a href="@if (!empty($about_section_style1->cv_file)) {{ asset('uploads/img/about/' . $about_section_style1->cv_file) }} @else # @endif"

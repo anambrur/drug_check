@@ -23,7 +23,7 @@
                     <div class="col-md-6">
                         <div class="section-heading-left">
                             <span>Tests</span>
-                            <h2>Our {{ $portfolios_style1[0]->portfolio_category->category_name }} </h2>
+                            <h2>{{ $portfolios_style1[0]->portfolio_category->category_name }} </h2>
                         </div>
                     </div>
                 @endif
