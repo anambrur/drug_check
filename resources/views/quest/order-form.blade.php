@@ -681,7 +681,7 @@
                                                         class="form-control @error('primary_phone') is-invalid @enderror"
                                                         name="primary_phone" id="primary_phone"
                                                         value="{{ old('primary_phone', $paymentData['phone']) }}"
-                                                        placeholder="(555) 000-0000">
+                                                        placeholder="5550000000" pattern="[0-9]*" inputmode="numeric">
                                                 </div>
                                                 @error('primary_phone')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -697,7 +697,7 @@
                                                     <input type="tel"
                                                         class="form-control @error('secondary_phone') is-invalid @enderror"
                                                         name="secondary_phone" id="secondary_phone"
-                                                        value="{{ old('secondary_phone') }}" placeholder="(555) 000-0000">
+                                                        value="{{ old('secondary_phone') }}" placeholder="5550000000" pattern="[0-9]*" inputmode="numeric">
                                                 </div>
                                                 @error('secondary_phone')
                                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -1045,7 +1045,7 @@
         document.addEventListener('DOMContentLoaded', function () {
 
             flatpickr("#dob", {
-                dateFormat: "m-d-Y",   // US format: MM-DD-YYYY
+                dateFormat: "m/d/Y",   // US format: MM/DD/YYYY
                 defaultDate: "today",
                 maxDate: "today",
                 allowInput: false
@@ -1096,6 +1096,16 @@
             // Form validation UX
             const form = document.getElementById('questOrderForm');
             if (form) {
+                // Restrict phone fields to digits only
+                ['primary_phone', 'secondary_phone', 'telephone_number'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', function() {
+                            this.value = this.value.replace(/\D/g, '');
+                        });
+                    }
+                });
+
                 form.addEventListener('submit', function (e) {
                     let valid = true;
                     form.querySelectorAll('[required]').forEach(f => {

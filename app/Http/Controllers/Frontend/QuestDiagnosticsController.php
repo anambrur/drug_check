@@ -496,7 +496,7 @@ class QuestDiagnosticsController extends Controller
             'primary_id'                  => ['required', 'string', 'max:25'],
             'primary_id_type'             => ['nullable', 'string', 'max:5'],
             // Accept any parseable date — reformatted to MM/DD/YYYY before sending to Quest
-            'dob'                         => ['nullable', 'date'],
+            'dob'                         => ['nullable', 'string'],
             'zip_code'                    => ['nullable', 'string', 'max:10'],
             'dot_test'                    => ['required', 'in:T,F'],
             'testing_authority'           => ['required_if:dot_test,T', 'nullable', 'in:FMCSA,PHMSA,FAA,FTA,FRA,USCG'],
@@ -511,7 +511,7 @@ class QuestDiagnosticsController extends Controller
             'unit_codes'                  => ['required', 'string', 'max:15'],
             'csl'                         => ['nullable', 'string', 'max:20'],
             'contact_name'                => ['required_if:is_ebat,true', 'nullable', 'string', 'max:45'],
-            'telephone_number'            => ['required_if:is_ebat,true', 'nullable', 'string', 'max:10'],
+            'telephone_number'            => ['required_if:is_ebat,true', 'nullable', 'string', 'max:20'],
             'order_comments'              => ['nullable', 'string', 'max:250'],
             'response_url'                => ['nullable', 'url', 'max:255'],
             'lab_account'                 => ['required', 'string', 'max:20'],

@@ -1067,7 +1067,7 @@
         document.addEventListener('DOMContentLoaded', function () {
 
             flatpickr("#dob", {
-                dateFormat: "m-d-Y",   // US format: MM-DD-YYYY
+                dateFormat: "m/d/Y",   // US format: MM-DD-YYYY
                 defaultDate: "today",
                 maxDate: "today",
                 allowInput: false
