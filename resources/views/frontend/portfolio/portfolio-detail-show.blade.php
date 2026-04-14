@@ -958,8 +958,8 @@
                                                         {{-- Country --}}
                                                         <div class="col-12">
                                                             <label class="pf-label" for="country">Country <span
-                                                                    class="pf-req">*</span></label>
-                                                            <select id="country" name="country" class="pf-control" required>
+                                                                    class="pf-opt">Optional</span></label>
+                                                            <select id="country" name="country" class="pf-control">
                                                                 <option value="" selected disabled>Select Country
                                                                 </option>
                                                             </select>
@@ -1141,10 +1141,10 @@
         const errorContainer = document.getElementById('card-errors');
         if (!form) return; // Only init on Non-DOT page
 
-        const priceRaw = document.getElementById('price')?.value.replace(/[^\d.]/g, '') || '0';
+        const portfolioId = document.getElementById('portfolio_id')?.value || '';
 
         // ── Stripe Init ──
-        const stripe = Stripe("{{ env('STRIPE_PUBLIC') }}");
+        const stripe = Stripe("{{ config('services.stripe.public') }}");
         const elements = stripe.elements();
 
         const elStyle = {
@@ -1183,12 +1183,8 @@
         cardCvc.mount('#card-cvc');
         postalCode.mount('#postal-code');
 
-        // Sync Stripe element focus/invalid classes to our wrapper divs
+        // Stripe validation errors
         [cardNumber, cardExpiry, cardCvc, postalCode].forEach(el => {
-            el.on('focus', () => el._element?.closest('.pf-stripe-wrap')?.classList.add(
-                'StripeElement--focus'));
-            el.on('blur', () => el._element?.closest('.pf-stripe-wrap')?.classList.remove(
-                'StripeElement--focus'));
             el.on('change', ev => {
                 if (ev.error) showError(ev.error.message);
                 else clearError();
@@ -1257,9 +1253,8 @@
                             .content
                     },
                     body: JSON.stringify({
-                        price: priceRaw,
-                        test_name: document.getElementById('test_name').value,
-                        country: document.getElementById('country').value
+                        portfolio_id: portfolioId,
+                        country: document.getElementById('country')?.value || null
                     })
                 });
 
@@ -1301,7 +1296,7 @@
         // ── Helpers ──
         function setLoading(on) {
             payButton.disabled = on;
-            payButtonText.textContent = on ? 'Processing…' : `Pay & Schedule Test — $${priceRaw}`;
+            payButtonText.textContent = on ? 'Processing…' : `Pay & Schedule Test — ${{ $portfolio->price }}`;
             payButtonLoader.classList.toggle('d-none', !on);
         }
 
@@ -1336,6 +1331,9 @@
                         o.textContent = c.name.common;
                         sel.appendChild(o);
                     });
+            })
+            .catch(() => {
+                // Country is optional; ignore failures.
             });
     });
 </script>

@@ -125,6 +125,7 @@ use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
+use App\Http\Controllers\StripeWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -133,20 +134,59 @@ use Stripe\Stripe;
 */
 
 Route::get('/optimize-clear', function () {
+    if (!app()->environment('local')) {
+        abort(404);
+    }
+
     Artisan::call('optimize:clear');
     return 'Optimize cache cleared successfully!';
 });
 
 Route::post('/create-payment-intent', function (Request $request) {
-    Stripe::setApiKey(env('STRIPE_SECRET'));
-    $price = preg_replace('/[^0-9.]/', '', $request->input('price'));
-    $amount = intval($price * 100);
+    $request->validate([
+        'portfolio_id' => 'required|integer',
+        'country' => 'nullable|string|size:2',
+    ]);
+
+    $portfolio = \App\Models\Admin\Portfolio::query()->findOrFail($request->integer('portfolio_id'));
+
+    $price = preg_replace('/[^0-9.]/', '', (string) $portfolio->price);
+    $amount = (int) round(((float) $price) * 100);
+
+    if ($amount < 50) {
+        return response()->json(['error' => 'Invalid amount.'], 422);
+    }
+
+    Stripe::setApiKey(config('services.stripe.secret'));
+
+    $appTag = (string) (config('app.name') ?: 'Drug Check');
+    $appEnv = (string) app()->environment();
+    $description = trim($appTag . ' - Non-DOT Testing - Portfolio#' . $portfolio->id . ' - ' . ($portfolio->title ?? ''));
+
     $paymentIntent = PaymentIntent::create([
         'amount' => $amount,
         'currency' => 'usd',
+        'description' => $description,
+        'metadata' => [
+            'portfolio_id' => (string) $portfolio->id,
+            'test_name' => (string) ($portfolio->title ?? ''),
+            'country' => (string) ($request->input('country') ?? ''),
+            'app_tag' => $appTag,
+            'app_env' => $appEnv,
+        ],
     ]);
-    return response()->json(['client_secret' => $paymentIntent->client_secret]);
+
+    return response()->json([
+        'client_secret' => $paymentIntent->client_secret,
+        'payment_intent_id' => $paymentIntent->id,
+        'amount' => $amount,
+        'currency' => 'usd',
+    ]);
 });
+
+// Stripe webhook (signature-verified). Add STRIPE_WEBHOOK_SECRET in .env
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handle'])
+    ->middleware(['throttle:60,1']);
 
 Livewire::setScriptRoute(function ($handle) {
     return Route::get('public/livewire/livewire.js', $handle);

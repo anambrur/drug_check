@@ -839,7 +839,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
 
-            const stripe = Stripe("{{ env('STRIPE_PUBLIC') }}");
+            const stripe = Stripe("{{ config('services.stripe.public') }}");
             const elements = stripe.elements();
             const form = document.getElementById('payment-form');
             const payButton = document.getElementById('pay-button');

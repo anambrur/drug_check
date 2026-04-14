@@ -6,6 +6,7 @@ use Stripe\Stripe;
 use App\Models\Admin\Map;
 use Stripe\PaymentIntent;
 use App\Models\Admin\Menu;
+use App\Models\Admin\Portfolio;
 use Illuminate\Support\Str;
 use App\Models\Admin\Footer;
 use App\Models\Admin\Social;
@@ -205,6 +206,7 @@ class ContactController extends Controller
     {
         // Validate form data
         $validator = Validator::make($request->all(), [
+            'portfolio_id' => 'required|integer',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -217,12 +219,13 @@ class ContactController extends Controller
             'company_name' => 'nullable|string',
             'accounting_email' => 'nullable|string',
             'reason_for_testing' => 'required|string',
-            'price' => 'required|string',
+            'price' => 'nullable|string',
             'services' => 'nullable|array',
             'payment_intent_id' => 'nullable|string',
             'test_name' => 'nullable|string',
             'code' => 'nullable|string',
             'lab_account' => 'nullable|string',
+            'country' => 'nullable|string|size:2',
         ]);
 
 
@@ -237,7 +240,7 @@ class ContactController extends Controller
             $validatedData = $request->all();
 
             // Verify Stripe payment
-            Stripe::setApiKey(env('STRIPE_SECRET'));
+            Stripe::setApiKey(config('services.stripe.secret'));
 
             $paymentIntent = PaymentIntent::retrieve($validatedData['payment_intent_id']);
 
@@ -245,9 +248,24 @@ class ContactController extends Controller
                 return redirect()->back()->with('error', 'Payment not successful!');
             }
 
+            $portfolio = Portfolio::query()->findOrFail((int) $validatedData['portfolio_id']);
+            $expectedPrice = preg_replace('/[^0-9.]/', '', (string) $portfolio->price);
+            $expectedAmount = (int) round(((float) $expectedPrice) * 100);
+
+            if (($paymentIntent->currency ?? null) !== 'usd') {
+                return redirect()->back()->with('error', 'Invalid payment currency.');
+            }
+            if (((int) ($paymentIntent->amount ?? 0)) !== $expectedAmount) {
+                return redirect()->back()->with('error', 'Payment amount mismatch.');
+            }
+            $piPortfolioId = data_get($paymentIntent, 'metadata.portfolio_id');
+            if ((string) $piPortfolioId !== (string) $portfolio->id) {
+                return redirect()->back()->with('error', 'Payment metadata mismatch.');
+            }
+
             // Process form submission only if payment is successful
             $services = isset($validatedData['services']) ? json_encode($validatedData['services']) : json_encode([]);
-            $price = isset($validatedData['price']) ? preg_replace('/[^0-9.]/', '', $validatedData['price']) : null;
+            $price = $expectedPrice;
 
             
             $emailTo = ContactInfoWidget::pluck('email')->first();
@@ -276,7 +294,7 @@ class ContactController extends Controller
                 'phone' => $validatedData['phone'],
                 'portfolio' => (object)[
                     'portfolio_id' => $validatedData['portfolio_id'],
-                    'title' => $validatedData['test_name'] ?? 'Test',
+                    'title' => $portfolio->title ?? ($validatedData['test_name'] ?? 'Test'),
                     'price' => $price,
                     'quest_unit_code' => $validatedData['code'] ?? null,
                     'quest_lab_account' => $validatedData['lab_account'] ?? null,
