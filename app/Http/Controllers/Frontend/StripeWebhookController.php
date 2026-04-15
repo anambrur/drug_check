@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Frontend;
 
+use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\StripeWebhookEvent;
 use Illuminate\Http\Request;

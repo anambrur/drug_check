@@ -115,6 +115,7 @@ use App\Http\Controllers\Frontend\ContactController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\QuestDiagnosticsController;
 use App\Http\Controllers\Frontend\ZipSearchController;
+use App\Http\Controllers\Frontend\StripeWebhookController;
 use App\Http\Middleware\XSS;
 use App\Models\Admin\PageBuilder;
 use Illuminate\Http\Request;
@@ -125,7 +126,6 @@ use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
-use App\Http\Controllers\StripeWebhookController;
 
 /*
 |--------------------------------------------------------------------------
