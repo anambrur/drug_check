@@ -1067,6 +1067,14 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
 });
 
 // ------------------------------------------------------------------
+// Payments (Stripe Transactions)
+// ------------------------------------------------------------------
+Route::middleware($adminBase)->prefix('admin')->group(function () {
+    Route::get('payments',           [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('admin.payments.index')->middleware('permission:payment view');
+    Route::get('payments/{payment}', [\App\Http\Controllers\Admin\PaymentController::class, 'show'])->name('admin.payments.show')->middleware('permission:payment view');
+});
+
+// ------------------------------------------------------------------
 // Quest Site Sync
 // ------------------------------------------------------------------
 Route::middleware($adminBase)->prefix('admin')->group(function () {

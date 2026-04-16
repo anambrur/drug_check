@@ -744,13 +744,20 @@ class QuestDiagnosticsController extends Controller
                 config('services.stripe.secret') ?? throw new \RuntimeException('Stripe secret key is not configured.')
             );
 
+            $employee = Employee::findOrFail($validated['employee_id']);
+
             $paymentIntent = PaymentIntent::create([
-                'amount'                    => (int) $validated['price'],
-                'currency'                  => 'usd',
-                'metadata'                  => [
-                    'portfolio_id' => $portfolio->id,
-                    'test_name'    => $portfolio->title,
-                    'employee_id'  => $validated['employee_id'],
+                'amount'        => (int) $validated['price'],
+                'currency'      => 'usd',
+                'receipt_email' => $employee->email ?: null,
+                'metadata'      => [
+                    'portfolio_id'  => (string) $portfolio->id,
+                    'test_name'     => (string) $portfolio->title,
+                    'employee_id'   => (string) $validated['employee_id'],
+                    // Customer fallback fields (used by webhook if billing_details is empty)
+                    'customer_name'  => trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? '')),
+                    'customer_email' => $employee->email ?? '',
+                    'customer_phone' => $employee->phone ?? '',
                 ],
                 'automatic_payment_methods' => ['enabled' => true],
             ]);

@@ -62,6 +62,7 @@ class PermissionSeeder extends Seeder
             'quest-site',
             'quest-order',
             'dot-test',
+            'payment',
 
             // Utility
             'contact message',

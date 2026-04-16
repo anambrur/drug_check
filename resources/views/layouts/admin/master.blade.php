@@ -272,6 +272,14 @@
                         <span class="menu-title">{{ __('content.dashboard') }}</span>
                     </a>
                 </li>
+                @can('payment view')
+                <li class="nav-item {{ request()->is('admin/payments*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.payments.index') }}">
+                        <i class="fas fa-credit-card menu-icon"></i>
+                        <span class="menu-title">Payments</span>
+                    </a>
+                </li>
+                @endcan
                 @can('page builder view')
                     <li
                         class="nav-item {{ request()->is('admin/page-name/create') ||

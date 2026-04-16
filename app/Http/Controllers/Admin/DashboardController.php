@@ -13,6 +13,7 @@ use App\Models\Admin\PanelImage;
 use App\Models\Admin\QuestOrder;
 use App\Models\Admin\RandomSelection;
 use App\Models\Admin\ResultRecording;
+use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -182,19 +183,32 @@ class DashboardController extends Controller
             ->pluck('count', 'reason_for_test')
             ->toArray();
 
+        // Payment summary stats
+        $paymentStats = [
+            'total_revenue'   => Payment::where('status', 'succeeded')->sum('amount'),
+            'today_revenue'   => Payment::where('status', 'succeeded')->whereDate('paid_at', today())->sum('amount'),
+            'succeeded_count' => Payment::where('status', 'succeeded')->count(),
+            'pending_count'   => Payment::whereIn('status', ['processing', 'requires_payment_method'])->count(),
+            'refunded_count'  => Payment::where('status', 'refunded')->count(),
+        ];
+
+        $recentPayments = Payment::latest()->take(5)->get();
+
         return [
-            'stats' => $stats,
-            'growth' => $growth,
-            'order_status_distribution' => $orderStatusDistribution,
-            'order_result_distribution' => $orderResultDistribution,
-            'weekly_orders' => $weeklyOrders,
-            'recent_activities' => $recentActivities,
-            'top_clients' => $topClients,
-            'monthly_trends' => $monthlyTrends,
-            'test_status_distribution' => $testStatusDistribution,
-            'reason_for_test_distribution' => $reasonForTestDistribution,
-            'recent_results' => $recentResults,
-            'user_type' => 'super-admin',
+            'stats'                       => $stats,
+            'growth'                      => $growth,
+            'order_status_distribution'   => $orderStatusDistribution,
+            'order_result_distribution'   => $orderResultDistribution,
+            'weekly_orders'               => $weeklyOrders,
+            'recent_activities'           => $recentActivities,
+            'top_clients'                 => $topClients,
+            'monthly_trends'              => $monthlyTrends,
+            'test_status_distribution'    => $testStatusDistribution,
+            'reason_for_test_distribution'=> $reasonForTestDistribution,
+            'recent_results'              => $recentResults,
+            'payment_stats'               => $paymentStats,
+            'recent_payments'             => $recentPayments,
+            'user_type'                   => 'super-admin',
         ];
     }
 

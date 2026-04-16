@@ -8,6 +8,7 @@ class StripeWebhookEvent extends Model
 {
     protected $fillable = [
         'stripe_event_id',
+        'payment_intent_id',
         'type',
         'api_version',
         'livemode',
@@ -17,7 +18,14 @@ class StripeWebhookEvent extends Model
 
     protected $casts = [
         'livemode' => 'boolean',
-        'payload' => 'array',
+        'payload'  => 'array',
     ];
+
+    // ── Relationships ────────────────────────────────────────────────────────
+
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class, 'payment_intent_id', 'stripe_payment_intent_id');
+    }
 }
 

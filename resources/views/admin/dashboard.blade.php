@@ -3,16 +3,59 @@
 @section('content')
     <style>
         /* ===== Welcome Banner ===== */
-        .dash-welcome{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px;padding:28px 32px;color:#fff;margin-bottom:28px;position:relative;overflow:hidden}
-        .dash-welcome::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:rgba(255,255,255,.08);border-radius:50%}
-        .dash-welcome h2{font-weight:700;font-size:1.6rem;margin-bottom:4px}
-        .dash-welcome p{opacity:.85;margin-bottom:0;font-size:.95rem}
+        .dash-welcome{
+            background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%);
+            border-radius: 18px;
+            padding: 36px 40px;
+            color: #ffffff;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+            border: none;
+        }
+        .dash-welcome::before{
+            content: ''; position: absolute; top: -50px; left: -50px; width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .dash-welcome::after{
+            content: ''; position: absolute; bottom: -80px; right: -20px; width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 65%);
+            border-radius: 50%;
+        }
+        .dash-welcome .welcome-content { position: relative; z-index: 2; }
+        .dash-welcome h2{font-weight:800; font-size:1.9rem; margin-bottom:8px; letter-spacing:-0.5px; color: #ffffff;}
+        .dash-welcome h2 span{color: #bfdbfe;}
+        .dash-welcome p{opacity:0.9; margin-bottom:0; font-size:1rem; font-weight:400; color: #e0e7ff;}
+        .welcome-date-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+            padding: 8px 16px; border-radius: 30px; font-size: 0.85rem; font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.3); margin-bottom: 18px;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .welcome-date-badge i { color: #ffffff; opacity: 0.9; }
+        .welcome-icon-box {
+            width: 75px; height: 75px; margin-left: auto;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: #ffffff;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(8px);
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dash-welcome:hover .welcome-icon-box { transform: translateY(-5px); box-shadow: 0 12px 35px rgba(0,0,0,0.15); }
 
         /* ===== Stat Cards Grid — Equal Width via CSS Grid ===== */
         .stat-grid{
             display:grid;
-            grid-template-columns:repeat(6, 1fr);
-            gap:16px;
+            grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+            gap:14px;
             margin-bottom:20px;
         }
         .stat-grid .stat-card-wrapper{
@@ -26,16 +69,41 @@
         .stat-grid .stat-card-wrapper:nth-child(6){animation-delay:.3s}
 
         .stat-card{
-            border:none;border-radius:14px;overflow:hidden;transition:all .3s ease;
-            position:relative;display:flex;flex-direction:column;width:100%;
-            box-shadow:0 2px 8px rgba(0,0,0,.05);
+            border:none;border-radius:12px;overflow:hidden;transition:all .2s ease;
+            position:relative;width:100%;
+            box-shadow:0 1px 4px rgba(0,0,0,.04);
+            background:#fff;
         }
-        .stat-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.12)}
-        .stat-card .card-body{padding:20px 22px;position:relative;z-index:1;flex:1;display:flex;flex-direction:column}
-        .stat-card .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:12px;flex-shrink:0}
-        .stat-card .stat-value{font-size:1.75rem;font-weight:800;line-height:1.1;margin-bottom:4px;white-space:nowrap}
-        .stat-card .stat-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;opacity:.7;font-weight:600;margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .stat-card .stat-trend{font-size:.75rem;font-weight:600;margin-top:6px;display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px}
+        .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,.08)}
+        .stat-card .card-body{
+            padding:14px 16px;
+            position:relative;z-index:1;
+            display:grid;
+            grid-template-columns:38px 1fr auto;
+            grid-template-rows:auto auto;
+            align-items:center;
+            column-gap:12px;
+            row-gap:2px;
+        }
+        .stat-card .stat-icon{
+            grid-column:1 / 2; grid-row: 1 / 3;
+            width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+            font-size:1.1rem;margin-bottom:0;
+        }
+        .stat-card .stat-value{
+            grid-column:2 / 3; grid-row: 1 / 2;
+            font-size:1.25rem;font-weight:700;line-height:1;margin-bottom:0;white-space:nowrap;
+        }
+        .stat-card .stat-label{
+            grid-column:2 / 3; grid-row: 2 / 3;
+            font-size:.68rem;text-transform:uppercase;letter-spacing:.3px;opacity:.8;font-weight:600;
+            margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        }
+        .stat-card .stat-trend{
+            grid-column:3 / 4; grid-row: 1 / 3;
+            font-size:.65rem;font-weight:700;display:inline-flex;align-items:center;gap:2px;
+            padding:4px 8px;border-radius:12px;margin-top:0;
+        }
         .stat-card .stat-trend.up{background:rgba(16,185,129,.15);color:#10b981}
         .stat-card .stat-trend.down{background:rgba(239,68,68,.15);color:#ef4444}
         .stat-card .stat-trend.neutral{background:rgba(107,114,128,.12);color:#6b7280}
@@ -107,22 +175,10 @@
 
         /* ===== Responsive Breakpoints ===== */
 
-        /* Large desktops — 6 columns (default) */
-
-        /* Medium-large screens */
-        @media(max-width:1399.98px){
-            .stat-grid{grid-template-columns:repeat(3, 1fr);gap:14px}
-        }
-
-        /* Tablets landscape */
         @media(max-width:1199.98px){
-            .stat-grid{grid-template-columns:repeat(3, 1fr);gap:14px}
             .stat-card .stat-value{font-size:1.5rem}
         }
-
-        /* Tablets portrait */
         @media(max-width:991.98px){
-            .stat-grid{grid-template-columns:repeat(3, 1fr);gap:12px}
             .dash-welcome{padding:22px 24px;border-radius:12px;margin-bottom:22px}
             .dash-welcome h2{font-size:1.35rem}
             .stat-card .card-body{padding:16px 18px}
@@ -132,10 +188,8 @@
             .dash-card .card-header{padding:14px 18px}
             .dash-card .card-body{padding:14px 18px}
         }
-
-        /* Large phones / small tablets */
         @media(max-width:767.98px){
-            .stat-grid{grid-template-columns:repeat(2, 1fr);gap:12px}
+            .stat-grid{grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:12px}
             .dash-welcome{padding:18px 20px;margin-bottom:18px}
             .dash-welcome h2{font-size:1.2rem}
             .dash-welcome p{font-size:.85rem}
@@ -151,8 +205,6 @@
             .table-modern tbody td{padding:10px 10px;font-size:.8rem}
             .client-avatar{width:34px;height:34px;font-size:.75rem;margin-right:10px}
         }
-
-        /* Small phones */
         @media(max-width:575.98px){
             .stat-grid{grid-template-columns:repeat(2, 1fr);gap:10px}
             .dash-welcome{padding:16px 16px;border-radius:10px;margin-bottom:16px}
@@ -173,8 +225,6 @@
             .client-info p{font-size:.7rem}
             .client-stats span{font-size:.9rem}
         }
-
-        /* Extra-small phones */
         @media(max-width:419.98px){
             .stat-grid{grid-template-columns:1fr 1fr;gap:8px}
             .stat-card .card-body{padding:10px 12px}
@@ -189,27 +239,33 @@
     <div class="container-fluid">
         {{-- Welcome Header --}}
         <div class="dash-welcome animate-in">
-            <div class="row align-items-center">
-                <div class="col-md-8">
+            <div class="row align-items-center welcome-content">
+                <div class="col-md-9">
+                    <div class="welcome-date-badge">
+                        <i class="fas fa-calendar-alt"></i>
+                        {{ now()->format('l, F j, Y') }}
+                    </div>
                     <h2>
                         @php
                             $hour = now()->format('H');
                             $greeting = $hour < 12 ? 'Good Morning' : ($hour < 17 ? 'Good Afternoon' : 'Good Evening');
                         @endphp
-                        {{ $greeting }}, {{ $auth_user->name ?? 'Admin' }} 👋
+                        {{ $greeting }}, <span>{{ $auth_user->name ?? 'Admin' }}</span> 👋
                     </h2>
-                    <p class="text-white">
+                    <p>
                         @if(isset($user_type) && $user_type === 'super-admin')
-                            Here's your system overview for {{ now()->format('l, F j, Y') }}
+                            Here's your system overview and real-time statistics.
                         @elseif(isset($user_type) && $user_type === 'company')
-                            Welcome to your company dashboard — {{ now()->format('l, F j, Y') }}
+                            Welcome to your company dashboard overview.
                         @else
-                            Welcome to your dashboard
+                            Welcome to your centralized dashboard.
                         @endif
                     </p>
                 </div>
-                <div class="col-md-4 text-right d-none d-md-block">
-                    <span style="font-size:2.5rem;opacity:.6">📊</span>
+                <div class="col-md-3 text-right d-none d-md-block">
+                    <div class="welcome-icon-box">
+                        <i class="fas fa-bolt"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -291,6 +347,55 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Payment Stats --}}
+                @if(isset($payment_stats))
+                <div class="stat-card-wrapper">
+                    <div class="card stat-card gradient-blue">
+                        <div class="card-body">
+                            <div class="stat-icon icon-blue"><i class="fas fa-money-bill-wave"></i></div>
+                            <div class="stat-value">${{ number_format($payment_stats['total_revenue'] ?? 0, 2) }}</div>
+                            <div class="stat-label">Total Revenue</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card-wrapper">
+                    <div class="card stat-card gradient-green">
+                        <div class="card-body">
+                            <div class="stat-icon icon-green"><i class="fas fa-hand-holding-usd"></i></div>
+                            <div class="stat-value">${{ number_format($payment_stats['today_revenue'] ?? 0, 2) }}</div>
+                            <div class="stat-label">Today's Revenue</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card-wrapper">
+                    <div class="card stat-card gradient-amber">
+                        <div class="card-body">
+                            <div class="stat-icon icon-amber"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-value">{{ number_format($payment_stats['succeeded_count'] ?? 0) }}</div>
+                            <div class="stat-label">Success Payments</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card-wrapper">
+                    <div class="card stat-card gradient-purple">
+                        <div class="card-body">
+                            <div class="stat-icon icon-purple"><i class="fas fa-hourglass-half"></i></div>
+                            <div class="stat-value">{{ number_format($payment_stats['pending_count'] ?? 0) }}</div>
+                            <div class="stat-label">Pending Payments</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card-wrapper">
+                    <div class="card stat-card gradient-rose">
+                        <div class="card-body">
+                            <div class="stat-icon icon-rose"><i class="fas fa-undo"></i></div>
+                            <div class="stat-value">{{ number_format($payment_stats['refunded_count'] ?? 0) }}</div>
+                            <div class="stat-label">Refunded</div>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
 
             {{-- Charts Row --}}
@@ -450,6 +555,41 @@
                                             </td>
                                             <td><small>{{ $result->reason_for_test ?? '-' }}</small></td>
                                             <td><small class="text-muted">{{ \Carbon\Carbon::parse($result->created_at)->format('M d, Y') }}</small></td>
+                                        </tr>
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            {{-- Recent Payments --}}
+            @if(isset($recent_payments) && $recent_payments->count())
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card dash-card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-credit-card mr-2" style="color:#6366f1"></i> Recent Payments</h5>
+                            <a href="{{ url('admin/payments') }}" class="badge badge-primary" style="text-decoration:none">View All →</a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-modern mb-0">
+                                    <thead><tr><th>Payment ID</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead>
+                                    <tbody>
+                                    @foreach($recent_payments as $payment)
+                                        <tr>
+                                            <td><code style="font-size:.8rem">{{ $payment->payment_id ?: '-' }}</code></td>
+                                            <td><strong>${{ number_format($payment->amount ?? 0, 2) }}</strong></td>
+                                            <td>{{ ucfirst($payment->payment_method ?? 'Stripe') }}</td>
+                                            <td>
+                                                @php $ps = strtolower($payment->status ?? ''); @endphp
+                                                <span class="status-badge badge-{{ $ps === 'succeeded' ? 'completed' : ($ps === 'refunded' ? 'negative' : 'pending') }}">{{ ucfirst($payment->status ?? 'N/A') }}</span>
+                                            </td>
+                                            <td><small class="text-muted">{{ \Carbon\Carbon::parse($payment->created_at)->format('M d, Y H:i') }}</small></td>
                                         </tr>
                                     @endforeach
                                     </tbody>
