@@ -1350,9 +1350,11 @@ class QuestDiagnosticsController extends Controller
         return $value;
     }
 
-    private function digitsOnly(string $value): string
+    private function digitsOnly(?string $value): string
     {
-        return preg_replace('/[^0-9]/', '', $value);
+        $value = $value ?? '';
+        $result = preg_replace('/[^0-9]/', '', $value);
+        return $result === null ? '' : $result;
     }
 
     private function xmlEscape(string $value): string
