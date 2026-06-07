@@ -4,25 +4,21 @@ namespace App\Http\Controllers\Admin;
 
 
 use Illuminate\Http\Request;
-use App\Services\FirebaseService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\Admin\CollectionSite;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\HeadingRowImport;
 use App\Services\QuestCollectionService;
 use Illuminate\Support\Facades\Validator;
 
 class QuestSyncController extends Controller
 {
     protected $questCollectionService;
-    protected $firebaseService;
 
-    public function __construct(QuestCollectionService $questCollectionService, FirebaseService $firebaseService)
+    public function __construct(QuestCollectionService $questCollectionService)
     {
         $this->questCollectionService = $questCollectionService;
-        $this->firebaseService = $firebaseService;
     }
 
     /**
@@ -30,10 +26,8 @@ class QuestSyncController extends Controller
      */
     public function dashboard()
     {
-        $sitesCount = $this->firebaseService->getSitesCount();
-
         return view('admin.quest-site.dashboard', [
-            'sitesCount' => $sitesCount,
+            'sitesCount' => 0,
             'lastSync' => now()->format('Y-m-d H:i:s')
         ]);
     }
@@ -41,156 +35,22 @@ class QuestSyncController extends Controller
     /**
      * Perform full sync
      */
-    // public function fullSync(Request $request)
-    // {
-    //     set_time_limit(600);
-    //     ini_set('max_execution_time', 600);
-
-    //     try {
-    //         $request->validate([
-    //             'confirm' => 'required|accepted'
-    //         ]);
-
-    //         Log::info('Starting manual full sync of Quest collection sites');
-
-    //         // Retrieve data from Quest API using the collection service
-    //         $result = $this->questCollectionService->getFullCollectionSiteDetails();
-    //         $sites = $result['sites'];
-
-    //         Log::info('Retrieved ' . count($sites) . ' sites from Quest API');
-
-    //         // Filter sites for drug testing capabilities
-    //         $filteredSites = array_filter($sites, function ($site) {
-    //             return $site['is_active'] &&
-    //                 $site['open_to_public'] &&
-    //                 ($site['nida_collections'] || $site['sap_collections']);
-    //         });
-
-    //         Log::info('Filtered to ' . count($filteredSites) . ' sites with drug testing capabilities');
-
-    //         // Sync to Firebase
-    //         $syncResult = $this->firebaseService->syncCollectionSites($filteredSites);
-
-    //         // Log results
-    //         Log::info('Quest collection sites sync completed', [
-    //             'total_retrieved' => count($sites),
-    //             'total_filtered' => count($filteredSites),
-    //             'sync_success' => $syncResult['success'],
-    //             'sync_errors' => $syncResult['errors']
-    //         ]);
-
-    //         return redirect()->route('quest-site.dashboard')
-    //             ->with('success', 'Full sync completed successfully! ' .
-    //                 $syncResult['success'] . ' sites processed, ' .
-    //                 $syncResult['errors'] . ' errors.')
-    //             ->with('details', $syncResult['details']);
-    //     } catch (\Exception $e) {
-    //         Log::error('Manual full sync failed: ' . $e->getMessage());
-
-    //         return redirect()->route('quest-site.dashboard')
-    //             ->with('error', 'Sync failed: ' . $e->getMessage());
-    //     }
-    // }
-
     public function fullSync(Request $request)
     {
-        // Store original limits
-        $originalTimeLimit = ini_get('max_execution_time');
-        $originalMemoryLimit = ini_get('memory_limit');
-
         try {
             $request->validate([
                 'confirm' => 'required|accepted'
             ]);
 
-            // Increase limits for the sync operation
-            set_time_limit(1800); // 30 minutes
-            ini_set('max_execution_time', 1800);
-            ini_set('memory_limit', '1024M');
-
-            Log::info('Starting manual full sync of Quest collection sites with extended limits');
-
-            // Store start time for progress tracking
-            $startTime = microtime(true);
-            cache()->put('sync_start_time', $startTime, 3600);
-            cache()->put('sync_in_progress', true, 3600);
-            cache()->put('sync_stage', 'retrieving_data', 3600);
-
-            // Retrieve data from Quest API
-            cache()->put('sync_stage', 'retrieving_quest_data', 3600);
-            $result = $this->questCollectionService->getFullCollectionSiteDetails();
-            $sites = $result['sites'];
-
-            Log::info('Retrieved ' . count($sites) . ' sites from Quest API');
-            cache()->put('sync_stage', 'filtering_sites', 3600);
-
-            // Filter sites for drug testing capabilities
-            $filteredSites = array_filter($sites, function ($site) {
-                return $site['is_active'] &&
-                    $site['open_to_public'] &&
-                    ($site['nida_collections'] || $site['sap_collections']);
-            });
-
-            Log::info('Filtered to ' . count($filteredSites) . ' sites with drug testing capabilities');
-            cache()->put('sync_stage', 'syncing_to_firebase', 3600);
-
-            // Sync to Firebase
-            $syncResult = $this->firebaseService->syncCollectionSites($filteredSites);
-
-            // Calculate total time
-            $totalTime = round(microtime(true) - $startTime, 2);
-            Log::info("Total sync time: {$totalTime} seconds");
-
-            // Store results in cache for display
-            cache()->put('last_sync_result', [
-                'success' => true,
-                'message' => 'Full sync completed successfully!',
-                'stats' => [
-                    'total_retrieved' => count($sites),
-                    'total_filtered' => count($filteredSites),
-                    'sync_success' => $syncResult['success'],
-                    'sync_errors' => $syncResult['errors'],
-                    'total_time' => $totalTime
-                ],
-                'completed_at' => now()->toDateTimeString()
-            ], 3600);
-
-            // Clear progress indicators
-            cache()->forget('sync_in_progress');
-            cache()->forget('sync_stage');
-            cache()->forget('sync_start_time');
+            Log::info('Full sync requested, but Firebase integration has been removed.');
 
             return redirect()->route('quest-site.dashboard')
-                ->with('success', 'Full sync completed successfully! ' .
-                    $syncResult['success'] . ' sites processed, ' .
-                    $syncResult['errors'] . ' errors. Time: ' . $totalTime . ' seconds.')
-                ->with('details', $syncResult['details']);
+                ->with('error', 'Full sync is not available because Firebase integration was removed.');
         } catch (\Exception $e) {
             Log::error('Manual full sync failed: ' . $e->getMessage());
 
-            // Clear progress indicators on error
-            cache()->forget('sync_in_progress');
-            cache()->forget('sync_stage');
-            cache()->forget('sync_start_time');
-
-            // Store error result
-            cache()->put('last_sync_result', [
-                'success' => false,
-                'message' => 'Sync failed: ' . $e->getMessage(),
-                'completed_at' => now()->toDateTimeString()
-            ], 3600);
-
             return redirect()->route('quest-site.dashboard')
                 ->with('error', 'Sync failed: ' . $e->getMessage());
-        } finally {
-            // Restore original limits
-            if ($originalTimeLimit !== false) {
-                set_time_limit((int)$originalTimeLimit);
-                ini_set('max_execution_time', $originalTimeLimit);
-            }
-            if ($originalMemoryLimit !== false) {
-                ini_set('memory_limit', $originalMemoryLimit);
-            }
         }
     }
 
@@ -227,40 +87,10 @@ class QuestSyncController extends Controller
 
             $sinceDate = $request->input('since_date');
 
-            Log::info('Starting manual incremental sync of Quest collection sites since ' . $sinceDate);
-
-            // Retrieve data from Quest API
-            $result = $this->questCollectionService->getFullCollectionSiteDetails($sinceDate);
-            $sites = $result['sites'];
-
-            Log::info('Retrieved ' . count($sites) . ' updated sites from Quest API');
-
-            // Filter sites for drug testing capabilities
-            $filteredSites = array_filter($sites, function ($site) {
-                return $site['is_active'] &&
-                    $site['open_to_public'] &&
-                    ($site['nida_collections'] || $site['sap_collections']);
-            });
-
-            Log::info('Filtered to ' . count($filteredSites) . ' updated sites with drug testing capabilities');
-
-            // Sync to Firebase
-            $syncResult = $this->firebaseService->syncCollectionSites($filteredSites);
-
-            // Log results
-            Log::info('Quest collection sites incremental sync completed', [
-                'since_date' => $sinceDate,
-                'total_retrieved' => count($sites),
-                'total_filtered' => count($filteredSites),
-                'sync_success' => $syncResult['success'],
-                'sync_errors' => $syncResult['errors']
-            ]);
+            Log::info('Incremental sync requested since ' . $sinceDate . ', but Firebase integration has been removed.');
 
             return redirect()->route('quest-site.dashboard')
-                ->with('success', 'Incremental sync completed successfully! ' .
-                    $syncResult['success'] . ' sites processed, ' .
-                    $syncResult['errors'] . ' errors.')
-                ->with('details', $syncResult['details']);
+                ->with('error', 'Incremental sync is not available because Firebase integration was removed.');
         } catch (\Exception $e) {
             Log::error('Manual incremental sync failed: ' . $e->getMessage());
 
@@ -275,19 +105,14 @@ class QuestSyncController extends Controller
     public function clearData(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            Validator::make($request->all(), [
                 'confirm' => 'required|accepted'
-            ]);
+            ])->validate();
 
-            $result = $this->firebaseService->clearAllSites();
+            Log::info('Clear data requested, but Firebase integration has been removed.');
 
-            if ($result) {
-                Log::info('All collection site data cleared from Firebase');
-                return redirect()->route('quest-site.dashboard')
-                    ->with('success', 'All data cleared successfully!');
-            } else {
-                throw new \Exception('Failed to clear data from Firebase');
-            }
+            return redirect()->route('quest-site.dashboard')
+                ->with('error', 'Clear data is not available because Firebase integration was removed.');
         } catch (\Exception $e) {
             Log::error('Clear data failed: ' . $e->getMessage());
 
@@ -302,11 +127,11 @@ class QuestSyncController extends Controller
     public function viewSites()
     {
         try {
-            $sites = $this->firebaseService->getAllSites();
+            $sites = [];
 
             return view('admin.quest-site.view-sites', [
                 'sites' => $sites,
-                'sitesCount' => count($sites)
+                'sitesCount' => 0
             ]);
         } catch (\Exception $e) {
             Log::error('View sites failed: ' . $e->getMessage());
