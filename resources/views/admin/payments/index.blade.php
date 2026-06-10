@@ -127,7 +127,7 @@
                                 @foreach($payments as $payment)
                                 <tr>
                                     <td class="text-nowrap">
-                                        {{ $payment->created_at->format('M d, Y') }}<br>
+                                        {{ $payment->created_at->format('m/d/Y') }}<br>
                                         <small class="text-muted">{{ $payment->created_at->format('H:i') }}</small>
                                     </td>
                                     <td>
@@ -155,7 +155,7 @@
                                         </code>
                                     </td>
                                     <td class="text-nowrap">
-                                        {{ $payment->paid_at?->format('M d, Y H:i') ?? '—' }}
+                                        {{ $payment->paid_at?->format('m/d/Y h:i A') ?? '—' }}
                                     </td>
                                     <td class="text-center">
                                         <a href="{{ route('admin.payments.show', $payment->id) }}"

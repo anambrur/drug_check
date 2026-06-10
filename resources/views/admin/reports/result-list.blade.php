@@ -62,7 +62,7 @@
                                     <tr>
                                         <td>{{ $result->id ?? 'N/A' }}</td>
                                         <td>
-                                            {{ \Carbon\Carbon::parse($result->collection_datetime)->format('Y-m-d h:i A') }}
+                                            {{ \Carbon\Carbon::parse($result->collection_datetime)->format('m/d/Y h:i A') }}
                                         </td>
 
                                         <td>{{ $result->clientProfile->company_name ?? 'N/A' }}</td>

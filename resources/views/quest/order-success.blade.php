@@ -77,7 +77,7 @@
     <div id="printable-area" class="d-none">
         <div class="print-header text-center mb-4">
             <h2 class="text-success">Quest Diagnostics Order Confirmation</h2>
-            <p class="text-muted">Order successfully scheduled on {{ now()->format('F j, Y \a\t g:i A') }}</p>
+            <p class="text-muted">Order successfully scheduled on {{ now()->format('m/d/Y h:i A') }}</p>
             <hr>
         </div>
 
@@ -94,7 +94,7 @@
                 </tr>
                 <tr>
                     <th>Order Date:</th>
-                    <td>{{ now()->format('F j, Y \a\t g:i A') }}</td>
+                    <td>{{ now()->format('m/d/Y h:i A') }}</td>
                 </tr>
             </table>
         </div>
@@ -111,7 +111,7 @@
 
         <div class="print-footer text-center mt-4">
             <hr>
-            <p class="text-muted">Generated on {{ now()->format('F j, Y \a\t g:i A') }}</p>
+            <p class="text-muted">Generated on {{ now()->format('m/d/Y h:i A') }}</p>
         </div>
     </div>
     <script>

@@ -117,7 +117,7 @@
                                         <td>{{ $clientProfile->billing_contact_name }}</td>
                                         <td>{{ $clientProfile->billing_contact_email }}</td>
                                         <td>{{ $clientProfile->billing_contact_phone }}</td>
-                                        <td>{{ Carbon\Carbon::parse($clientProfile->created_at)->format('d.m.Y') }}</td>
+                                        <td>{{ Carbon\Carbon::parse($clientProfile->created_at)->format('m/d/Y') }}</td>
                                         <td>
                                             @if ($clientProfile->status == 'active')
                                                 <span class="badge badge-pill badge-success">Active</span>

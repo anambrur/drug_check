@@ -15,7 +15,7 @@
     <h3>Payment Details:</h3>
     <ul>
         <li><strong>Amount Paid:</strong> ${{ number_format($amount, 2) }}</li>
-        <li><strong>Payment Date:</strong> {{ now()->format('F j, Y') }}</li>
+        <li><strong>Payment Date:</strong> {{ now()->format('m/d/Y') }}</li>
         <li><strong>Test Scheduled:</strong> {{ $data['date'] ?? 'To be confirmed' }}</li>
     </ul>
 

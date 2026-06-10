@@ -154,15 +154,15 @@
                     </div>
                     <div class="card-body">
                         <p class="font-13 mb-1"><span class="text-muted">Created:</span><br>
-                            <strong>{{ $payment->created_at->format('M d, Y H:i:s') }}</strong></p>
+                            <strong>{{ $payment->created_at->format('m/d/Y h:i:s A') }}</strong></p>
                         <p class="font-13 mb-1"><span class="text-muted">Paid At:</span><br>
-                            <strong>{{ $payment->paid_at?->format('M d, Y H:i:s') ?? '—' }}</strong></p>
+                            <strong>{{ $payment->paid_at?->format('m/d/Y h:i:s A') ?? '—' }}</strong></p>
                         @if($payment->refunded_at)
                         <p class="font-13 mb-1"><span class="text-muted">Refunded At:</span><br>
-                            <strong>{{ $payment->refunded_at->format('M d, Y H:i:s') }}</strong></p>
+                            <strong>{{ $payment->refunded_at->format('m/d/Y h:i:s A') }}</strong></p>
                         @endif
                         <p class="font-13 mb-0"><span class="text-muted">Last Updated:</span><br>
-                            <strong>{{ $payment->updated_at->format('M d, Y H:i:s') }}</strong></p>
+                            <strong>{{ $payment->updated_at->format('m/d/Y h:i:s A') }}</strong></p>
                     </div>
                 </div>
 
@@ -192,7 +192,7 @@
                                         <div>
                                             <p class="mb-0 font-13 font-weight-medium">{{ $event->type }}</p>
                                             <small class="text-muted">
-                                                {{ \Carbon\Carbon::createFromTimestamp($event->stripe_created)->format('M d, Y H:i:s') }}
+                                                {{ \Carbon\Carbon::createFromTimestamp($event->stripe_created)->format('m/d/Y h:i:s A') }}
                                             </small>
                                             @if($event->livemode === false)
                                                 <span class="badge badge-warning badge-pill ml-1" style="font-size:9px;">test</span>

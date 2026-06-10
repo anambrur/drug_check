@@ -20,7 +20,7 @@
                             <table class="table table-bordered">
                                 <tr>
                                     <th width="30%">Execution Date</th>
-                                    <td>{{ $event->selection_date->format('M d, Y h:i A') }}</td>
+                                    <td>{{ $event->selection_date->format('m/d/Y h:i A') }}</td>
                                 </tr>
                                 <tr>
                                     <th>Protocol</th>

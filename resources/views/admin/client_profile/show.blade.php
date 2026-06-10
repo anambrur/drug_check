@@ -102,7 +102,7 @@
                         @if ($clientProfile->certificate_path)
                             <div class="alert alert-success">
                                 Certificate generated on:
-                                {{ $clientProfile->certificate_generated_at->format('F j, Y, g:i a') }}
+                                {{ $clientProfile->certificate_generated_at->format('m/d/Y h:i A') }}
                             </div>
                         @endif
 

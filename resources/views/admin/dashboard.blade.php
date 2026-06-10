@@ -243,7 +243,7 @@
                 <div class="col-md-9">
                     <div class="welcome-date-badge">
                         <i class="fas fa-calendar-alt"></i>
-                        {{ now()->format('l, F j, Y') }}
+                        {{ now()->format('l, m/d/Y') }}
                     </div>
                     <h2>
                         @php
@@ -554,7 +554,7 @@
                                                 <span class="status-badge badge-{{ str_contains($rs,'complet') ? 'completed' : 'pending' }}">{{ ucfirst($result->status ?? 'N/A') }}</span>
                                             </td>
                                             <td><small>{{ $result->reason_for_test ?? '-' }}</small></td>
-                                            <td><small class="text-muted">{{ \Carbon\Carbon::parse($result->created_at)->format('M d, Y') }}</small></td>
+                                            <td><small class="text-muted">{{ \Carbon\Carbon::parse($result->created_at)->format('m/d/Y') }}</small></td>
                                         </tr>
                                     @endforeach
                                     </tbody>
@@ -589,7 +589,7 @@
                                                 @php $ps = strtolower($payment->status ?? ''); @endphp
                                                 <span class="status-badge badge-{{ $ps === 'succeeded' ? 'completed' : ($ps === 'refunded' ? 'negative' : 'pending') }}">{{ ucfirst($payment->status ?? 'N/A') }}</span>
                                             </td>
-                                            <td><small class="text-muted">{{ \Carbon\Carbon::parse($payment->created_at)->format('M d, Y H:i') }}</small></td>
+                                            <td><small class="text-muted">{{ \Carbon\Carbon::parse($payment->created_at)->format('m/d/Y h:i A') }}</small></td>
                                         </tr>
                                     @endforeach
                                     </tbody>
@@ -776,7 +776,7 @@
                                                 <td>{{ optional($result->laboratory)->laboratory_name ?? '-' }}</td>
                                                 <td>{{ optional($result->mro)->name ?? '-' }}</td>
                                                 <td><span class="status-badge badge-{{ strtolower($result->status ?? '') === 'completed' ? 'completed' : 'pending' }}">{{ ucfirst($result->status ?? 'N/A') }}</span></td>
-                                                <td><small>{{ \Carbon\Carbon::parse($result->created_at)->format('M d, Y') }}</small></td>
+                                                <td><small>{{ \Carbon\Carbon::parse($result->created_at)->format('m/d/Y') }}</small></td>
                                             </tr>
                                         @endforeach
                                         </tbody>

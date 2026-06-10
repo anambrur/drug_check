@@ -483,8 +483,8 @@ class ClientProfileController extends Controller
         // Prepare certificate data
         $data = [
             'companyName' => htmlspecialchars($clientProfile->company_name),
-            'startDate' => $startDate->format('F j, Y'),
-            'endDate' => $endDate->format('F j, Y'),
+            'startDate' => $startDate->format('m/d/Y'),
+            'endDate' => $endDate->format('m/d/Y'),
             'signatureName' => 'Harinder Garcia',
         ];
 

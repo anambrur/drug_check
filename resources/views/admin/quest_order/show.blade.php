@@ -35,7 +35,7 @@
                                     </tr>
                                     <tr>
                                         <th>Date of Birth:</th>
-                                        <td>{{ $questOrder->dob ? $questOrder->dob->format('d M Y') : 'N/A' }}</td>
+                                        <td>{{ $questOrder->dob ? $questOrder->dob->format('m/d/Y') : 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Primary Phone:</th>
@@ -121,7 +121,7 @@
                                     </tr>
                                     <tr>
                                         <th>Collected Date/Time:</th>
-                                        <td>{{ $questOrder->collected_datetime ? $questOrder->collected_datetime->format('d M Y H:i') : 'N/A' }}
+                                        <td>{{ $questOrder->collected_datetime ? $questOrder->collected_datetime->format('m/d/Y h:i A') : 'N/A' }}
                                         </td>
                                     </tr>
                                 </table>
@@ -218,21 +218,21 @@
                                     </tr>
                                     <tr>
                                         <th>End Date/Time:</th>
-                                        <td>{{ $questOrder->end_datetime ? $questOrder->end_datetime->format('d M Y H:i') : 'N/A' }}
+                                        <td>{{ $questOrder->end_datetime ? $questOrder->end_datetime->format('m/d/Y h:i A') : 'N/A' }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <th>Expired At:</th>
-                                        <td>{{ $questOrder->expired_at ? $questOrder->expired_at->format('d M Y H:i') : 'N/A' }}
+                                        <td>{{ $questOrder->expired_at ? $questOrder->expired_at->format('m/d/Y h:i A') : 'N/A' }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <th>Created Date:</th>
-                                        <td>{{ $questOrder->created_at->format('d M Y H:i') }}</td>
+                                        <td>{{ $questOrder->created_at->format('m/d/Y h:i A') }}</td>
                                     </tr>
                                     <tr>
                                         <th>Last Updated:</th>
-                                        <td>{{ $questOrder->updated_at->format('d M Y H:i') }}</td>
+                                        <td>{{ $questOrder->updated_at->format('m/d/Y h:i A') }}</td>
                                     </tr>
                                     <tr>
                                         <th>API Response Status:</th>

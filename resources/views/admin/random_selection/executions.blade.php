@@ -21,7 +21,7 @@
                                     <i class="fas fa-calendar-alt font-36"></i>
                                     <div class="info-box-content">
                                         <span class="info-box-text">Protocol Created</span>
-                                        <span class="info-box-number">{{ $protocol->created_at->format('M d, Y') }}</span>
+                                        <span class="info-box-number">{{ $protocol->created_at->format('m/d/Y') }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -68,7 +68,7 @@
                                         @foreach ($executions as $execution)
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $execution->selection_date->format('M d, Y h:i A') }}</td>
+                                                <td>{{ $execution->selection_date->format('m/d/Y h:i A') }}</td>
                                                 <td>{{ $execution->pool_size }}</td>
                                                 <td>
                                                     @php

@@ -130,7 +130,7 @@
                                     </div>
                                     <div class="text-left view_results">
                                         <strong>
-                                            {{ \Carbon\Carbon::parse($recoding_result->collection_datetime)->format('Y-m-d h:i A') }}</strong>
+                                            {{ \Carbon\Carbon::parse($recoding_result->collection_datetime)->format('m/d/Y h:i A') }}</strong>
                                     </div>
                                     <div class="text-left view_results">
                                         <strong> {{ $recoding_result->employee->first_name }}

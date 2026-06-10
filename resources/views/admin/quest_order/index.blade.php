@@ -99,7 +99,7 @@
                                                 <span class="badge badge-pill badge-secondary">Not Available</span>
                                             @endif
                                         </td>
-                                        <td>{{ Carbon\Carbon::parse($order->created_at)->format('m.d.Y') }}</td>
+                                        <td>{{ Carbon\Carbon::parse($order->created_at)->format('m/d/Y') }}</td>
                                         <td>
                                             <div>
                                                 @can('quest-order view')

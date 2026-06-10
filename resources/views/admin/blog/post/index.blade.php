@@ -91,7 +91,7 @@
                                         </td>
                                         <td>{{ $blog->title }}</td>
                                         <td><span class="badge badge-pill badge-dark">@if (isset($blog->category->category_name)) {{ $blog->category->category_name }} @else {{ $blog->category_name }} @endif</span></td>
-                                        <td>{{ Carbon\Carbon::parse($blog->created_at)->format('d.m.Y') }}</td>
+                                        <td>{{ Carbon\Carbon::parse($blog->created_at)->format('m/d/Y') }}</td>
                                         <td>{{ $blog->order }}</td>
                                         <td>
                                             @if ($blog->status == "published")

@@ -57,7 +57,7 @@
                                     <div class="info-box-content">
                                         <span class="info-box-text">Selection Date</span>
                                         <span
-                                            class="info-box-number">{{ $event->selection_date->format('M d, Y h:i A') }}</span>
+                                            class="info-box-number">{{ $event->selection_date->format('m/d/Y h:i A') }}</span>
                                     </div>
                                 </div>
                             </div>
