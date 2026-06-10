@@ -229,7 +229,7 @@
                     </div>
 
                     <!-- PDF Upload Section -->
-                    <div class="col-md-6">
+                    <div class="col-md-3 pt-2">
                         <div class="form-group">
                             <label for="pdf_file">Upload PDF Report</label>
                             <input type="file" class="form-control-file" id="pdf_file" name="pdf_file"
@@ -259,7 +259,20 @@
                         </div>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-3 pt-2">
+                        <div class="form-group">
+                            <label for="send_notification_toggle">Send Notification</label>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="send_notification_toggle" 
+                                    name="send_notification" value="1">
+                                <label class="custom-control-label" for="send_notification_toggle">
+                                    Send notification to client after creating result
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 pt-2">
                         <div class="form-group">
                             <label for="note">Note</label>
                             <textarea id="note" name="note" class="form-control" rows="3">{{ $recoding_result->note }}</textarea>

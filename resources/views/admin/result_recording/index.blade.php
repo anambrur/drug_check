@@ -164,12 +164,39 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="note">Note</label>
                             <textarea id="note" name="note" class="form-control" rows="3"></textarea>
                         </div>
                     </div>
+
+                    <!-- PDF Upload Section -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="pdf_file">Upload PDF Report</label>
+                            <input type="file" class="form-control-file" id="pdf_file" name="pdf_file"
+                                accept=".pdf,.PDF">
+                            <small class="form-text text-muted">
+                                Upload a PDF file (Max: 10MB). Leave empty to keep existing file.
+                            </small>
+
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="send_notification_toggle">Send Notification</label>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="send_notification_toggle" 
+                                    name="send_notification" value="1">
+                                <label class="custom-control-label" for="send_notification_toggle">
+                                    Send notification to client after creating result
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-md-3 d-flex align-items-center mt-3">
                         <button type="submit" class="btn btn-primary w-100">{{ __('content.submit') }}</button>
                     </div>
@@ -367,7 +394,8 @@
                                                 <hr>
 
                                                 <div class="client-info">
-                                                    <p><strong>Client:</strong> {{ $result->clientProfile->company_name ?? 'N/A' }}
+                                                    <p><strong>Client:</strong>
+                                                        {{ $result->clientProfile->company_name ?? 'N/A' }}
                                                         <strong>Phone:</strong>
                                                         {{ $result->clientProfile->phone ?? 'N/A' }}
                                                     </p>

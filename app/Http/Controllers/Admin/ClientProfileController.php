@@ -277,7 +277,9 @@ class ClientProfileController extends Controller
 
     public function show($id)
     {
-        $clientProfile = ClientProfile::with('employees')->where('id', $id)->first();
+        $clientProfile = ClientProfile::with(['employees' => function ($query) {
+            $query->withCount('resultRecordings');
+        }])->where('id', $id)->first();
         return view('admin.client_profile.show', compact('clientProfile'));
     }
 

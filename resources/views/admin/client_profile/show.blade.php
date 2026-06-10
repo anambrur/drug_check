@@ -512,21 +512,11 @@
                         <tr>
                             <th>First Name</th>
                             <th>Last Name</th>
-                            <th>Middle Name</th>
                             <th>Email</th>
-                            <th>Group</th>
-                            <th>Department</th>
-                            <th>Shift</th>
-                            <th>Date Of Birth</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Employee ID</th>
-                            <th>Background Check Date</th>
-                            <th>SSN</th>
                             <th>Phone</th>
-                            <th>Description</th>
-                            <th>CDL State</th>
-                            <th>CDL Number</th>
+                            <th>Employee ID</th>
+                            <th>Group</th>
+                            <th>Date Of Birth</th>
                             <th>{{ __('content.status') }}</th>
                             <th class="custom-width-action">{{ __('content.action') }}</th>
                         </tr>
@@ -538,22 +528,11 @@
                             <tr>
                                 <td>{{ $employee->first_name }}</td>
                                 <td>{{ $employee->last_name }}</td>
-                                <td>{{ $employee->middle_name }}</td>
                                 <td>{{ $employee->email }}</td>
-                                <td>{{ $employee->dot }}</td>
-                                <td>{{ $employee->department }}</td>
-                                <td>{{ $employee->shift }}</td>
-                                <td>{{ $employee->date_of_birth }}</td>
-                                <td>{{ $employee->start_date }}</td>
-                                <td>{{ $employee->end_date }}</td>
-                                <td>{{ $employee->employee_id }}</td>
-                                <td>{{ $employee->background_check_date }}</td>
-                                <td>{{ $employee->ssn }}</td>
                                 <td>{{ $employee->phone }}</td>
-                                <td>{{ $employee->short_description }}</td>
-                                <td>{{ $employee->cdl_state }}</td>
-                                <td>{{ $employee->cdl_number }}</td>
-
+                                <td>{{ $employee->employee_id }}</td>
+                                <td>{{ $employee->dot }}</td>
+                                <td>{{ $employee->date_of_birth }}</td>
                                 <td>
                                     @if ($employee->status == 'active')
                                         <span class="badge badge-pill badge-success">Active</span>
@@ -564,7 +543,7 @@
                                 <td>
                                     <div class="d-flex justify-content-left align-items-center">
                                         <a href="{{ route('client-profile.employee_edit', $employee->id) }}"
-                                            class="mr-2">
+                                            class="mr-2 pt-1">
                                             <i class="fa fa-edit text-info font-18"></i>
                                         </a>
 
@@ -575,7 +554,7 @@
 
                                         <a href="{{ route('result-recording.resultByEmployee', $employee->id) }}"
                                             class="ml-2">
-                                            <span class="badge badge-pill badge-info">Result</span>
+                                            <span class="badge badge-pill badge-info">Result ({{ $employee->result_recordings_count }})</span>
                                         </a>
                                     </div>
                                 </td>

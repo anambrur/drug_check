@@ -20,6 +20,7 @@ use App\Models\Admin\ResultRecording;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Admin\Employee;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ResultRecordingController extends Controller
@@ -32,7 +33,6 @@ class ResultRecordingController extends Controller
     public function index()
     {
         // Retrieving models
-        $language = getLanguage();
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $laboratories = Laboratory::orderBy('id', 'desc')->get();
@@ -60,12 +60,24 @@ class ResultRecordingController extends Controller
 
     public function resultByEmployee($id)
     {
-        $language = getLanguage();
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')->orderBy('id', 'desc')->where('employee_id', $id)->get();
 
-        return view('admin.result_recording.result_by_employee', compact('favicon', 'panel_image', 'recoding_results'));
+        $employee = Employee::findOrFail($id);
+
+        $clientProfile = ClientProfile::with('employees')->orderBy('id', 'desc')->whereHas('employees', function ($query) use ($id) {
+            $query->where('id', $id);
+        })->first();
+
+        $test_admins = TestAdmin::with('laboratory', 'mro', 'panel')->orderBy('id', 'desc')->get();
+
+        $laboratories = Laboratory::orderBy('id', 'desc')->get();
+        $mros = MRO::orderBy('id', 'desc')->get();
+
+        // dd($clientProfile);
+
+        return view('admin.result_recording.result_by_employee', compact('favicon', 'panel_image', 'recoding_results', 'clientProfile', 'employee', 'test_admins', 'laboratories', 'mros'));
     }
 
     public function get_empoyees(Request $request)
@@ -104,6 +116,7 @@ class ResultRecordingController extends Controller
             'time_of_collection' => 'required|date_format:H:i',
             'note' => 'nullable|string',
             'status' => 'in:positive,negative,refused,excused,cancelled,pending,saved,collection only',
+            'pdf_file' => 'nullable|file|mimes:pdf|max:10240',
             'panel_results' => 'nullable|array',
             'panel_results.*.result' => 'nullable|in:negative,positive',
             'panel_results.*.panel_id' => 'nullable|exists:panels,id',
@@ -115,6 +128,29 @@ class ResultRecordingController extends Controller
             return back();
         }
         $input = $request->all();
+
+        // Handle PDF file upload using your existing system
+        if ($request->hasFile('pdf_file')) {
+            // Get PDF file
+            $pdf = $request->file('pdf_file');
+
+            // Folder path
+            $folder = 'uploads/pdf/result_records/';
+
+            // Create folder if it doesn't exist
+            if (!File::exists(public_path($folder))) {
+                File::makeDirectory(public_path($folder), 0755, true);
+            }
+
+            // Make PDF file name
+            $pdf_name = time() . '-' . $pdf->getClientOriginalName();
+
+            // Upload file
+            $pdf->move($folder, $pdf_name);
+
+            // Set input
+            $input['pdf_path'] = $folder . $pdf_name;
+        }
 
         DB::beginTransaction();
 
@@ -136,6 +172,7 @@ class ResultRecordingController extends Controller
                 'time_of_collection' => $input['time_of_collection'],
                 'note' => $input['note'] ?? null,
                 'status' => $input['status'] ?? null,
+                'pdf_path' => $input['pdf_path'] ?? null,
             ]);
 
             // Create panel results
@@ -155,10 +192,11 @@ class ResultRecordingController extends Controller
 
             DB::commit();
 
-            // Send notifications
-            $notificationService = new NotificationService();
-            $notificationService->sendTestNotificationStore($result, 'company');
-
+            // Send notifications if toggle is enabled
+            if ($request->has('send_notification') && $request->send_notification) {
+                $notificationService = new NotificationService();
+                $notificationService->sendTestNotificationStore($result, 'company');
+            }
 
             toastr()->success('content.created_successfully', 'content.success');
             return redirect()->route('result-recording.index');
@@ -369,7 +407,7 @@ class ResultRecordingController extends Controller
 
             $mailData->additional_text = $validated['additional_text'] ?? null;
 
-    
+
             $databasePdf = null;
             if ($mailData->pdf_path) {
                 $fullPath = public_path($mailData->pdf_path);
