@@ -16,7 +16,7 @@
                     <div class="card-body">
                         <!-- Protocol Summary -->
                         <div class="row mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="info-box bg-light p-3" style="border-radius: 10px">
                                     <i class="fas fa-calendar-alt font-36"></i>
                                     <div class="info-box-content">
@@ -25,8 +25,8 @@
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="col-md-4">
+
+                            <div class="col-md-3">
                                 <div class="info-box bg-light p-3" style="border-radius: 10px">
                                     <i class="fas fa-users font-36"></i>
                                     <div class="info-box-content">
@@ -36,7 +36,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="info-box bg-light p-3" style="border-radius: 10px">
                                     <i class="fa fa-history text-primary font-36" title="View Execution History"></i>
                                     <div class="info-box-content">
@@ -45,12 +45,11 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="row mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="info-box bg-light p-3" style="border-radius: 10px">
-                                    <i class="fas fa-envelope font-36 {{ $protocol->is_email_send ? 'text-info' : 'text-secondary' }}"></i>
+                                    <i
+                                        class="fas fa-envelope font-36 {{ $protocol->is_email_send ? 'text-info' : 'text-secondary' }}"></i>
                                     <div class="info-box-content">
                                         <span class="info-box-text">Email Notifications</span>
                                         <span class="info-box-number">
@@ -64,6 +63,8 @@
                                 </div>
                             </div>
                         </div>
+
+
 
                         <!-- Executions Table -->
                         <div class="card card-outline card-primary">

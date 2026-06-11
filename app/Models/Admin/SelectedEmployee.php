@@ -36,6 +36,11 @@ class SelectedEmployee extends Model
         return $this->belongsTo(Employee::class);
     }
 
+    public function company()
+    {
+        return $this->employee->clientProfile->company_name ?? 'N/A';
+    }
+
     public function test()
     {
         return $this->belongsTo(TestAdmin::class);

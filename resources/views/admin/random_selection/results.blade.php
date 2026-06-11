@@ -97,6 +97,7 @@
                                             <th>#</th>
                                             <th>Employee ID</th>
                                             <th>Name</th>
+                                            <th>Company</th>
                                             <th>Department</th>
                                             <th>Shift</th>
                                             <th>Test Type</th>
@@ -115,6 +116,7 @@
                                                 </td>
                                                 <td>{{ $selection->employee->first_name . ' ' . $selection->employee->last_name ?? 'N/A' }}
                                                 </td>
+                                                <td>{{ $selection->company() }}</td>
                                                 <td>{{ $selection->employee->department ?? 'N/A' }}</td>
                                                 <td>{{ $selection->employee->shift ?? 'N/A' }}</td>
                                                 <td>{{ $selection->test->test_name ?? 'Primary Test' }}</td>

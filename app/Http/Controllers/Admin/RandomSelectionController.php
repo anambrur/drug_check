@@ -105,7 +105,7 @@ class RandomSelectionController extends Controller
                 'automatic' => $request->has('automatic'),
                 'calculate_pool_average' => $request->has('calculate_pool_average'),
                 'is_active' => $request->has('is_active'),
-                'is_email_send' => $request->has('is_email_send')
+                'is_email_send' => $request->boolean('is_email_send')
             ]);
 
             // Attach multiple clients
@@ -238,6 +238,7 @@ class RandomSelectionController extends Controller
 
     public function update(Request $request, $id)
     {
+        // dd($request->all());
         DB::beginTransaction();
 
         try {
@@ -312,7 +313,7 @@ class RandomSelectionController extends Controller
                 'automatic' => $request->has('automatic'),
                 'calculate_pool_average' => $request->has('calculate_pool_average'),
                 'is_active' => $request->has('is_active'),
-                'is_email_send' => $request->has('is_email_send')
+                'is_email_send' => $request->boolean('is_email_send')
             ]);
 
             // Update clients
