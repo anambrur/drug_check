@@ -294,8 +294,8 @@ class RandomSelectionService
             // Create initial result recording
             $this->createInitialResultRecording($selection, $employee, $testId, $event);
 
-            // Send notification email (only for primary selections)
-            if ($type === 'PRIMARY' && $employee->email) {
+            // Send notification email (only for primary selections, only if protocol has email enabled)
+            if ($type === 'PRIMARY' && $employee->email && $event->protocol?->is_email_send) {
                 try {
                     Mail::to($employee->email)
                         ->queue(new EmployeeSelectedNotification($employee, $event->protocol));

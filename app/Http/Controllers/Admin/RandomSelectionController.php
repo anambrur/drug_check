@@ -35,7 +35,6 @@ class RandomSelectionController extends Controller
 
     public function store(Request $request)
     {
-        // dd($request->all());
         DB::beginTransaction();
 
         try {
@@ -43,7 +42,8 @@ class RandomSelectionController extends Controller
                 'exclude_previously_selected' => $request->has('exclude_previously_selected'),
                 'automatic' => $request->has('automatic'),
                 'calculate_pool_average' => $request->has('calculate_pool_average'),
-                'is_active' => $request->has('is_active')
+                'is_active' => $request->has('is_active'),
+                'is_email_send' => $request->has('is_email_send')
             ]);
 
             // Validate the main form data
@@ -68,6 +68,7 @@ class RandomSelectionController extends Controller
                 'automatic' => 'boolean',
                 'calculate_pool_average' => 'boolean',
                 'is_active' => 'boolean',
+                'is_email_send' => 'boolean',
                 'extra_tests' => 'sometimes|array',
                 'extra_tests.*' => 'sometimes|exists:test_admins,id',
                 'sub_selections' => 'sometimes|array|max:3',
@@ -103,7 +104,8 @@ class RandomSelectionController extends Controller
                 'alternates_value' => $input['alternates_value'] > 0 ? $input['alternates_value'] : 0,
                 'automatic' => $request->has('automatic'),
                 'calculate_pool_average' => $request->has('calculate_pool_average'),
-                'is_active' => $request->has('is_active')
+                'is_active' => $request->has('is_active'),
+                'is_email_send' => $request->has('is_email_send')
             ]);
 
             // Attach multiple clients
@@ -243,7 +245,8 @@ class RandomSelectionController extends Controller
                 'exclude_previously_selected' => $request->has('exclude_previously_selected'),
                 'automatic' => $request->has('automatic'),
                 'calculate_pool_average' => $request->has('calculate_pool_average'),
-                'is_active' => $request->has('is_active')
+                'is_active' => $request->has('is_active'),
+                'is_email_send' => $request->has('is_email_send')
             ]);
 
             // Validate the main form data
@@ -268,6 +271,7 @@ class RandomSelectionController extends Controller
                 'automatic' => 'boolean',
                 'calculate_pool_average' => 'boolean',
                 'is_active' => 'boolean',
+                'is_email_send' => 'boolean',
                 'extra_tests' => 'sometimes|array',
                 'extra_tests.*' => 'sometimes|exists:test_admins,id',
                 'sub_selections' => 'sometimes|array|max:3',
@@ -307,7 +311,8 @@ class RandomSelectionController extends Controller
                 'alternates_value' => $input['alternates_value'] > 0 ? $input['alternates_value'] : 0,
                 'automatic' => $request->has('automatic'),
                 'calculate_pool_average' => $request->has('calculate_pool_average'),
-                'is_active' => $request->has('is_active')
+                'is_active' => $request->has('is_active'),
+                'is_email_send' => $request->has('is_email_send')
             ]);
 
             // Update clients

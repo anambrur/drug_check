@@ -27,7 +27,8 @@ class SelectionProtocol extends Model
         'alternates_value',
         'automatic',
         'calculate_pool_average',
-        'is_active'
+        'is_active',
+        'is_email_send'
     ];
 
     protected $casts = [
@@ -35,7 +36,8 @@ class SelectionProtocol extends Model
         'exclude_previously_selected' => 'boolean',
         'automatic' => 'boolean',
         'calculate_pool_average' => 'boolean',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'is_email_send' => 'boolean'
     ];
 
     public function clients()

@@ -72,6 +72,19 @@
                             </div>
                         </div>
 
+                        {{-- Email Notification Banner --}}
+                        @if ($protocol->is_email_send)
+                            <div class="alert alert-info">
+                                <i class="fas fa-envelope mr-2"></i>
+                                <strong>Email notifications sent.</strong> Selected employees have been notified by email.
+                            </div>
+                        @else
+                            <div class="alert alert-secondary">
+                                <i class="fas fa-envelope-open mr-2"></i>
+                                <strong>Email notifications disabled.</strong> No emails were sent for this execution.
+                            </div>
+                        @endif
+
                         <!-- Consolidated Results Table -->
                         <div class="card card-outline card-primary">
                             <div class="card-header">

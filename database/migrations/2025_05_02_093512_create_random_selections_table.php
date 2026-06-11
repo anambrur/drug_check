@@ -33,6 +33,7 @@ return new class extends Migration
             $table->boolean('automatic')->default(true);
             $table->boolean('calculate_pool_average')->default(false);
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_email_send')->default(false);
             $table->timestamps();
         });
 

@@ -36,6 +36,16 @@
                                         @endswitch
                                     </td>
                                 </tr>
+                                <tr>
+                                    <th>Email Notifications</th>
+                                    <td>
+                                        @if ($protocol->is_email_send)
+                                            <span class="badge badge-info"><i class="fas fa-envelope mr-1"></i> Enabled</span>
+                                        @else
+                                            <span class="badge badge-secondary"><i class="fas fa-envelope-open mr-1"></i> Disabled</span>
+                                        @endif
+                                    </td>
+                                </tr>
                             </table>
                         </div>
                         <div class="col-md-6">

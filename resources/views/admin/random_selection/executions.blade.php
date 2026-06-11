@@ -47,6 +47,24 @@
                             </div>
                         </div>
 
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="info-box bg-light p-3" style="border-radius: 10px">
+                                    <i class="fas fa-envelope font-36 {{ $protocol->is_email_send ? 'text-info' : 'text-secondary' }}"></i>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Email Notifications</span>
+                                        <span class="info-box-number">
+                                            @if ($protocol->is_email_send)
+                                                <span class="badge badge-info">Enabled</span>
+                                            @else
+                                                <span class="badge badge-secondary">Disabled</span>
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Executions Table -->
                         <div class="card card-outline card-primary">
                             <div class="card-header">

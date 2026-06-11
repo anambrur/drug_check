@@ -13,6 +13,7 @@
                             <th>Group</th>
                             <th>Frequency</th>
                             <th>Status</th>
+                            <th>Email</th>
                             <th class="custom-width-action">{{ __('content.action') }}</th>
                         </tr>
                     </thead>
@@ -56,6 +57,13 @@
                                         <span class="badge badge-pill badge-success">Active</span>
                                     @else
                                         <span class="badge badge-pill badge-danger">Inactive</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($protocol->is_email_send)
+                                        <span class="badge badge-pill badge-info"><i class="fas fa-envelope mr-1"></i> On</span>
+                                    @else
+                                        <span class="badge badge-pill badge-secondary"><i class="fas fa-envelope-open mr-1"></i> Off</span>
                                     @endif
                                 </td>
                                 <td>

@@ -293,6 +293,14 @@
                     </small>
                 </div>
 
+                <div class="form-group form-check">
+                    <input type="checkbox" class="form-check-input" id="is_email_send" name="is_email_send">
+                    <label class="form-check-label ml-3" for="is_email_send">Send Email Notifications</label>
+                    <small class="form-text text-muted">
+                        When enabled, selected employees will receive an email notification after each execution.
+                    </small>
+                </div>
+
                 <button type="submit" class="btn btn-primary">Create Protocol</button>
                 </form>
             </div>
