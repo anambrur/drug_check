@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             BackgroundCategorySeeder::class,
             BackgroundSeeder::class,
             PackageCategorySeeder::class,
+            ConsortiumPlansSeeder::class,
         ]);
 
     }

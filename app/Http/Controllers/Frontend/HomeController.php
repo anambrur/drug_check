@@ -266,11 +266,7 @@ class HomeController extends Controller
         ));
     }
 
-    public function random_consortium()
-    {
-        $random_consortium = RandomConsortium::first();
-        return view('frontend.random_consortium.index', array_merge(getFrontendData(), compact('random_consortium')));
-    }
+
 
     public function clearing_house()
     {

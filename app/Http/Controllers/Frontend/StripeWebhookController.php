@@ -5,9 +5,15 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\StripeWebhookEvent;
+use App\Models\ConsortiumEnrollment;
+use App\Models\Admin\ConsortiumPlan;
+use App\Models\Admin\ContactInfoWidget;
+use App\Mail\ConsortiumEnrollmentConfirmed;
+use App\Mail\ConsortiumEnrollmentAdminNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
 
@@ -74,6 +80,10 @@ class StripeWebhookController extends Controller
     private function processEvent($event): void
     {
         switch ($event->type) {
+            case 'checkout.session.completed':
+                $this->handleCheckoutSessionCompleted($event->data->object);
+                return;
+
             case 'payment_intent.succeeded':
             case 'payment_intent.processing':
             case 'payment_intent.payment_failed':
@@ -196,6 +206,61 @@ class StripeWebhookController extends Controller
                 'refunded_at' => now(),
                 'status' => 'refunded',
             ]);
+    }
+
+    /**
+     * Handle completed checkout session event.
+     */
+    private function handleCheckoutSessionCompleted($session): void
+    {
+        $enrollmentId = $session->metadata->consortium_enrollment_id ?? null;
+        if (!$enrollmentId) {
+            return;
+        }
+
+        $enrollment = ConsortiumEnrollment::find($enrollmentId);
+        if (!$enrollment) {
+            Log::error('Consortium enrollment not found during webhook processing.', ['id' => $enrollmentId]);
+            return;
+        }
+
+        // Avoid duplicate emails/updates if already completed
+        if ($enrollment->payment_status === 'completed') {
+            return;
+        }
+
+        $enrollment->update([
+            'payment_status' => 'completed',
+            'status' => 'Payment Completed',
+            'stripe_payment_intent_id' => $session->payment_intent ?? null,
+        ]);
+
+        $pricing = ConsortiumPlan::where('name', $enrollment->selected_plan)->with('fees')->first() ?? ConsortiumPlan::first();
+
+        // 1. Send confirmation email to customer
+        try {
+            Mail::to($enrollment->email)->send(new ConsortiumEnrollmentConfirmed($enrollment, $pricing));
+        } catch (\Exception $e) {
+            Log::error('Failed to send customer consortium enrollment confirmation email.', [
+                'enrollment_id' => $enrollment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // 2. Send notification email to admin
+        try {
+            $adminEmail = ContactInfoWidget::pluck('email')->first();
+            if ($adminEmail) {
+                Mail::to($adminEmail)->send(new ConsortiumEnrollmentAdminNotification($enrollment, $pricing));
+            } else {
+                Log::warning('Admin email not configured in ContactInfoWidget; skipping admin notification.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send admin consortium enrollment notification email.', [
+                'enrollment_id' => $enrollment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
 

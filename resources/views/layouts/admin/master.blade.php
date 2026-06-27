@@ -447,7 +447,7 @@
                             : '' }}">
                         <a class="nav-link" data-toggle="collapse" href="#quest-orders" aria-expanded="false"
                             aria-controls="quest-orders">
-                            <i class="fas fa-location-arrow menu-icon"></i>
+                            <i class="fas fa-receipt menu-icon"></i>    
                             <span class="menu-title">Quest Order</span>
                             <i class="ti-angle-right"></i>
                         </a>
@@ -593,7 +593,7 @@
                             ? 'active'
                             : '' }}">
                         <a class="nav-link" href="{{ url('admin/result-recording') }}">
-                            <i class="fas fa-clipboard-list menu-icon"></i>
+                            <i class="fas fa-chart-line menu-icon"></i>  
                             <span class="menu-title">Result Recording</span>
                         </a>
                     </li>
@@ -965,7 +965,7 @@
                             : '' }}">
                         <a class="nav-link" data-toggle="collapse" href="#backgrounds" aria-expanded="false"
                             aria-controls="backgrounds">
-                            <i class="fas fa-plus-square menu-icon"></i>
+                            <i class="fas fa-id-card menu-icon"></i>           
                             <span class="menu-title">Background Checks</span>
                             <i class="ti-angle-right"></i>
                         </a>
@@ -1300,6 +1300,8 @@
                         request()->is('admin/dot-supervisor-training/*/edit') ||
                         request()->is('admin/random-consortium/create') ||
                         request()->is('admin/random-consortium/*/edit') ||
+                        request()->is('admin/consortium-enrollments*') ||
+                        request()->is('admin/consortium-plans*') ||
                         request()->is('admin/quick-access/create')
                             ? 'active'
                             : '' }}">
@@ -1341,6 +1343,8 @@
                         request()->is('admin/dot-supervisor-training/*/edit') ||
                         request()->is('admin/random-consortium/create') ||
                         request()->is('admin/random-consortium/*/edit') ||
+                        request()->is('admin/consortium-enrollments*') ||
+                        request()->is('admin/consortium-plans*') ||
                         request()->is('admin/quick-access/create')
                             ? 'show'
                             : '' }}"
@@ -1424,8 +1428,20 @@
                                 </li>
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/random-consortium/create') ? 'active' : '' }}"
-                                        href="{{ url('admin/random-consortium/create') }}">Random Consortium</a>
+                                        href="{{ url('admin/random-consortium/create') }}">Random Consortium Text</a>
                                 </li>
+                                @can('random consortium view')
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/consortium-enrollments*') ? 'active' : '' }}"
+                                        href="{{ url('admin/consortium-enrollments') }}">Consortium Enrollments</a>
+                                </li>
+                                @endcan
+                                @can('random consortium edit')
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/consortium-plans*') ? 'active' : '' }}"
+                                        href="{{ route('admin.consortium-plans.index') }}">Consortium Pricing</a>
+                                </li>
+                                @endcan
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/terms-and-conditions/create') ? 'active' : '' }}"
                                         href="{{ url('admin/terms-and-conditions/create') }}">Terms & Conditions</a>

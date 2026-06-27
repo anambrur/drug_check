@@ -8,10 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('stripe_webhook_events', function (Blueprint $table) {
-            // Indexed plain column so we can quickly find all events for a given PaymentIntent
-            $table->string('payment_intent_id')->nullable()->index()->after('stripe_event_id');
-        });
+        if (!Schema::hasColumn('stripe_webhook_events', 'payment_intent_id')) {
+            Schema::table('stripe_webhook_events', function (Blueprint $table) {
+                // Indexed plain column so we can quickly find all events for a given PaymentIntent
+                $table->string('payment_intent_id')->nullable()->index()->after('stripe_event_id');
+            });
+        }
     }
 
     public function down(): void

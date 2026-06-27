@@ -220,7 +220,9 @@ Route::get('dot-testing', [\App\Http\Controllers\Frontend\PortfolioController::c
 Route::get('non-dot-testing', [\App\Http\Controllers\Frontend\PortfolioController::class, 'non_dot_testing'])->name('frontend.non-dot')->middleware('XSS');
 Route::get('background-checks', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks'])->name('frontend.background-check')->middleware('XSS');
 Route::get('background-checks-forms', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks_forms'])->name('frontend.background-check-forms')->middleware('XSS');
-Route::get('random-consortium', [\App\Http\Controllers\Frontend\HomeController::class, 'random_consortium'])->name('frontend.random-consortium')->middleware('XSS');
+Route::get('random-consortium', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'random_consortium'])->name('frontend.random-consortium')->middleware('XSS');
+Route::post('random-consortium/enroll', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'enroll'])->name('frontend.random-consortium.enroll')->middleware('XSS');
+Route::get('random-consortium/success/{id}', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'success'])->name('frontend.random-consortium.success');
 Route::get('dot-supervisor-training', [\App\Http\Controllers\Frontend\HomeController::class, 'dot_supervisor_training'])->name('frontend.dot-supervisor-training')->middleware('XSS');
 Route::get('clearing-house', [\App\Http\Controllers\Frontend\HomeController::class, 'clearing_house'])->name('frontend.clearing-house')->middleware('XSS');
 Route::get('background-checks-services', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks_services'])->name('frontend.background-check-services')->middleware('XSS');
@@ -1013,6 +1015,38 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::get('random-consortium/{id}/edit', [RandomConsortiumController::class, 'edit'])->name('random-consortium.edit')->middleware('permission:random consortium edit');
     Route::put('random-consortium/{id}', [RandomConsortiumController::class, 'update'])->name('random-consortium.update')->middleware('permission:random consortium edit');
     Route::delete('random-consortium/{id}', [RandomConsortiumController::class, 'destroy'])->name('random-consortium.destroy')->middleware('permission:random consortium delete');
+
+
+
+    // Consortium Pricing Plans (Dynamic)
+    Route::get('consortium-plans', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'index'])
+        ->name('admin.consortium-plans.index')->middleware('permission:random consortium view');
+    Route::get('consortium-plans/create', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'create'])
+        ->name('admin.consortium-plans.create')->middleware('permission:random consortium edit');
+    Route::post('consortium-plans', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'store'])
+        ->name('admin.consortium-plans.store')->middleware('permission:random consortium edit');
+    Route::get('consortium-plans/trashed', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'trashed'])
+        ->name('admin.consortium-plans.trashed')->middleware('permission:random consortium view');
+    Route::get('consortium-plans/{id}/edit', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'edit'])
+        ->name('admin.consortium-plans.edit')->middleware('permission:random consortium edit');
+    Route::put('consortium-plans/{id}', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'update'])
+        ->name('admin.consortium-plans.update')->middleware('permission:random consortium edit');
+    Route::patch('consortium-plans/{id}/toggle-status', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'toggleStatus'])
+        ->name('admin.consortium-plans.toggle-status')->middleware('permission:random consortium edit');
+    Route::delete('consortium-plans/{id}', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'destroy'])
+        ->name('admin.consortium-plans.destroy')->middleware('permission:random consortium edit');
+    Route::patch('consortium-plans/{id}/restore', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'restore'])
+        ->name('admin.consortium-plans.restore')->middleware('permission:random consortium edit');
+
+    // Consortium Enrollments
+    Route::get('consortium-enrollments', [\App\Http\Controllers\Admin\ConsortiumEnrollmentAdminController::class, 'index'])
+        ->name('consortium-enrollments.index')->middleware('permission:random consortium view');
+    Route::get('consortium-enrollments/{id}', [\App\Http\Controllers\Admin\ConsortiumEnrollmentAdminController::class, 'show'])
+        ->name('consortium-enrollments.show')->middleware('permission:random consortium view');
+    Route::put('consortium-enrollments/{id}/status', [\App\Http\Controllers\Admin\ConsortiumEnrollmentAdminController::class, 'updateStatus'])
+        ->name('consortium-enrollments.updateStatus')->middleware('permission:random consortium edit');
+    Route::put('consortium-enrollments/{id}/notes', [\App\Http\Controllers\Admin\ConsortiumEnrollmentAdminController::class, 'updateNotes'])
+        ->name('consortium-enrollments.updateNotes')->middleware('permission:random consortium edit');
 });
 
 // ------------------------------------------------------------------
