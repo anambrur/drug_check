@@ -80,23 +80,15 @@
                             @endcan
                         @endif
                         <div class="portfolio-item-inner">
-                            @if (!empty($item->section_image))
-                                <div class="portfolio-item-img">
-                                    <img src="{{ asset('uploads/img/portfolio/' . $item->section_image) }}"
-                                        alt="Portfolio image" class="img-fluid">
-                                    {{-- <a href="{{ asset('uploads/img/portfolio/'.$item->section_image) }}" class="portfolio-zoom-link">
-                                                        <i class="fas fa-search"></i>
-                                                    </a> --}}
-                                </div>
-                            @endif
                             <a href="{{ !empty($item->url) ? $item->url : route('default-portfolio-detail-show', ['portfolio_slug' => $item->portfolio_slug]) }}"
                                 class="portfolio-link">
-                                {{-- <div class="body">
-                                                    <div class="portfolio-details">
-                                                        <span>{{ $item->portfolio_category->category_name }}</span>
-                                                        <h6>{{ $item->title }}</h6>
-                                                    </div>
-                                                </div> --}}
+                                @if (!empty($item->section_image))
+                                    <div class="portfolio-item-img">
+                                        <img src="{{ asset('uploads/img/portfolio/' . $item->section_image) }}"
+                                            alt="Portfolio image" class="img-fluid">
+                                    </div>
+                                @endif
+
                                 <div class="body d-block">
                                     <div class="portfolio-details">
                                         <h6>{{ $item->title }}</h6>

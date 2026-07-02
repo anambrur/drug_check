@@ -410,42 +410,6 @@
     @endif
 
     <style>
-        /* Custom Scoped Styles */
-        .hover-shadow {
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
-        }
-
-        .hover-shadow:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12) !important;
-            transform: translateY(-2px);
-        }
-
-        .transition {
-            transition: all 0.3s ease-in-out;
-        }
-
-        .about-inner h6 {
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-            font-size: 0.9rem;
-        }
-
-        .about-inner h2 {
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        @media (max-width: 767.98px) {
-            .border-right-md {
-                border-right: none !important;
-                border-bottom: 1px solid #dee2e6;
-            }
-        }
+        
     </style>
 @endsection
