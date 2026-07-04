@@ -35,7 +35,7 @@
                                             @endif
                                         @endisset
                                         @isset($site_info)
-                                            <p class="footer-desc">@php echo html_entity_decode($site_info->description); @endphp</p>
+                                            <p class="footer-desc" style="font-size: 14px; line- height :1;">@php echo html_entity_decode($site_info->description); @endphp</p>
                                         @else
                                             @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
                                             <p class="footer-desc">
@@ -64,7 +64,7 @@
                                             </div>
                                         @else
                                             @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
-                                            <div class="footer-social-links">
+                                            {{-- <div class="footer-social-links">
                                                 <a href="javascript:void(0)">
                                                     <i class="fab fa-facebook-f"></i>
                                                 </a>
@@ -77,7 +77,7 @@
                                                 <a href="javascript:void(0)">
                                                     <i class="fab fa-youtube"></i>
                                                 </a>
-                                            </div>
+                                            </div> --}}
                                             @endif
                                         @endif
                                     </div>
@@ -90,7 +90,7 @@
                                         <ul class="footer-links">
                                             @foreach ($footers as $footer)
                                                 @if ($footer_category->category_name == $footer->category_name)
-                                                    <li><a href="{{ $footer->url }}">{{ $footer->title }}</a></li>
+                                                    <li style="line-height :1;"><a href="{{ $footer->url }}" style="font-size: 14px;">{{ $footer->title }}</a></li>
                                                 @endif
                                             @endforeach
                                             @unset ($footer)
@@ -136,18 +136,18 @@
                                                 <ul class="footer-contact-info-list">
                                                     @if (!empty($contact_info_widget_style1->address))
                                                     <li>
-                                                        <p>{{ $contact_info_widget_style1->description }}</p>
+                                                        <p style="font-size: 14px;">{{ $contact_info_widget_style1->description }}</p>
                                                     </li>
                                                     @endif
                                                     @if (!empty($contact_info_widget_style1->address))
                                                         <li>
-                                                            <h6><i class="far fa-map custom-color-orange"></i> {{ __('frontend.address') }}</h6>
+                                                            <h6 style="font-size: 14px;"><i class="far fa-map custom-color-orange"></i> {{ __('frontend.address') }}</h6>
                                                             <p>@php echo html_entity_decode($contact_info_widget_style1->address); @endphp</p>
                                                         </li>
                                                     @endif
                                                         @if (!empty($contact_info_widget_style1->email))
                                                             <li>
-                                                                <h6><i class="far fa-envelope custom-color-orange"></i> {{ __('frontend.email') }}</h6>
+                                                                <h6 style="font-size: 14px;"><i class="far fa-envelope custom-color-orange"></i> {{ __('frontend.email') }}</h6>
                                                                 <div class="text">
                                                                     <p><a class="text-white" href="mailto:{{ $contact_info_widget_style1->email }}">{{ $contact_info_widget_style1->email }}</a></p>
                                                                 </div>
@@ -155,7 +155,7 @@
                                                         @endif
                                                         @if (!empty($contact_info_widget_style1->phone))
                                                             <li>
-                                                                <h6><i class="fas fa-phone custom-color-orange"></i> {{ __('frontend.phone') }}</h6>
+                                                                <h6 style="font-size: 14px;"><i class="fas fa-phone custom-color-orange"></i> {{ __('frontend.phone') }}</h6>
                                                                 <div class="text">
                                                                     <p><a class="text-white" href="tel:{{ $contact_info_widget_style1->phone }}">{{ $contact_info_widget_style1->phone }}</a></p>
                                                                 </div>

@@ -4269,7 +4269,7 @@ header[style] {
 .footer .footer-top .footer-widget .footer-contact-info-list li h6 {
     font-weight: 600;
     color: #fff;
-    margin-bottom: 10px;
+    /* margin-bottom: 10px; */
 }
 .footer .footer-top .footer-widget .footer-contact-info-list li p {
     color: #fff;
