@@ -1,50 +1,199 @@
 @extends('layouts.frontend.master2')
 
 @section('content')
-    <section class="my-5">
-        <div class="container pt-5">
-            <div class="row mt-4">
-                <div class="col-md-12">
-                    <h2 class="text-center">{{ $dot_supervisor_training->title }}</h2>
-                    <p class="text-center"> @php echo html_entity_decode($dot_supervisor_training->description); @endphp</p>
+
+@php
+    $dstTitle = $dot_supervisor_training?->title ?? 'DOT Supervisor Training';
+    $dstIntro = $dot_supervisor_training?->short_description
+        ?? 'Professional DOT-compliant supervisor training to help your team meet FMCSA requirements with confidence.';
+    $hasDescription = !empty($dot_supervisor_training?->description);
+@endphp
+
+<div class="dst-page ch-page">
+    {{-- Scroll progress --}}
+    <div class="rc-scroll-progress" id="rc-scroll-progress" aria-hidden="true"><span></span></div>
+
+    {{-- Hero --}}
+    <section class="rc-hero">
+        <div class="rc-hero-bg" aria-hidden="true">
+            <div class="rc-hero-orb rc-hero-orb--1"></div>
+            <div class="rc-hero-orb rc-hero-orb--2"></div>
+            <div class="rc-hero-grid"></div>
+            <div class="rc-particles">
+                <span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="container position-relative">
+            <div class="rc-hero-content text-center">
+                <span class="rc-badge rc-hero-item rc-hero-item--1">
+                    <i class="fas fa-user-graduate" aria-hidden="true"></i>
+                    Supervisor Training
+                </span>
+                <h1 class="rc-hero-title rc-hero-item rc-hero-item--2">{{ $dstTitle }}</h1>
+                <div class="rc-hero-desc rc-hero-item rc-hero-item--3">@php echo html_entity_decode($dstIntro); @endphp</div>
+
+                @if ($hasDescription)
+                    <div class="dst-hero-actions rc-hero-item rc-hero-item--4">
+                        <a href="#dot-training-content" class="pf-btn-submit dst-hero-btn text-decoration-none">
+                            <i class="fas fa-book-open" aria-hidden="true"></i> View Training Details
+                        </a>
+                        <a href="#dot-training-highlights" class="dst-hero-btn-outline text-decoration-none">
+                            <i class="fas fa-shield-alt" aria-hidden="true"></i> Why It Matters
+                        </a>
+                    </div>
+                @endif
+            </div>
+
+            @if ($hasDescription)
+                <nav class="rc-stepper rc-hero-item rc-hero-item--4 dst-stepper" aria-label="Page sections" id="dst-stepper">
+                    <div class="rc-step rc-step--active rc-step--current" data-step="1" data-target="#dot-training-highlights">
+                        <span class="rc-step-num">1</span>
+                        <span class="rc-step-label">Overview</span>
+                    </div>
+                    <div class="rc-step-line" aria-hidden="true"><span class="rc-step-line-fill" data-line="1"></span></div>
+                    <div class="rc-step" data-step="2" data-target="#dot-training-content">
+                        <span class="rc-step-num">2</span>
+                        <span class="rc-step-label">Details</span>
+                    </div>
+                </nav>
+            @endif
+        </div>
+    </section>
+
+    {{-- Highlights strip --}}
+    <section class="plan-section dst-section" id="dot-training-highlights">
+        <div class="container">
+            <div class="rc-section-head text-center rc-animate mb-4 mb-lg-5">
+                <p class="section-eyebrow">FMCSA Compliance</p>
+                <h2>Built for Supervisors &amp; Safety Leaders</h2>
+                <p class="sub">Equip your team with the knowledge required to maintain DOT drug and alcohol program compliance.</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4 rc-animate" style="--rc-delay: 0s;">
+                    <div class="plan-card card dst-highlight-card h-100" style="--plan-accent: var(--main-color); border-top-color: var(--main-color) !important;">
+                        <div class="plan-card-glow" aria-hidden="true"></div>
+                        <div class="card-body text-center">
+                            <div class="plan-icon-wrap mx-auto" style="background: var(--main-color);"><i class="fas fa-clipboard-check" aria-hidden="true"></i></div>
+                            <h4>Regulatory Compliance</h4>
+                            <p class="range mb-0">Covers DOT/FMCSA supervisor training requirements for reasonable suspicion and program awareness.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 rc-animate" style="--rc-delay: .08s;">
+                    <div class="plan-card card dst-highlight-card h-100" style="--plan-accent: #059669; border-top-color: #059669 !important;">
+                        <div class="plan-card-glow" aria-hidden="true"></div>
+                        <div class="card-body text-center">
+                            <div class="plan-icon-wrap mx-auto" style="background: #059669;"><i class="fas fa-users" aria-hidden="true"></i></div>
+                            <h4>Practical Guidance</h4>
+                            <p class="range mb-0">Clear, actionable content designed for fleet managers, DERs, and front-line supervisors.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 rc-animate" style="--rc-delay: .16s;">
+                    <div class="plan-card card dst-highlight-card h-100" style="--plan-accent: #8b5cf6; border-top-color: #8b5cf6 !important;">
+                        <div class="plan-card-glow" aria-hidden="true"></div>
+                        <div class="card-body text-center">
+                            <div class="plan-icon-wrap mx-auto" style="background: #8b5cf6;"><i class="fas fa-certificate" aria-hidden="true"></i></div>
+                            <h4>Professional Delivery</h4>
+                            <p class="range mb-0">Structured training materials presented in a clear, premium learning experience.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <style>
+    {{-- Main CMS content --}}
+    @if ($hasDescription)
+        <section class="dst-section dst-section--alt" id="dot-training-content">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10 rc-animate">
+                        <div class="pf-card dst-content-card">
+                            <div class="pf-header">
+                                <div class="d-flex align-items-start justify-content-between gap-3">
+                                    <div>
+                                        <span class="pill">Training Program</span>
+                                        <h4>{{ $dstTitle }}</h4>
+                                        <p>Complete supervisor training information and program details below.</p>
+                                    </div>
+                                    <div class="pf-header-icon d-none d-sm-flex" aria-hidden="true">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pf-body">
+                                <article class="dst-prose">
+                                    @php echo html_entity_decode($dot_supervisor_training->description); @endphp
+                                </article>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    @else
+        <section class="dst-section dst-section--alt" id="dot-training-content">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 rc-animate">
+                        <div class="pf-card dst-content-card text-center">
+                            <div class="pf-body py-5">
+                                <div class="dst-empty-icon mx-auto mb-3" aria-hidden="true"><i class="fas fa-book-open"></i></div>
+                                <h3 class="dst-empty-title">Training Content Coming Soon</h3>
+                                <p class="ch-text-muted mb-0">Program details will be published here shortly. Please check back or contact our team for more information.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    @endif
+
+    {{-- Trust strip --}}
+    <section class="dst-trust-strip" aria-label="Training credentials">
+        <div class="container">
+            <div class="dst-trust-inner rc-animate">
+                <span><i class="fas fa-shield-alt" aria-hidden="true"></i> DOT Compliant</span>
+                <span><i class="fas fa-truck" aria-hidden="true"></i> FMCSA Standards</span>
+                <span><i class="fas fa-user-tie" aria-hidden="true"></i> Supervisor Ready</span>
+                <span><i class="fas fa-check-circle" aria-hidden="true"></i> Professional Training</span>
+            </div>
+        </div>
+    </section>
+</div>
+
+{{-- Legacy form (preserved, inactive) --}}
+<style>
+    .contact-form-wrap2 {
+        background: #fff;
+        margin: 250px !important;
+    }
+
+    @media (max-width: 576px) {
         .contact-form-wrap2 {
             background: #fff;
-            margin: 250px !important;
-
+            margin: 20px !important;
         }
+    }
 
-        @media (max-width: 576px) {
-            .contact-form-wrap2 {
-                background: #fff;
-                margin: 20px !important;
-
-            }
+    @media (max-width: 768px) {
+        .contact-form-wrap2 {
+            background: #fff;
+            margin: 100px !important;
         }
+    }
 
-        @media (max-width: 768px) {
-            .contact-form-wrap2 {
-                background: #fff;
-                margin: 100px !important;
-
-            }
+    @media (max-width: 992px) {
+        .contact-form-wrap2 {
+            background: #fff;
+            margin: 100px !important;
         }
+    }
+</style>
 
-        @media (max-width: 992px) {
-            .contact-form-wrap2 {
-                background: #fff;
-                margin: 100px !important;
-
-            }
-        }
-    </style>
-
-    {{-- <section class="">
+{{-- <section class="">
         <div class="container m-auto ">
             <div class="sidebar-widgets contact-form-wrap2 ">
                 <h5 class="inner-header-title">Please fill out the information below
@@ -357,4 +506,104 @@
             </div>
         </div>
     </section> --}}
+
+<script>
+(function () {
+    function initScrollAnimations() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.querySelectorAll('.dst-page .rc-animate').forEach(function (el) {
+                el.classList.add('rc-visible');
+            });
+            return;
+        }
+        if (!('IntersectionObserver' in window)) {
+            document.querySelectorAll('.dst-page .rc-animate').forEach(function (el) {
+                el.classList.add('rc-visible');
+            });
+            return;
+        }
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('rc-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.dst-page .rc-animate').forEach(function (el) {
+            observer.observe(el);
+        });
+    }
+
+    function initScrollProgress() {
+        var bar = document.querySelector('#rc-scroll-progress span');
+        if (!bar) return;
+        window.addEventListener('scroll', function () {
+            var doc = document.documentElement;
+            var pct = (doc.scrollTop / (doc.scrollHeight - doc.clientHeight)) * 100;
+            bar.style.width = Math.min(100, Math.max(0, pct)) + '%';
+        }, { passive: true });
+    }
+
+    function updateStepper(step) {
+        document.querySelectorAll('#dst-stepper .rc-step').forEach(function (el) {
+            var n = parseInt(el.dataset.step, 10);
+            el.classList.toggle('rc-step--active', n <= step);
+            el.classList.toggle('rc-step--current', n === step);
+        });
+        document.querySelectorAll('#dst-stepper .rc-step-line-fill').forEach(function (line) {
+            var n = parseInt(line.dataset.line, 10);
+            line.classList.toggle('rc-step-line-fill--done', n < step);
+        });
+    }
+
+    function initStepper() {
+        var stepper = document.getElementById('dst-stepper');
+        if (!stepper) return;
+
+        var sections = [
+            { step: 1, el: document.getElementById('dot-training-highlights') },
+            { step: 2, el: document.getElementById('dot-training-content') }
+        ];
+
+        document.querySelectorAll('#dst-stepper .rc-step').forEach(function (stepEl) {
+            stepEl.addEventListener('click', function () {
+                var target = document.querySelector(stepEl.dataset.target);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                updateStepper(parseInt(stepEl.dataset.step, 10));
+            });
+        });
+
+        if (!('IntersectionObserver' in window)) return;
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                var match = sections.find(function (s) { return s.el === entry.target; });
+                if (match) updateStepper(match.step);
+            });
+        }, { threshold: 0.25 });
+        sections.forEach(function (s) { if (s.el) observer.observe(s.el); });
+    }
+
+    function initHighlightCards() {
+        document.querySelectorAll('.dst-highlight-card').forEach(function (card) {
+            card.addEventListener('mouseenter', function () {
+                card.classList.add('rc-plan-pop');
+            });
+            card.addEventListener('animationend', function () {
+                card.classList.remove('rc-plan-pop');
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initScrollAnimations();
+        initScrollProgress();
+        initStepper();
+        initHighlightCards();
+        updateStepper(1);
+    });
+})();
+</script>
+
 @endsection
