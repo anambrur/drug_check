@@ -5,6 +5,12 @@
             @endcan
 @endif
 
+@php
+    $siteMainColor = (isset($color_option) && $color_option->color_option != 0)
+        ? $color_option->main_color
+        : '#ff4500';
+@endphp
+
 <!--// My Works Start //-->
 <section class="section bg-primary-light" id="porfolio">
     <div class="container">
@@ -58,175 +64,108 @@
             @endif
         </div>
         @if (is_countable($portfolios_style1) && count($portfolios_style1) > 0)
-            <div class="row portfolio-grid" id="portfolio-masonry-wrap">
+            <div class="row g-4 portfolio-grid" id="portfolio-masonry-wrap">
                 @foreach ($portfolios_style1 as $item)
-                    <div
-                        class="col-md-6 col-lg-3 portfolio-item {{ $item->portfolio_category->portfolio_category_slug }}">
+                    <div class="col-md-6 col-lg-3 portfolio-item {{ $item->portfolio_category->portfolio_category_slug }}">
                         @if (Auth::user())
                             @can('portfolio view')
                                 @php
                                     $url = request()->path();
                                     $modified_url = str_replace('/', '-bracket-', $url);
                                 @endphp
-                                <form method="POST" action="{{ route('site-url.index') }}" class="d-inline-block">
+                                <form method="POST" action="{{ route('site-url.index') }}" class="svc-admin-edit">
                                     @csrf
                                     <input type="hidden" name="route" value="portfolio.edit">
                                     <input type="hidden" name="single_id" value="{{ $item->id }}">
                                     <input type="hidden" name="site_url" value="{{ $modified_url }}">
-                                    <button type="submit" class="me-2 custom-pure-button ">
-                                        <i class="fa fa-edit text-info easier-custom-font-size-24"></i>
+                                    <button type="submit" class="svc-edit-btn" title="Edit service">
+                                        <i class="fa fa-edit" aria-hidden="true"></i>
                                     </button>
                                 </form>
                             @endcan
                         @endif
-                        <div class="portfolio-item-inner">
+
+                        <article class="svc-test-card h-100" style="--svc-accent: {{ $siteMainColor }};">
                             <a href="{{ !empty($item->url) ? $item->url : route('default-portfolio-detail-show', ['portfolio_slug' => $item->portfolio_slug]) }}"
-                                class="portfolio-link">
+                               class="svc-test-link text-decoration-none">
                                 @if (!empty($item->section_image))
-                                    <div class="portfolio-item-img">
+                                    <div class="svc-test-img">
                                         <img src="{{ asset('uploads/img/portfolio/' . $item->section_image) }}"
-                                            alt="Portfolio image" class="img-fluid">
+                                             alt="{{ $item->title }}" loading="lazy">
+                                    </div>
+                                @else
+                                    <div class="svc-test-img svc-test-img--placeholder" aria-hidden="true">
+                                        <i class="fas fa-vial"></i>
                                     </div>
                                 @endif
 
-                                <div class="body d-block">
-                                    <div class="portfolio-details">
-                                        <h6>{{ $item->title }}</h6>
-                                        <div class="d-flex justify-content-between mt-2">
-                                            <span class="text-start">{{ $item->code }}</span>
-                                            <span class="text-end">${{ $item->price }}</span>
-                                        </div>
+                                <div class="svc-test-body">
+                                    <h6 class="svc-test-title">{{ $item->title }}</h6>
+                                    <div class="svc-test-meta">
+                                        @if (!empty($item->code))
+                                            <span class="svc-test-code">
+                                                <i class="fas fa-barcode" aria-hidden="true"></i>
+                                                {{ $item->code }}
+                                            </span>
+                                        @endif
+                                        @if (!empty($item->price))
+                                            <span class="svc-test-price">${{ $item->price }}</span>
+                                        @endif
                                     </div>
+                                    <span class="svc-test-cta">
+                                        View Details <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                                    </span>
                                 </div>
                             </a>
-                        </div>
+                        </article>
                     </div>
                 @endforeach
                 @unset ($item)
             </div>
         @else
             @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
-                <div class="row portfolio-grid" id="portfolio-masonry-wrap">
-                    <div class="col-md-6 col-lg-4 portfolio-item mockup">
-                        <div class="portfolio-item-inner">
-                            <div class="portfolio-item-img">
-                                <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image"
-                                    class="img-fluid">
-                                <a href="{{ asset('uploads/img/dummy/600x600.jpg') }}" class="portfolio-zoom-link">
-                                    <i class="fas fa-search"></i>
+                <div class="row g-4 portfolio-grid" id="portfolio-masonry-wrap">
+                    @php
+                        $draftCards = [
+                            ['class' => 'mockup', 'label' => 'Mockup', 'title' => 'Card Mockup'],
+                            ['class' => 'mockup', 'label' => 'Mockup', 'title' => 'Mockup Box'],
+                            ['class' => 'mockup', 'label' => 'Mockup', 'title' => 'Coffee Mockup'],
+                            ['class' => 'mockup', 'label' => 'Mockup', 'title' => 'Square Box'],
+                            ['class' => 'ui', 'label' => 'Ui Design', 'title' => 'Paper Design'],
+                            ['class' => 'mockup', 'label' => 'Mockup', 'title' => 'Business Card'],
+                        ];
+                    @endphp
+                    @foreach ($draftCards as $draft)
+                        <div class="col-md-6 col-lg-4 portfolio-item {{ $draft['class'] }}">
+                            <article class="svc-test-card h-100" style="--svc-accent: {{ $siteMainColor }};">
+                                <a href="{{ asset('uploads/img/dummy/600x600.jpg') }}"
+                                   class="svc-zoom-btn"
+                                   target="_blank"
+                                   rel="noopener"
+                                   title="Preview image"
+                                   onclick="event.stopPropagation();">
+                                    <i class="fas fa-search" aria-hidden="true"></i>
                                 </a>
-                            </div>
-                            <div class="body">
-                                <div class="portfolio-details">
-                                    <span>Mockup</span>
-                                    <h5>Card Mockup</h5>
-                                </div>
-                                <a href="#" class="portfolio-link">
-                                    <i class="fa fa-arrow-right"></i>
+                                <a href="#" class="svc-test-link text-decoration-none">
+                                    <div class="svc-test-img">
+                                        <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="{{ $draft['title'] }}" loading="lazy">
+                                    </div>
+                                    <div class="svc-test-body">
+                                        <h6 class="svc-test-title">{{ $draft['title'] }}</h6>
+                                        <div class="svc-test-meta">
+                                            <span class="svc-test-code">
+                                                <i class="fas fa-tag" aria-hidden="true"></i>
+                                                {{ $draft['label'] }}
+                                            </span>
+                                        </div>
+                                        <span class="svc-test-cta">
+                                            View Details <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                                        </span>
+                                    </div>
                                 </a>
-                            </div>
+                            </article>
                         </div>
-                    </div>
-                    <div class="col-md-6 col-lg-4 portfolio-item mockup">
-                        <div class="portfolio-item-inner">
-                            <div class="portfolio-item-img">
-                                <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image"
-                                    class="img-fluid">
-                                <a href="{{ asset('uploads/img/dummy/600x600.jpg') }}" class="portfolio-zoom-link">
-                                    <i class="fas fa-search"></i>
-                                </a>
-                            </div>
-                            <div class="body">
-                                <div class="portfolio-details">
-                                    <span>Mockup</span>
-                                    <h5>Mockup Box</h5>
-                                </div>
-                                <a href="#" class="portfolio-link">
-                                    <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-4 portfolio-item mockup">
-                        <div class="portfolio-item-inner">
-                            <div class="portfolio-item-img">
-                                <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image"
-                                    class="img-fluid">
-                                <a href="{{ asset('uploads/img/dummy/600x600.jpg') }}" class="portfolio-zoom-link">
-                                    <i class="fas fa-search"></i>
-                                </a>
-                            </div>
-                            <div class="body">
-                                <div class="portfolio-details">
-                                    <span>Mockup</span>
-                                    <h5>Coffee Mockup</h5>
-                                </div>
-                                <a href="#" class="portfolio-link">
-                                    <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-4 portfolio-item mockup">
-                        <div class="portfolio-item-inner">
-                            <div class="portfolio-item-img">
-                                <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image"
-                                    class="img-fluid">
-                                <a href="{{ asset('uploads/img/dummy/600x600.jpg') }}" class="portfolio-zoom-link">
-                                    <i class="fas fa-search"></i>
-                                </a>
-                            </div>
-                            <div class="body">
-                                <div class="portfolio-details">
-                                    <span>Mockup</span>
-                                    <h5>Square Box</h5>
-                                </div>
-                                <a href="#" class="portfolio-link">
-                                    <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-4 portfolio-item ui">
-                        <div class="portfolio-item-inner">
-                            <div class="portfolio-item-img">
-                                <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image"
-                                    class="img-fluid">
-                                <a href="{{ asset('uploads/img/dummy/600x600.jpg') }}" class="portfolio-zoom-link">
-                                    <i class="fas fa-search"></i>
-                                </a>
-                            </div>
-                            <div class="body">
-                                <div class="portfolio-details">
-                                    <span>Ui Design</span>
-                                    <h5>Paper Design</h5>
-                                </div>
-                                <a href="#" class="portfolio-link">
-                                    <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-4 portfolio-item mockup">
-                        <div class="portfolio-item-inner">
-                            <div class="portfolio-item-img">
-                                <img src="{{ asset('uploads/img/dummy/600x600.jpg') }}" alt="Portfolio image"
-                                    class="img-fluid">
-                                <a href="{{ asset('uploads/img/dummy/600x600.jpg') }}" class="portfolio-zoom-link">
-                                    <i class="fas fa-search"></i>
-                                </a>
-                            </div>
-                            <div class="body">
-                                <div class="portfolio-details">
-                                    <span>Mockup</span>
-                                    <h5>Business Card</h5>
-                                </div>
-                                <a href="#" class="portfolio-link">
-                                    <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             @endif
         @endif
@@ -295,3 +234,23 @@
         </div>
     @endcan
 @endif
+
+<script>
+(function ($) {
+    $(window).on('load', function () {
+        var $wrap = $('#porfolio #portfolio-masonry-wrap');
+        if (!$wrap.length || typeof $.fn.isotope !== 'function') return;
+
+        $wrap.imagesLoaded(function () {
+            if ($wrap.data('isotope')) {
+                $wrap.isotope('destroy');
+            }
+            $wrap.isotope({
+                itemSelector: '.portfolio-item',
+                layoutMode: 'fitRows',
+                percentPosition: true
+            });
+        });
+    });
+})(window.jQuery);
+</script>

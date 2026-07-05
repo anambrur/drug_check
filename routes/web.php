@@ -143,45 +143,8 @@ Route::get('/optimize-clear', function () {
 });
 
 Route::post('/create-payment-intent', function (Request $request) {
-    $request->validate([
-        'portfolio_id' => 'required|integer',
-        'country' => 'nullable|string|size:2',
-    ]);
-
-    $portfolio = \App\Models\Admin\Portfolio::query()->findOrFail($request->integer('portfolio_id'));
-
-    $price = preg_replace('/[^0-9.]/', '', (string) $portfolio->price);
-    $amount = (int) round(((float) $price) * 100);
-
-    if ($amount < 50) {
-        return response()->json(['error' => 'Invalid amount.'], 422);
-    }
-
-    Stripe::setApiKey(config('services.stripe.secret'));
-
-    $appTag = (string) (config('app.name') ?: 'Drug Check');
-    $appEnv = (string) app()->environment();
-    $description = trim($appTag . ' - Non-DOT Testing - Portfolio#' . $portfolio->id . ' - ' . ($portfolio->title ?? ''));
-
-    $paymentIntent = PaymentIntent::create([
-        'amount' => $amount,
-        'currency' => 'usd',
-        'description' => $description,
-        'metadata' => [
-            'portfolio_id' => (string) $portfolio->id,
-            'test_name' => (string) ($portfolio->title ?? ''),
-            'country' => (string) ($request->input('country') ?? ''),
-            'app_tag' => $appTag,
-            'app_env' => $appEnv,
-        ],
-    ]);
-
-    return response()->json([
-        'client_secret' => $paymentIntent->client_secret,
-        'payment_intent_id' => $paymentIntent->id,
-        'amount' => $amount,
-        'currency' => 'usd',
-    ]);
+    // Deprecated for portfolio test flows — use PortfolioTestCheckoutController instead.
+    return response()->json(['error' => 'This endpoint is deprecated. Use portfolio checkout.'], 410);
 });
 
 // Stripe webhook (signature-verified). Add STRIPE_WEBHOOK_SECRET in .env
@@ -223,6 +186,11 @@ Route::get('background-checks-forms', [\App\Http\Controllers\Frontend\HomeContro
 Route::get('random-consortium', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'random_consortium'])->name('frontend.random-consortium')->middleware('XSS');
 Route::post('random-consortium/enroll', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'enroll'])->name('frontend.random-consortium.enroll')->middleware('XSS');
 Route::get('random-consortium/success/{id}', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'success'])->name('frontend.random-consortium.success');
+Route::post('portfolio-test/checkout/dot', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'checkoutDot'])->name('frontend.portfolio-test.checkout.dot')->middleware('XSS');
+Route::post('portfolio-test/checkout/non-dot', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'checkoutNonDot'])->name('frontend.portfolio-test.checkout.non-dot')->middleware('XSS');
+Route::get('portfolio-test/success/{id}', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'success'])->name('frontend.portfolio-test.success');
+Route::get('portfolio-test/retry/{id}', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'retry'])->name('frontend.portfolio-test.retry')->middleware('auth');
+Route::post('portfolio-test/retry/{id}/resubmit', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'resubmit'])->name('frontend.portfolio-test.resubmit')->middleware('auth');
 Route::get('dot-supervisor-training', [\App\Http\Controllers\Frontend\HomeController::class, 'dot_supervisor_training'])->name('frontend.dot-supervisor-training')->middleware('XSS');
 Route::get('clearing-house', [\App\Http\Controllers\Frontend\HomeController::class, 'clearing_house'])->name('frontend.clearing-house')->middleware('XSS');
 Route::get('background-checks-services', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks_services'])->name('frontend.background-check-services')->middleware('XSS');
@@ -231,13 +199,15 @@ Route::get('privacy-policy', [\App\Http\Controllers\Frontend\HomeController::cla
 
 Route::prefix('quest')->group(function () {
     Route::get('/order-form', [QuestDiagnosticsController::class, 'showOrderForm'])->name('quest.order-form');
-    Route::post('/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])->name('quest.submit-order');
-    Route::get('/order-success/{quest_order_id}/{reference_test_id}', [QuestDiagnosticsController::class, 'orderSuccess'])->name('quest.order-success');
-    Route::get('/order/{id}/document/{docType}', [QuestDiagnosticsController::class, 'getDocument'])->name('quest.get-document');
-    Route::get('/order-details', [QuestDiagnosticsController::class, 'getOrderDetailsForm'])->name('quest.order-details.form');
-    Route::post('/order-details', [QuestDiagnosticsController::class, 'getOrderDetails'])->name('quest.order-details.submit');
-    Route::get('/order-details/show', [QuestDiagnosticsController::class, 'showOrderDetails'])->name('quest.order-details.show');
-    Route::get('/order-details/{questOrderId}/{referenceTestId?}', [QuestDiagnosticsController::class, 'getOrderDetails'])->name('quest.order-details.direct');
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/order-success/{quest_order_id}/{reference_test_id}', [QuestDiagnosticsController::class, 'orderSuccess'])->name('quest.order-success');
+        Route::get('/order/{id}/document/{docType}', [QuestDiagnosticsController::class, 'getDocument'])->name('quest.get-document');
+        Route::get('/order-details', [QuestDiagnosticsController::class, 'getOrderDetailsForm'])->name('quest.order-details.form');
+        Route::post('/order-details', [QuestDiagnosticsController::class, 'getOrderDetails'])->name('quest.order-details.submit');
+        Route::get('/order-details/show', [QuestDiagnosticsController::class, 'showOrderDetails'])->name('quest.order-details.show');
+        Route::get('/order-details/{questOrderId}/{referenceTestId?}', [QuestDiagnosticsController::class, 'getOrderDetails'])->name('quest.order-details.direct');
+    });
 });
 
 Route::get('{page_uri?}', [HomeController::class, 'page_index'])->name('page-index')->middleware('XSS');
@@ -1126,12 +1096,14 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
 // DOT Test
 // ------------------------------------------------------------------
 Route::middleware($adminBase)->prefix('admin')->group(function () {
-    Route::get('dot-test/testEnvVars', [QuestDiagnosticsController::class, 'testEnvVars'])->name('admin.dot-test.testEnvVars');
-    Route::post('dot-test/submit-order', [QuestDiagnosticsController::class, 'submitOrder'])->name('admin.dot-test.submit-order');
+    Route::get('dot-test/order-form/{reference}', [QuestDiagnosticsController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form');
     Route::get('dot-test/{portfolioId}', [QuestDiagnosticsController::class, 'dotTest'])->name('dot-test.index');
-    Route::post('dot-test/process-payment', [QuestDiagnosticsController::class, 'processPayment'])->name('admin.dot-test.process-payment');
-    Route::get('dot-test/order-form/{paymentIntent}', [QuestDiagnosticsController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form');
 });
+
+// ------------------------------------------------------------------
+// Collection Sites Search (public)
+// ------------------------------------------------------------------
+Route::get('/collection-sites/search', [QuestDiagnosticsController::class, 'searchCollectionSites'])->name('collection-sites.search');
 
 // ------------------------------------------------------------------
 // Lab Admin (Laboratory, MRO, Panel, Test Admin, Dot Agency)
@@ -1258,10 +1230,7 @@ Route::post('admin/demo-mode', [DemoModeController::class, 'update_demo_mode'])-
 Route::get('/portfolio/{portfolio}/login', [App\Http\Controllers\Auth\CustomLoginController::class, 'create'])->name('portfolio.login');
 Route::post('/portfolio/{portfolio}/login', [App\Http\Controllers\Auth\CustomLoginController::class, 'store'])->name('portfolio.login.submit');
 
-// ------------------------------------------------------------------
-// Collection Sites Search (public)
-// ------------------------------------------------------------------
-Route::get('/collection-sites/search', [QuestDiagnosticsController::class, 'searchCollectionSites'])->name('collection-sites.search');
+
 
 // ------------------------------------------------------------------
 // Language locale (public)

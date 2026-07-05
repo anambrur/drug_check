@@ -7,7 +7,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-20">
-                        <h6 class="card-title mb-0">Clint Profile List
+                        <h6 class="card-title mb-0">Client Profile List
                             <!-- Button -->
                             <a id="hoverButton" class="iyzi-btn"><i class="fas fa-camera"></i>
                                 {{ __('content.view_draft') }}</a>

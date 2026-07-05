@@ -48,10 +48,13 @@ return [
         'password'    => env('QUEST_PASSWORD'),
         'lab_account' => env('QUEST_LAB_ACCOUNT'),
         'dot_lab_account' => env('QUEST_DOT_LAB_ACCOUNT'),
+        'default_csl' => env('QUEST_DEFAULT_CSL'),
+        'default_contact_name' => env('QUEST_DEFAULT_CONTACT_NAME'),
+        'default_telephone' => env('QUEST_DEFAULT_TELEPHONE'),
 
         // API endpoint URLs
         'urls' => [
-            'production' => 'https://ocs.questdiagnostics.com/services/ESPService.asmx',
+            'production' => 'https://qcs.questdiagnostics.com/services/ESPService.asmx',
             'staging'    => 'https://qcs-uat.questdiagnostics.com/services/ESPService.asmx',
         ],
 

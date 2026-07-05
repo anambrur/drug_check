@@ -3,20 +3,15 @@
 namespace App\Http\Controllers\Frontend;
 
 use Carbon\Carbon;
-use SimpleXMLElement;
 use Illuminate\Http\Request;
-use App\Models\Admin\Employee;
 use App\Models\Admin\Portfolio;
 use App\Models\Admin\QuestOrder;
-use App\Models\Admin\ClientProfile;
+use App\Models\PortfolioTestApplication;
 use App\Models\Admin\CollectionSite;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
-use Stripe\Stripe;
-use Stripe\PaymentIntent;
 
 /**
  * QuestDiagnosticsController
@@ -25,7 +20,7 @@ use Stripe\PaymentIntent;
  *
  * =========================================================================
  * OUTBOUND — we call Quest:
- *   CreateOrder     → submitOrder()
+ *   CreateOrder     → QuestOrderSubmissionService (portfolio checkout flow)
  *   GetOrderDetails → getOrderDetails()
  *   GetDocument     → getDocument()
  *
@@ -444,124 +439,16 @@ class QuestDiagnosticsController extends Controller
 
     public function showOrderForm(Request $request)
     {
-        $paymentData = $request->session()->get('non_dot_payment_data');
+        $applicationId = $request->session()->get('portfolio_test_application_id');
 
-        if (!$paymentData || empty($paymentData['portfolio']->portfolio_id)) {
-            return redirect()->back()->with('error', 'Payment data not found. Please complete payment first11233444444.');
-        }
-
-        $portfolio = Portfolio::findOrFail($paymentData['portfolio']->portfolio_id);
-
-        return view('quest.order-form', array_merge(getFrontendData(), [
-            'paymentData' => $paymentData,
-            'portfolio'   => $portfolio,
-        ]));
-    }
-
-    // =========================================================================
-    // DOT ORDER FORM
-    // =========================================================================
-
-    public function showDotOrderForm(Request $request, string $paymentIntent)
-    {
-        $paymentData = $request->session()->get('payment_data');
-
-        if (!$paymentData || $paymentData['payment_intent_id'] !== $paymentIntent) {
-            toastr()->error('Invalid or expired payment session.', 'Error');
-            return redirect()->route('dot-test.index', [
-                'portfolioId' => $paymentData['portfolio_id'] ?? null,
-            ]);
-        }
-
-        $employee  = Employee::with('clientProfile')->findOrFail($paymentData['employee_id']);
-        $portfolio = Portfolio::findOrFail($paymentData['portfolio_id']);
-
-        return view('admin.dot-test.dot-test-order-form', compact('employee', 'paymentData', 'portfolio'));
-    }
-
-    // =========================================================================
-    // SUBMIT ORDER
-    // =========================================================================
-
-    public function submitOrder(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'payment_intent_id'           => ['required', 'string', 'max:255'],
-            'first_name'                  => ['required', 'string', 'max:20'],
-            'last_name'                   => ['required', 'string', 'max:25'],
-            'middle_name'                 => ['nullable', 'string', 'max:20'],
-            'email'                       => ['required', 'email:rfc,dns', 'max:254'],
-            'primary_phone'               => ['nullable', 'string', 'max:20'],
-            'secondary_phone'             => ['nullable', 'string', 'max:20'],
-            'primary_id'                  => ['required', 'string', 'max:25'],
-            'primary_id_type'             => ['nullable', 'string', 'max:5'],
-            // Accept any parseable date — reformatted to MM/DD/YYYY before sending to Quest
-            'dob'                         => ['nullable', 'string'],
-            'zip_code'                    => ['nullable', 'string', 'max:10'],
-            'dot_test'                    => ['required', 'in:T,F'],
-            'testing_authority'           => ['required_if:dot_test,T', 'nullable', 'in:FMCSA,PHMSA,FAA,FTA,FRA,USCG'],
-            'reason_for_test_id'          => ['required_if:is_physical,false', 'nullable', 'integer'],
-            'physical_reason_for_test_id' => ['required_if:is_physical,true', 'nullable', 'in:NC,RE,FU,OT,SA,PE,RD,SU'],
-            'collection_site_id'          => ['nullable', 'string', 'max:6'],
-            // Accepted as Y-m-d H:i from the form; reformatted to MM/DD/YYYY HH:MM:SS for Quest
-            'end_datetime'                => ['nullable', 'date_format:Y-m-d\TH:i'],
-            'end_datetime_timezone_id'    => ['nullable', 'integer', 'between:1,8'],
-            'observed_requested'          => ['nullable', 'in:Y,N'],
-            'split_specimen_requested'    => ['nullable', 'in:Y,N'],
-            'unit_codes'                  => ['required', 'string', 'max:15'],
-            'csl'                         => ['nullable', 'string', 'max:20'],
-            'contact_name'                => ['required_if:is_ebat,true', 'nullable', 'string', 'max:45'],
-            'telephone_number'            => ['required_if:is_ebat,true', 'nullable', 'string', 'max:20'],
-            'order_comments'              => ['nullable', 'string', 'max:250'],
-            'response_url'                => ['nullable', 'url', 'max:255'],
-            'lab_account'                 => ['required', 'string', 'max:20'],
-        ]);
-
-        if ($validator->fails()) {
-            toastr()->error($validator->errors()->first(), 'Validation Error');
-            return back()->withInput();
-        }
-
-        $data = $validator->validated();
-
-
-        if ($request->test_type === 'dot') {
-            $paymentData = $request->session()->get('payment_data');
-            if (!$paymentData || $paymentData['payment_intent_id'] !== $data['payment_intent_id']) {
-                return back()->withInput()->with('error', 'Payment session mismatch. Please restart the order process.');
-            }
-        } else {
-            $paymentData = $request->session()->get('non_dot_payment_data');
-            if (!$paymentData || $paymentData['payment_intent_id'] !== $data['payment_intent_id']) {
-                return back()->withInput()->with('error', 'Payment session mismatch. Please restart the order process.');
+        if ($applicationId) {
+            $application = PortfolioTestApplication::where('user_id', Auth::id())->find($applicationId);
+            if ($application && $application->payment_status === 'completed') {
+                return redirect()->route('frontend.portfolio-test.retry', $application->id);
             }
         }
 
-
-        try {
-            $orderXml    = $this->buildOrderXml($data);
-            $rawResponse = $this->callQuestCreateOrder($orderXml);
-            $result      = $this->parseSoapResponse($rawResponse);
-
-            if ($result['status'] === 'SUCCESS') {
-                $this->storeQuestOrder($data, $result, $orderXml);
-
-                //clear payment session data after successful order creation
-                $request->session()->forget('payment_data');
-                $request->session()->forget('non_dot_payment_data');
-
-
-                return redirect()->route('quest.order-success', [
-                    'quest_order_id'    => $result['quest_order_id'],
-                    'reference_test_id' => $result['reference_test_id'],
-                ]);
-            }
-
-            return back()->withInput()->with('error', 'Failed to create Quest order: ' . ($result['error']['detail'] ?? 'Unknown error.'));
-        } catch (\RuntimeException $e) {
-            Log::error('Quest order submission failed', ['message' => $e->getMessage()]);
-            return back()->withInput()->with('error', $e->getMessage());
-        }
+        return redirect()->route('page-index')->with('error', 'Please complete your test order from the portfolio page.');
     }
 
     // =========================================================================
@@ -648,6 +535,8 @@ class QuestDiagnosticsController extends Controller
             return back()->with('error', 'Quest Order ID or Reference Test ID is required.');
         }
 
+        $this->assertUserOwnsQuestOrder($questOrderId ?: null, $referenceTestId ?: null);
+
         $soapBody = '<?xml version="1.0" encoding="utf-8"?>'
             . '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"'
             . ' xmlns:wss="http://wssim.labone.com/">'
@@ -687,7 +576,7 @@ class QuestDiagnosticsController extends Controller
         $orderDetails = session('order_details');
 
         if (!$orderDetails) {
-            return redirect()->route('quest.order-form')->with('error', 'No order details found.');
+            return redirect()->route('quest.order-details.form')->with('error', 'No order details found.');
         }
 
         return view('quest.order-details', array_merge(getFrontendData(), compact('orderDetails')));
@@ -705,81 +594,59 @@ class QuestDiagnosticsController extends Controller
     public function dotTest(?int $portfolioId = null)
     {
         $portfolio = Portfolio::findOrFail($portfolioId);
-        $authUser  = Auth::user();
-        $role      = $authUser->roles()->first();
 
-        $employees = match ($role?->name) {
-            'super-admin' => Employee::with('clientProfile')->where('status', 'active')->get(),
-            'company'     => Employee::with('clientProfile')
-                ->where('status', 'active')
-                ->where('client_profile_id', ClientProfile::where('user_id', $authUser->id)->value('id'))
-                ->get(),
-            default => collect(),
-        };
-
-        return view('admin.dot-test.index', compact('portfolio', 'authUser', 'employees'));
+        return redirect()
+            ->route('default-portfolio-detail-show', [
+                'portfolio_slug' => $portfolio->portfolio_slug,
+            ])
+            ->with('info', 'Complete your DOT test order details on this page, then proceed to secure checkout. Your order will be submitted to Quest Diagnostics automatically after payment.');
     }
 
-    // =========================================================================
-    // PAYMENT PROCESSING
-    // =========================================================================
-
-    public function processPayment(Request $request)
+    /**
+     * Legacy admin redirect — old payment flow URLs land here.
+     * Accepts application ID or Stripe payment_intent_id.
+     */
+    public function showDotOrderForm(Request $request, string $reference)
     {
-        $validator = Validator::make($request->all(), [
-            'portfolio_id' => ['required', 'integer', 'exists:portfolios,id'],
-            'price'        => ['required', 'numeric', 'min:1'],
-            'employee_id'  => ['required', 'integer', 'exists:employees,id'],
-        ]);
+        $application = PortfolioTestApplication::with('portfolio')
+            ->where('user_id', Auth::id())
+            ->where(function ($query) use ($reference) {
+                if (ctype_digit($reference)) {
+                    $query->where('id', (int) $reference);
+                } else {
+                    $query->where('stripe_payment_intent_id', $reference);
+                }
+            })
+            ->first();
 
-        if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        if (!$application) {
+            return redirect()
+                ->route('page-index')
+                ->with('error', 'Order not found. Please start a new test from the portfolio page.');
         }
 
-        try {
-            $validated = $validator->validated();
-            $portfolio = Portfolio::findOrFail($validated['portfolio_id']);
+        if ($application->isQuestSubmitted() && $application->quest_order_id) {
+            $questOrder = QuestOrder::where('quest_order_id', $application->quest_order_id)->first();
 
-            Stripe::setApiKey(
-                config('services.stripe.secret') ?? throw new \RuntimeException('Stripe secret key is not configured.')
-            );
-
-            $employee = Employee::findOrFail($validated['employee_id']);
-
-            $paymentIntent = PaymentIntent::create([
-                'amount'        => (int) $validated['price'],
-                'currency'      => 'usd',
-                'receipt_email' => $employee->email ?: null,
-                'metadata'      => [
-                    'portfolio_id'  => (string) $portfolio->id,
-                    'test_name'     => (string) $portfolio->title,
-                    'employee_id'   => (string) $validated['employee_id'],
-                    // Customer fallback fields (used by webhook if billing_details is empty)
-                    'customer_name'  => trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? '')),
-                    'customer_email' => $employee->email ?? '',
-                    'customer_phone' => $employee->phone ?? '',
-                ],
-                'automatic_payment_methods' => ['enabled' => true],
+            return redirect()->route('quest.order-success', [
+                'quest_order_id' => $application->quest_order_id,
+                'reference_test_id' => $questOrder?->reference_test_id ?? '',
             ]);
-
-            $request->session()->put('payment_data', [
-                'payment_intent_id' => $paymentIntent->id,
-                'portfolio_id'      => $portfolio->id,
-                'amount'            => $validated['price'] / 100,
-                'test_name'         => $portfolio->title,
-                'quest_unit_code'   => $portfolio->quest_unit_code,
-                'employee_id'       => $validated['employee_id'],
-            ]);
-
-            return response()->json([
-                'success'           => true,
-                'client_secret'     => $paymentIntent->client_secret,
-                'payment_intent_id' => $paymentIntent->id,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Stripe payment processing failed', ['message' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => 'Payment processing failed. Please try again.'], 500);
         }
+
+        if ($application->payment_status === 'completed') {
+            return redirect()->route('frontend.portfolio-test.retry', $application->id);
+        }
+
+        if ($application->portfolio) {
+            return redirect()
+                ->route('default-portfolio-detail-show', [
+                    'portfolio_slug' => $application->portfolio->portfolio_slug,
+                ])
+                ->with('info', 'Please complete your order details and checkout from the portfolio page.');
+        }
+
+        return redirect()->route('page-index')->with('error', 'Please complete your test order from the portfolio page.');
     }
 
     // =========================================================================
@@ -821,145 +688,8 @@ class QuestDiagnosticsController extends Controller
     }
 
     // =========================================================================
-    // PRIVATE — XML BUILDER
-    // =========================================================================
-
-    private function buildOrderXml(array $data): string
-    {
-        $xml = new SimpleXMLElement('<Order/>');
-
-        // --- EventInfo ---
-        $eventInfo = $xml->addChild('EventInfo');
-
-        // Physical orders must NOT include CollectionSiteID (spec §2.1.2)
-        if (!empty($data['collection_site_id'])) {
-            $eventInfo->addChild('CollectionSiteID', $data['collection_site_id']);
-        }
-
-        if (!empty($data['email'])) {
-            $eventInfo->addChild('EmailAuthorizationAddresses')
-                ->addChild('EmailAddress', $data['email']);
-        }
-
-        if (!empty($data['end_datetime'])) {
-            // FIX: Spec §4.16 requires MM/DD/YYYY HH:MM:SS — form sends Y-m-d\TH:i
-            try {
-                $eventInfo->addChild(
-                    'EndDateTime',
-                    Carbon::createFromFormat('Y-m-d\TH:i', $data['end_datetime'])->format('m/d/Y H:i:s')
-                );
-            } catch (\Throwable) {
-                Log::warning('Quest: could not reformat end_datetime', ['value' => $data['end_datetime']]);
-            }
-            if (!empty($data['end_datetime_timezone_id'])) {
-                $eventInfo->addChild('EndDateTimeTimeZoneID', $data['end_datetime_timezone_id']);
-            }
-        }
-
-        // --- DonorInfo ---
-        $donorInfo = $xml->addChild('DonorInfo');
-        $donorInfo->addChild('FirstName', $data['first_name']);
-        $donorInfo->addChild('LastName',  $data['last_name']);
-
-        if (!empty($data['middle_name'])) {
-            $donorInfo->addChild('MiddleName', $data['middle_name']);
-        }
-
-        $donorInfo->addChild('PrimaryID', $data['primary_id']);
-
-        if (!empty($data['primary_id_type'])) {
-            $donorInfo->addChild('PrimaryIDType', $data['primary_id_type']);
-        }
-
-        if (!empty($data['dob'])) {
-            // FIX: Spec §4.10 requires MM/DD/YYYY with slashes
-            try {
-                $donorInfo->addChild('DOB', Carbon::parse($data['dob'])->format('m/d/Y'));
-            } catch (\Throwable) {
-                Log::warning('Quest: could not reformat dob', ['value' => $data['dob']]);
-            }
-        }
-
-        $donorInfo->addChild('PrimaryPhone', $this->digitsOnly($data['primary_phone']));
-
-        if (!empty($data['secondary_phone'])) {
-            $donorInfo->addChild('SecondaryPhone', $this->digitsOnly($data['secondary_phone']));
-        }
-
-        if (!empty($data['zip_code'])) {
-            $donorInfo->addChild('PostalAddress')->addChild('ZipCode', $data['zip_code']);
-        }
-
-        // --- ClientInfo ---
-        $clientInfo = $xml->addChild('ClientInfo');
-
-        if (!empty($data['contact_name'])) {
-            $clientInfo->addChild('ContactName', $data['contact_name']);
-        }
-
-        if (!empty($data['telephone_number'])) {
-            // Spec §4.46: exactly 10 digits
-            $clientInfo->addChild('TelephoneNumber', substr($this->digitsOnly($data['telephone_number']), 0, 10));
-        }
-
-        $clientInfo->addChild('LabAccount', $data['lab_account']);
-
-        if (!empty($data['csl'])) {
-            $clientInfo->addChild('CSL', $data['csl']);
-        }
-
-        // --- TestInfo ---
-        $testInfo = $xml->addChild('TestInfo');
-        $testInfo->addChild('ClientReferenceID', $this->generateClientReferenceId());
-        $testInfo->addChild('DOTTest', $data['dot_test']);
-
-        if ($data['dot_test'] === 'T' && !empty($data['testing_authority'])) {
-            $testInfo->addChild('TestingAuthority', $data['testing_authority']);
-        }
-
-        if (!empty($data['reason_for_test_id'])) {
-            $testInfo->addChild('ReasonForTestID', $data['reason_for_test_id']);
-        }
-
-        if (!empty($data['physical_reason_for_test_id'])) {
-            $testInfo->addChild('PhysicalReasonForTestID', $data['physical_reason_for_test_id']);
-        }
-
-        if (!empty($data['observed_requested'])) {
-            $testInfo->addChild('ObservedRequested', $data['observed_requested']);
-        }
-
-        if (!empty($data['split_specimen_requested'])) {
-            $testInfo->addChild('SplitSpecimenRequested', $data['split_specimen_requested']);
-        }
-
-        if (!empty($data['order_comments'])) {
-            $testInfo->addChild('OrderComments', $data['order_comments']);
-        }
-
-        $testInfo->addChild('Screenings')
-            ->addChild('UnitCodes')
-            ->addChild('UnitCode', $data['unit_codes']);
-
-        // --- ClientCustom ---
-        if (!empty($data['response_url'])) {
-            $xml->addChild('ClientCustom')->addChild('ResponseURL', $data['response_url']);
-        }
-
-        return trim(preg_replace('/<\?xml[^?]*\?>/', '', $xml->asXML()));
-    }
-
-    // =========================================================================
     // PRIVATE — SOAP / HTTP
     // =========================================================================
-
-    private function callQuestCreateOrder(string $orderXml): string
-    {
-        return $this->sendCurlRequest(
-            $this->buildSoapEnvelope($orderXml),
-            $this->getSoapAction('CreateOrder')
-        );
-    }
 
     private function sendCurlRequest(string $soapBody, string $soapAction): string
     {
@@ -1022,21 +752,6 @@ class QuestDiagnosticsController extends Controller
 
         $this->resetCircuitBreaker();
         return $response;
-    }
-
-    private function buildSoapEnvelope(string $orderXml): string
-    {
-        return '<?xml version="1.0" encoding="utf-8"?>'
-            . '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"'
-            . ' xmlns:wss="http://wssim.labone.com/">'
-            . '<soap:Body>'
-            . '<wss:CreateOrder>'
-            . '<wss:username>' . $this->xmlEscape($this->getUsername()) . '</wss:username>'
-            . '<wss:password>' . $this->xmlEscape($this->getPassword()) . '</wss:password>'
-            . '<wss:orderXml><![CDATA[' . $orderXml . ']]></wss:orderXml>'
-            . '</wss:CreateOrder>'
-            . '</soap:Body>'
-            . '</soap:Envelope>';
     }
 
     // =========================================================================
@@ -1220,71 +935,6 @@ class QuestDiagnosticsController extends Controller
     }
 
     // =========================================================================
-    // PRIVATE — DATABASE
-    // =========================================================================
-
-    private function storeQuestOrder(array $data, array $apiResponse, string $orderXml): QuestOrder
-    {
-        try {
-            $order = QuestOrder::create([
-                'user_id'                     => auth()->id(),
-                'payment_intent_id'           => $data['payment_intent_id'],
-                'quest_order_id'              => $apiResponse['quest_order_id']      ?? null,
-                'reference_test_id'           => $apiResponse['reference_test_id']   ?? null,
-                'client_reference_id'         => $apiResponse['client_reference_id'] ?? $this->generateClientReferenceId(),
-                // Status/result start null — filled by inbound webhook
-                'order_status'                => null,
-                'order_result'                => null,
-                // Donor
-                // Use nullIfEmpty() pattern: form submits '' for unfilled optional fields;
-                // MySQL strict mode rejects '' for integer and date column types.
-                'first_name'                  => $data['first_name'],
-                'last_name'                   => $data['last_name'],
-                'middle_name'                 => $this->nullIfEmpty($data['middle_name']                 ?? null),
-                'primary_id'                  => $data['primary_id'],
-                'primary_id_type'             => $this->nullIfEmpty($data['primary_id_type']             ?? null),
-                'dob'                         => !empty($data['dob']) ? Carbon::parse($data['dob'])->toDateString() : null,
-                'primary_phone'               => $data['primary_phone'],
-                'secondary_phone'             => $this->nullIfEmpty($data['secondary_phone']             ?? null),
-                'email'                       => $this->nullIfEmpty($data['email']                       ?? null),
-                'zip_code'                    => $this->nullIfEmpty($data['zip_code']                    ?? null),
-                // Test
-                'portfolio_id'                => !empty($data['portfolio_id'])         ? (int) $data['portfolio_id']           : null,
-                'unit_codes'                  => json_encode($data['unit_codes']),
-                'dot_test'                    => $data['dot_test'],
-                'testing_authority'           => $this->nullIfEmpty($data['testing_authority']           ?? null),
-                // Cast integer columns — MySQL strict mode rejects '' for int columns
-                'reason_for_test_id'          => !empty($data['reason_for_test_id'])   ? (int) $data['reason_for_test_id']     : null,
-                'physical_reason_for_test_id' => $this->nullIfEmpty($data['physical_reason_for_test_id'] ?? null),
-                'collection_site_id'          => $this->nullIfEmpty($data['collection_site_id']         ?? null),
-                'observed_requested'          => $this->nullIfEmpty($data['observed_requested']         ?? null) ?? 'N',
-                'split_specimen_requested'    => $this->nullIfEmpty($data['split_specimen_requested']   ?? null) ?? 'N',
-                'order_comments'              => $this->nullIfEmpty($data['order_comments']             ?? null),
-                // Client
-                'lab_account'                 => app()->isProduction() ? $data['lab_account'] : config('services.quest.lab_account'),
-                'csl'                         => $this->nullIfEmpty($data['csl']                        ?? null),
-                'contact_name'                => $this->nullIfEmpty($data['contact_name']               ?? null),
-                'telephone_number'            => $this->nullIfEmpty($data['telephone_number']           ?? null),
-                // Timing — both are nullable integers/timestamps; cast explicitly
-                'end_datetime'                => !empty($data['end_datetime']) ? Carbon::parse($data['end_datetime']) : null,
-                'end_datetime_timezone_id'    => !empty($data['end_datetime_timezone_id']) ? (int) $data['end_datetime_timezone_id'] : null,
-                // API logging
-                'response_url'                => $this->nullIfEmpty($data['response_url'] ?? null),
-                'request_xml'                 => $orderXml,
-                'create_response_xml'         => $apiResponse['_raw_response']         ?? null,
-                'create_response_status'      => $apiResponse['status'],
-                'create_error'                => isset($apiResponse['error']) ? json_encode($apiResponse['error']) : null,
-            ]);
-
-            Log::info('Quest order stored', ['id' => $order->id, 'quest_order_id' => $order->quest_order_id]);
-            return $order;
-        } catch (\Throwable $e) {
-            Log::error('Quest: failed to store order', ['error' => $e->getMessage()]);
-            throw new \RuntimeException('Your order was accepted by Quest but could not be saved. Please contact support.', 0, $e);
-        }
-    }
-
-    // =========================================================================
     // PRIVATE — CIRCUIT BREAKER
     // =========================================================================
 
@@ -1329,32 +979,28 @@ class QuestDiagnosticsController extends Controller
     // PRIVATE — UTILITIES
     // =========================================================================
 
-    private function generateClientReferenceId(): string
+    private function assertUserOwnsQuestOrder(?string $questOrderId, ?string $referenceTestId): void
     {
-        return 'ORDER_' . now()->format('Ymd_His') . '_' . random_int(1000, 9999);
-    }
+        $userId = auth()->id();
 
-    /**
-     * Convert an empty string to null.
-     *
-     * Laravel's validated() returns null for fields declared nullable when the
-     * user submits nothing, BUT some browsers / JS libraries submit '' instead
-     * of omitting the field. MySQL strict mode rejects '' for integer, date,
-     * and timestamp columns, so we normalise here before every DB write.
-     */
-    private function nullIfEmpty(mixed $value): mixed
-    {
-        if ($value === '' || $value === null) {
-            return null;
+        $owned = QuestOrder::where('user_id', $userId)
+            ->where(function ($q) use ($questOrderId, $referenceTestId) {
+                if ($questOrderId) {
+                    $q->where('quest_order_id', $questOrderId);
+                }
+                if ($referenceTestId) {
+                    $q->orWhere('reference_test_id', $referenceTestId);
+                }
+            })
+            ->exists();
+
+        if (!$owned && $questOrderId) {
+            $owned = PortfolioTestApplication::where('user_id', $userId)
+                ->where('quest_order_id', $questOrderId)
+                ->exists();
         }
-        return $value;
-    }
 
-    private function digitsOnly(?string $value): string
-    {
-        $value = $value ?? '';
-        $result = preg_replace('/[^0-9]/', '', $value);
-        return $result === null ? '' : $result;
+        abort_unless($owned, 403, 'You are not authorized to view this order.');
     }
 
     private function xmlEscape(string $value): string

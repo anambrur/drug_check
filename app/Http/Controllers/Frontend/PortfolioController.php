@@ -22,6 +22,9 @@ use App\Models\Admin\PortfolioSection;
 use App\Models\Admin\ContactInfoWidget;
 use App\Models\Admin\PortfolioCategory;
 use App\Models\Admin\PortfolioDetailSection;
+use App\Models\Admin\ClientProfile;
+use App\Models\Admin\Employee;
+use Illuminate\Support\Facades\Auth;
 
 class PortfolioController extends Controller
 {
@@ -73,6 +76,21 @@ class PortfolioController extends Controller
             $portfolio_images = PortfolioImage::where('portfolio_id', $portfolio->id)
                 ->orderBy('order', 'asc')
                 ->get();
+        }
+
+        $isNonDot = ($portfolio->category_name ?? '') === 'Non DOT Testing';
+        $employees = collect();
+        if (!$isNonDot && Auth::check()) {
+            $authUser = Auth::user();
+            $role = $authUser->roles()->first();
+            $employees = match ($role?->name) {
+                'super-admin' => Employee::with('clientProfile')->where('status', 'active')->get(),
+                'company' => Employee::with('clientProfile')
+                    ->where('status', 'active')
+                    ->where('client_profile_id', ClientProfile::where('user_id', $authUser->id)->value('id'))
+                    ->get(),
+                default => collect(),
+            };
         }
         $portfolio_count_categories = Portfolio::select(DB::raw('count(*) as category_count, category_id'))
             ->where('language_id', $language->id)
@@ -131,7 +149,9 @@ class PortfolioController extends Controller
             'site_info',
             'footers',
             'footer_categories',
-            'page_builder'
+            'page_builder',
+            'isNonDot',
+            'employees'
         ));
     }
 

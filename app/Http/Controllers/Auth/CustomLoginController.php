@@ -57,15 +57,17 @@ class CustomLoginController extends Controller
      */
     protected function handlePostAuthentication(Request $request)
     {
-        // Check if we have a portfolio ID stored in session
         $portfolioId = session('login_redirect_portfolio');
 
         if ($portfolioId) {
-            // Clear the session value
             session()->forget('login_redirect_portfolio');
 
-            // Redirect to portfolio application form or next step
-            return redirect()->route('dot-test.index', $portfolioId);
+            $portfolio = \App\Models\Admin\Portfolio::find($portfolioId);
+            if ($portfolio) {
+                return redirect()->route('default-portfolio-detail-show', [
+                    'portfolio_slug' => $portfolio->portfolio_slug,
+                ]);
+            }
         }
 
         return app(LoginResponse::class);

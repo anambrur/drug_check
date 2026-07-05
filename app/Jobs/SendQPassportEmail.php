@@ -34,7 +34,7 @@ class SendQPassportEmail implements ShouldQueue
             $username = env('QUEST_USERNAME');
             $password = env('QUEST_PASSWORD');
             $url = config('app.env') === 'production'
-                ? 'https://ocs.questdiagnostics.com/services/ESPService.asmx'
+                ? 'https://qcs.questdiagnostics.com/services/ESPService.asmx'
                 : 'https://qcs-uat.questdiagnostics.com/services/ESPService.asmx';
 
             // More aggressive timeout settings

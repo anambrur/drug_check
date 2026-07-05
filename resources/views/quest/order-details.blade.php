@@ -1,62 +1,70 @@
 @extends('layouts.frontend.master2')
 
 @section('content')
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Order Details</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            The order details URL will expire in 20 seconds. Click the button below to view immediately.
+    <div class="pf-show-page svc-page ch-page" style="padding: 6rem 0 4rem;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="pf-card">
+                        <div class="pf-header">
+                            <span class="pill">Quest Portal</span>
+                            <h4>View Order Details</h4>
+                            <p>Access your order status, documents, and collection site options in the Quest portal.</p>
                         </div>
+                        <div class="pf-body">
+                            <div class="pf-alert pf-alert-info mb-3">
+                                <i class="fas fa-info-circle mt-1"></i>
+                                <div>The order details URL will expire in 20 seconds. Click the button below to view immediately.</div>
+                            </div>
 
-                        <div class="order-info mb-4">
-                            <h6 class="text-muted">Order Information</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Quest Order ID:</strong> {{ $orderDetails['quest_order_id'] ?? 'N/A' }}</p>
-                                    <p><strong>Reference Test ID:</strong> {{ $orderDetails['reference_test_id'] ?? 'N/A' }}
-                                    </p>
+                            <div class="pf-section">
+                                <div class="pf-section-head">
+                                    <div class="icon-wrap"><i class="fas fa-clipboard-check"></i></div>
+                                    <h6>Order Information</h6>
                                 </div>
-                                <div class="col-md-6">
-                                    <p><strong>Client Reference ID:</strong>
-                                        {{ $orderDetails['client_reference_id'] ?? 'N/A' }}</p>
+                                <div class="pf-section-body">
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-5">Quest Order ID</dt>
+                                        <dd class="col-sm-7">{{ $orderDetails['quest_order_id'] ?? 'N/A' }}</dd>
+                                        <dt class="col-sm-5">Reference Test ID</dt>
+                                        <dd class="col-sm-7">{{ $orderDetails['reference_test_id'] ?? 'N/A' }}</dd>
+                                        <dt class="col-sm-5">Client Reference ID</dt>
+                                        <dd class="col-sm-7">{{ $orderDetails['client_reference_id'] ?? 'N/A' }}</dd>
+                                    </dl>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="text-center mb-4">
-                            <a href="{{ $orderDetails['display_url'] }}" target="_blank" class="btn btn-primary btn-lg"
-                                onclick="markUrlAsUsed()">
-                                <i class="fas fa-external-link-alt me-2"></i> View Order Details in Quest Portal
-                            </a>
-                        </div>
-
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <h6 class="card-title"><i class="fas fa-lightbulb me-2"></i>What You Can Do:</h6>
-                                <ul class="mb-0">
-                                    <li>View testing status (Collected, At Lab, Pending MRO, etc.)</li>
-                                    <li>Access Authorization Form (QPassport)</li>
-                                    <li>Choose a Collection Site (if not already selected)</li>
-                                    <li>Schedule an Appointment (at Quest Patient Service Centers)</li>
-                                    <li>View Custody & Control Form (after collection)</li>
-                                    <li>View Lab Report or MRO Letter (when available)</li>
-                                </ul>
+                            <div class="pf-section">
+                                <div class="pf-section-head">
+                                    <div class="icon-wrap"><i class="fas fa-lightbulb"></i></div>
+                                    <h6>What You Can Do</h6>
+                                </div>
+                                <div class="pf-section-body">
+                                    <ul class="pf-checklist mb-0">
+                                        <li><i class="fas fa-vial"></i> View testing status (Collected, At Lab, Pending MRO, etc.)</li>
+                                        <li><i class="fas fa-file-alt"></i> Access Authorization Form (QPassport)</li>
+                                        <li><i class="fas fa-map-marker-alt"></i> Choose a Collection Site (if not already selected)</li>
+                                        <li><i class="fas fa-calendar-check"></i> Schedule an Appointment (at Quest Patient Service Centers)</li>
+                                        <li><i class="fas fa-file-signature"></i> View Custody &amp; Control Form (after collection)</li>
+                                        <li><i class="fas fa-file-medical"></i> View Lab Report or MRO Letter (when available)</li>
+                                    </ul>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="mt-4 text-center">
-                            <a href="{{ route('quest.order-details.form') }}" class="btn btn-outline-secondary me-2">
-                                <i class="fas fa-search me-2"></i> Search Another Order
-                            </a>
-                            {{-- <a href="{{ route('home') }}" class="btn btn-outline-primary">
-                                <i class="fas fa-home me-2"></i> Return Home
-                            </a> --}}
+                            <div class="text-center pt-2">
+                                <a href="{{ $orderDetails['display_url'] }}" target="_blank" rel="noopener noreferrer"
+                                    id="quest-portal-btn" class="pf-btn-submit text-decoration-none d-inline-flex"
+                                    onclick="markUrlAsUsed()">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    View Order Details in Quest Portal
+                                </a>
+                            </div>
+
+                            <p class="pf-secure mt-3">
+                                <a href="{{ route('quest.order-details.form') }}">
+                                    Search another order
+                                </a>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -66,26 +74,63 @@
 
     <script>
         function markUrlAsUsed() {
-            // You can implement tracking here if needed
-            console.log('Quest portal URL accessed');
-
-            // Optionally disable the button after click
             setTimeout(function() {
-                const btn = document.querySelector('.btn-primary');
+                const btn = document.getElementById('quest-portal-btn');
                 if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-check me-2"></i> URL Used';
+                    btn.classList.add('disabled');
+                    btn.style.pointerEvents = 'none';
+                    btn.style.opacity = '0.7';
+                    btn.innerHTML = '<i class="fas fa-check"></i> URL Opened';
                 }
             }, 1000);
         }
 
-        // Auto-click the link after 5 seconds if user doesn't click it
         setTimeout(function() {
-            const link = document.querySelector('a[target="_blank"]');
-            if (link && !link.disabled) {
+            const link = document.getElementById('quest-portal-btn');
+            if (link && !link.classList.contains('disabled')) {
                 link.click();
                 markUrlAsUsed();
             }
         }, 5000);
     </script>
 @endsection
+
+@push('styles')
+    <style>
+        .pf-show-page .pf-checklist {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .pf-show-page .pf-checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: .65rem;
+            padding: .55rem 0;
+            font-size: .88rem;
+            color: var(--pf-text);
+            border-bottom: 1px dashed var(--pf-border);
+        }
+
+        .pf-show-page .pf-checklist li:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .pf-show-page .pf-checklist li i {
+            color: var(--main-color);
+            margin-top: .15rem;
+            width: 1rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .pf-show-page #quest-portal-btn {
+            width: auto;
+            min-width: min(100%, 22rem);
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+    </style>
+@endpush

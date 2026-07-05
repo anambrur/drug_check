@@ -68,7 +68,7 @@
                                                 <a href="javascript:void(0)">
                                                     <i class="fab fa-facebook-f"></i>
                                                 </a>
-                                                <a href="javascript:void(0)">
+                                                <a href="javascript:void(0)"> 
                                                     <i class="fab fa-twitter"></i>
                                                 </a>
                                                 <a href="javascript:void(0)">

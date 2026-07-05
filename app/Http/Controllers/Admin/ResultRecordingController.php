@@ -43,9 +43,13 @@ class ResultRecordingController extends Controller
         // Check if user is client
         if (auth()->user()->hasRole('company')) {
             $clientProfile = auth()->user()->clientProfile;
-            // dd(auth()->user());
+
             $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')
-                ->where('company_id', $clientProfile->id)
+                ->when(
+                    $clientProfile,
+                    fn ($query) => $query->where('company_id', $clientProfile->id),
+                    fn ($query) => $query->whereRaw('1 = 0')
+                )
                 ->orderBy('id', 'desc')
                 ->get();
 

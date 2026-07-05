@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\StripeWebhookEvent;
+use App\Models\PortfolioTestApplication;
 use App\Models\ConsortiumEnrollment;
 use App\Models\Admin\ConsortiumPlan;
 use App\Models\Admin\ContactInfoWidget;
 use App\Mail\ConsortiumEnrollmentConfirmed;
 use App\Mail\ConsortiumEnrollmentAdminNotification;
+use App\Services\QuestOrderSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -213,6 +215,11 @@ class StripeWebhookController extends Controller
      */
     private function handleCheckoutSessionCompleted($session): void
     {
+        $portfolioApplicationId = $session->metadata->portfolio_test_application_id ?? null;
+        if ($portfolioApplicationId) {
+            $this->handlePortfolioTestCheckoutCompleted($session, (int) $portfolioApplicationId);
+        }
+
         $enrollmentId = $session->metadata->consortium_enrollment_id ?? null;
         if (!$enrollmentId) {
             return;
@@ -258,6 +265,37 @@ class StripeWebhookController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to send admin consortium enrollment notification email.', [
                 'enrollment_id' => $enrollment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function handlePortfolioTestCheckoutCompleted($session, int $applicationId): void
+    {
+        $application = PortfolioTestApplication::with('portfolio')->find($applicationId);
+        if (!$application) {
+            Log::error('Portfolio test application not found during webhook processing.', ['id' => $applicationId]);
+            return;
+        }
+
+        if ($application->payment_status !== 'completed') {
+            $application->update([
+                'payment_status' => 'completed',
+                'status' => 'Payment Completed',
+                'stripe_payment_intent_id' => $session->payment_intent ?? $application->stripe_payment_intent_id,
+            ]);
+            $application->refresh();
+        }
+
+        if ($application->quest_submission_status === 'submitted') {
+            return;
+        }
+
+        try {
+            app(QuestOrderSubmissionService::class)->submitFromApplication($application);
+        } catch (\Throwable $e) {
+            Log::error('Quest auto-submit via webhook failed', [
+                'application_id' => $applicationId,
                 'error' => $e->getMessage(),
             ]);
         }

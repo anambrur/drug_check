@@ -1,71 +1,80 @@
 @extends('layouts.frontend.master2')
 
 @section('content')
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body text-center p-5">
-                        <div class="checkmark-circle mb-4">
-                            <div class="checkmark draw"></div>
+    <div class="pf-show-page svc-page ch-page" style="padding: 6rem 0 4rem;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="pf-card">
+                        <div class="pf-header">
+                            <span class="pill">Quest Diagnostics</span>
+                            <h4>Test Successfully Scheduled!</h4>
+                            <p>Your Quest Diagnostics order has been created successfully.</p>
                         </div>
+                        <div class="pf-body">
+                            <div class="pf-alert pf-alert-success mb-3">
+                                <i class="fas fa-check-circle mt-1"></i>
+                                <div>Your order is confirmed. Save your order IDs below for future reference.</div>
+                            </div>
 
-                        <h2 class="mb-3 text-success">Test Successfully Scheduled!</h2>
-                        <p class="lead mb-4">Your Quest Diagnostics order has been created successfully.</p>
-
-                        <div class="order-details bg-light p-4 rounded-3 mb-4 text-start">
-                            <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Order Details</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Quest Order ID:</strong> {{ $questOrderId }}</p>
-                                    <p><strong>Reference Test ID:</strong> {{ $referenceTestId }}</p>
+                            <div class="pf-section">
+                                <div class="pf-section-head">
+                                    <div class="icon-wrap"><i class="fas fa-clipboard-check"></i></div>
+                                    <h6>Order Details</h6>
                                 </div>
-                                <div class="col-md-6">
-                                    <p><strong>Next Steps:</strong></p>
-                                    <ul class="mb-0">
-                                        <li>You'll receive an email with your QPassport</li>
-                                        <li>Bring your ID to the collection site</li>
-                                        <li>Check your email for results</li>
+                                <div class="pf-section-body">
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-5">Quest Order ID</dt>
+                                        <dd class="col-sm-7">{{ $questOrderId }}</dd>
+                                        <dt class="col-sm-5">Reference Test ID</dt>
+                                        <dd class="col-sm-7">{{ $referenceTestId }}</dd>
+                                        <dt class="col-sm-5">Order Date</dt>
+                                        <dd class="col-sm-7">{{ now()->format('m/d/Y h:i A') }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+
+                            <div class="pf-section">
+                                <div class="pf-section-head">
+                                    <div class="icon-wrap"><i class="fas fa-tasks"></i></div>
+                                    <h6>Next Steps</h6>
+                                </div>
+                                <div class="pf-section-body">
+                                    <ul class="pf-checklist mb-0">
+                                        <li><i class="fas fa-envelope"></i> You'll receive an email with your QPassport</li>
+                                        <li><i class="fas fa-id-card"></i> Bring your government-issued ID to the collection site</li>
+                                        <li><i class="fas fa-file-medical"></i> Check your email for test results when available</li>
                                     </ul>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="download-section mb-4">
-                            <h5 class="mb-3"><i class="fas fa-download me-2"></i>Download Documents</h5>
-                            <div class="d-flex flex-wrap justify-content-center gap-2">
-                                {{-- QPassport Button --}}
-                                <a href="{{ route('quest.get-document', ['id' => $questOrderId, 'docType' => 'QPassport']) }}"
-                                    class="btn btn-info mb-2">
-                                    <i class="fas fa-file-alt me-2"></i> QPassport
-                                </a>
-
-
-                                {{-- <a href="{{ route('quest.get-document', ['id' => $questOrderId, 'docType' => 'LabReport']) }}"
-                                    class="btn btn-primary mb-2">
-                                    <i class="fas fa-flask me-2"></i> Lab Report
-                                </a>
-                            --}}
+                            <div class="pf-section">
+                                <div class="pf-section-head">
+                                    <div class="icon-wrap"><i class="fas fa-download"></i></div>
+                                    <h6>Download Documents</h6>
+                                </div>
+                                <div class="pf-section-body">
+                                    <div class="pf-btn-stack">
+                                        <a href="{{ route('quest.get-document', ['id' => $questOrderId, 'docType' => 'QPassport']) }}"
+                                            class="pf-btn-submit text-decoration-none mb-2">
+                                            <i class="fas fa-file-alt"></i>
+                                            Download QPassport
+                                        </a>
+                                        <a href="{{ route('quest.order-details.direct', ['questOrderId' => $questOrderId, 'referenceTestId' => $referenceTestId]) }}"
+                                            class="pf-btn-submit pf-btn-secondary text-decoration-none mb-2">
+                                            <i class="fas fa-eye"></i>
+                                            View Order Details
+                                        </a>
+                                        <button type="button" class="pf-btn-submit pf-btn-secondary mb-2" onclick="printOrderDetails()">
+                                            <i class="fas fa-print"></i>
+                                            Print This Page
+                                        </button>
+                                    </div>
+                                    <p class="pf-hint text-center mt-3 mb-0">
+                                        Some documents may not be available until later stages of the testing process.
+                                    </p>
+                                </div>
                             </div>
-
-                           
-
-                            <div class="mt-3">
-                                <a href="{{ route('quest.order-details.direct', ['questOrderId' => $questOrderId, 'referenceTestId' => $referenceTestId]) }}"
-                                    class="btn btn-outline-info">
-                                    <i class="fas fa-eye me-2"></i> View Order Details
-                                </a>
-                            </div>
-
-                            <small class="text-muted mt-2 d-block">
-                                Note: Some documents may not be available until later stages of the testing process.
-                            </small>
-                        </div>
-
-                        <div class="d-flex justify-content-center gap-3">
-                            <button class="btn btn-outline-primary px-4" onclick="printOrderDetails()">
-                                <i class="fas fa-print me-2"></i> Print This Page
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -73,27 +82,26 @@
         </div>
     </div>
 
-    {{-- Hidden div for printing --}}
     <div id="printable-area" class="d-none">
         <div class="print-header text-center mb-4">
-            <h2 class="text-success">Quest Diagnostics Order Confirmation</h2>
-            <p class="text-muted">Order successfully scheduled on {{ now()->format('m/d/Y h:i A') }}</p>
+            <h2>Quest Diagnostics Order Confirmation</h2>
+            <p>Order successfully scheduled on {{ now()->format('m/d/Y h:i A') }}</p>
             <hr>
         </div>
 
         <div class="order-details-print">
             <h4>Order Details</h4>
-            <table class="table table-bordered">
+            <table>
                 <tr>
-                    <th>Quest Order ID:</th>
+                    <th>Quest Order ID</th>
                     <td>{{ $questOrderId }}</td>
                 </tr>
                 <tr>
-                    <th>Reference Test ID:</th>
+                    <th>Reference Test ID</th>
                     <td>{{ $referenceTestId }}</td>
                 </tr>
                 <tr>
-                    <th>Order Date:</th>
+                    <th>Order Date</th>
                     <td>{{ now()->format('m/d/Y h:i A') }}</td>
                 </tr>
             </table>
@@ -111,25 +119,18 @@
 
         <div class="print-footer text-center mt-4">
             <hr>
-            <p class="text-muted">Generated on {{ now()->format('m/d/Y h:i A') }}</p>
+            <p>Generated on {{ now()->format('m/d/Y h:i A') }}</p>
         </div>
     </div>
+
     <script>
         function printOrderDetails() {
-            // Create a print-friendly version
             const printContent = document.getElementById('printable-area').innerHTML;
             const originalContent = document.body.innerHTML;
 
-            // Replace body content with printable content
             document.body.innerHTML = printContent;
-
-            // Print the page
             window.print();
-
-            // Restore original content
             document.body.innerHTML = originalContent;
-
-            // Reload the page to restore functionality (optional)
             window.location.reload();
         }
     </script>
@@ -137,75 +138,55 @@
 
 @push('styles')
     <style>
-        .checkmark-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
+        .pf-show-page .pf-checklist {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .pf-show-page .pf-checklist li {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #28a745;
-            margin: 0 auto 20px;
+            align-items: flex-start;
+            gap: .65rem;
+            padding: .55rem 0;
+            font-size: .88rem;
+            color: var(--pf-text);
+            border-bottom: 1px dashed var(--pf-border);
         }
 
-        .checkmark {
-            width: 50px;
-            height: 50px;
+        .pf-show-page .pf-checklist li:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
         }
 
-        .checkmark.draw:after {
-            animation: checkmark 0.8s ease forwards;
-            content: '';
-            display: block;
-            position: relative;
-            left: 15px;
-            top: 25px;
-            width: 20px;
-            height: 40px;
-            border-right: 5px solid white;
-            border-top: 5px solid white;
-            transform: scaleX(-1) rotate(135deg);
+        .pf-show-page .pf-checklist li i {
+            color: var(--main-color);
+            margin-top: .15rem;
+            width: 1rem;
+            text-align: center;
+            flex-shrink: 0;
         }
 
-        @keyframes checkmark {
-            0% {
-                height: 0;
-                width: 0;
-                opacity: 1;
-            }
-
-            20% {
-                height: 0;
-                width: 20px;
-                opacity: 1;
-            }
-
-            40% {
-                height: 40px;
-                width: 20px;
-                opacity: 1;
-            }
-
-            100% {
-                height: 40px;
-                width: 20px;
-                opacity: 1;
-            }
+        .pf-show-page .pf-btn-stack {
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
         }
 
-        .order-details {
-            border-left: 4px solid #0d6efd;
+        .pf-show-page .pf-btn-secondary {
+            background: var(--pf-surface-2);
+            color: var(--pf-primary-dark);
+            border: 1.5px solid color-mix(in srgb, var(--main-color) 22%, transparent);
+            box-shadow: none;
         }
 
-        .download-section {
-            border-top: 1px solid #dee2e6;
-            padding-top: 20px;
+        .pf-show-page .pf-btn-secondary:hover {
+            background: var(--pf-primary-light);
+            color: var(--pf-primary-dark);
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--main-color) 18%, transparent);
         }
 
-        /* Print-specific styles */
         @media print {
-
-            /* Hide everything except the printable area */
             body * {
                 visibility: hidden;
             }
@@ -221,10 +202,9 @@
                 left: 0;
                 top: 0;
                 width: 100%;
-                background: white;
+                background: #fff;
             }
 
-            /* Remove browser headers and footers */
             @page {
                 margin: 0;
                 size: auto;
@@ -232,20 +212,7 @@
 
             body {
                 margin: 1.6cm;
-                /* Add some margin for content */
                 padding: 0;
-            }
-
-            /* Hide buttons and other interactive elements in print */
-            .btn,
-            .download-section,
-            .checkmark-circle {
-                display: none !important;
-            }
-
-            /* Style for printable content */
-            .print-header {
-                margin-bottom: 20px;
             }
 
             .order-details-print table {
@@ -260,9 +227,10 @@
             }
 
             .order-details-print th {
-                background-color: #f8f9fa;
-                font-weight: bold;
+                background: #f8f9fa;
+                font-weight: 700;
                 width: 30%;
+                text-align: left;
             }
 
             .next-steps-print ul {
@@ -276,6 +244,7 @@
             .print-footer {
                 margin-top: 30px;
                 font-size: 12px;
+                color: #64748b;
             }
         }
     </style>
