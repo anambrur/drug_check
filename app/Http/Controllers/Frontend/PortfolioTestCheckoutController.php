@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PortfolioTestCheckoutRequest;
+use App\Http\Requests\PortfolioTestResubmitRequest;
 use App\Mail\DotApplicationReceived;
 use App\Mail\PaymentConfirmation;
 use App\Models\Admin\ContactInfoWidget;
@@ -134,20 +135,63 @@ class PortfolioTestCheckoutController extends Controller
             ]);
         }
 
+        $portfolio = $application->portfolio;
+        $flags = $this->applicationService->portfolioFlags($portfolio);
+
         return view('frontend.portfolio.quest-retry', [
             'application' => $application,
+            'portfolio' => $portfolio,
+            'isNonDot' => $application->isNonDot(),
+            'questDefaults' => $this->applicationService->questDefaultsFromApplication($application),
+            'employees' => $application->isDot() ? $this->applicationService->employeesForUser() : collect(),
+            'questIsPhysical' => $flags['is_physical'],
+            'questIsEbat' => $flags['is_ebat'],
+            'initialCollectionSite' => $this->applicationService->collectionSiteSelectOption($application),
         ] + getFrontendData());
     }
 
-    public function resubmit(Request $request, int $id)
+    public function resubmit(PortfolioTestResubmitRequest $request, int $id)
     {
-        $application = PortfolioTestApplication::with('portfolio')
+        $application = PortfolioTestApplication::with(['portfolio', 'employee'])
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 
         if ($application->payment_status !== 'completed') {
             return back()->with('error', 'Payment has not been completed.');
         }
+
+        if ($application->isQuestSubmitted()) {
+            return redirect()->route('quest.order-success', [
+                'quest_order_id' => $application->quest_order_id,
+                'reference_test_id' => QuestOrder::where('quest_order_id', $application->quest_order_id)->value('reference_test_id'),
+            ]);
+        }
+
+        $validated = $request->validated();
+        $employee = null;
+
+        if ($application->isDot()) {
+            $employee = Employee::with('clientProfile')->findOrFail((int) $validated['employee_id']);
+            if (!$this->userCanSelectEmployee($employee)) {
+                return back()->withErrors(['employee_id' => 'You are not authorized to select this employee.']);
+            }
+        }
+
+        $application->update(array_merge(
+            $this->applicationService->questAttributesFromValidated($validated),
+            [
+                'quest_submission_status' => 'pending',
+                'quest_submission_error' => null,
+            ]
+        ));
+
+        $application->refresh();
+        $internal = $this->applicationService->populateInternalFields(
+            $application,
+            $application->portfolio,
+            $employee
+        );
+        $application->update($internal);
 
         return $this->submitQuestAndRedirect($application);
     }
@@ -170,59 +214,18 @@ class PortfolioTestCheckoutController extends Controller
 
     private function buildApplicationAttributes(array $validated, Portfolio $portfolio, int $amountCents): array
     {
-        $testType = $validated['test_type'];
-
-        return [
-            'test_type' => $testType,
-            'portfolio_id' => $portfolio->id,
-            'user_id' => Auth::id(),
-            'employee_id' => $testType === 'dot' ? (int) $validated['employee_id'] : null,
-            'first_name' => $validated['first_name'],
-            'last_name' => $validated['last_name'],
-            'middle_name' => $this->nullIfEmpty($validated['middle_name'] ?? null),
-            'primary_id' => $validated['primary_id'],
-            'primary_id_type' => $this->nullIfEmpty($validated['primary_id_type'] ?? null),
-            'dob' => $this->nullIfEmpty($validated['dob'] ?? null),
-            'email' => $validated['email'],
-            'phone' => $this->nullIfEmpty($validated['primary_phone'] ?? null),
-            'secondary_phone' => $this->nullIfEmpty($validated['secondary_phone'] ?? null),
-            'zip_code' => $this->nullIfEmpty($validated['zip_code'] ?? null),
-            'dot_test' => $validated['dot_test'],
-            'testing_authority' => $this->nullIfEmpty($validated['testing_authority'] ?? null),
-            'reason_for_test_id' => $this->nullInt($validated['reason_for_test_id'] ?? null),
-            'physical_reason_for_test_id' => $this->nullIfEmpty($validated['physical_reason_for_test_id'] ?? null),
-            'collection_site_id' => $this->nullIfEmpty($validated['collection_site_id'] ?? null),
-            'end_datetime' => $this->nullIfEmpty($validated['end_datetime'] ?? null),
-            'end_datetime_timezone_id' => $this->nullInt($validated['end_datetime_timezone_id'] ?? null),
-            'observed_requested' => $this->nullIfEmpty($validated['observed_requested'] ?? null) ?? 'N',
-            'split_specimen_requested' => $this->nullIfEmpty($validated['split_specimen_requested'] ?? null) ?? 'N',
-            'csl' => $this->nullIfEmpty($validated['csl'] ?? null),
-            'contact_name' => $this->nullIfEmpty($validated['contact_name'] ?? null),
-            'telephone_number' => $this->nullIfEmpty($validated['telephone_number'] ?? null),
-            'order_comments' => $this->nullIfEmpty($validated['order_comments'] ?? null),
-            'amount' => $amountCents,
-            'status' => 'Pending Payment',
-            'payment_status' => 'pending',
-            'quest_submission_status' => 'pending',
-        ];
-    }
-
-    private function nullIfEmpty(mixed $value): mixed
-    {
-        if ($value === '' || $value === null) {
-            return null;
-        }
-
-        return $value;
-    }
-
-    private function nullInt(mixed $value): ?int
-    {
-        if ($value === '' || $value === null) {
-            return null;
-        }
-
-        return (int) $value;
+        return array_merge(
+            $this->applicationService->questAttributesFromValidated($validated),
+            [
+                'test_type' => $validated['test_type'],
+                'portfolio_id' => $portfolio->id,
+                'user_id' => Auth::id(),
+                'amount' => $amountCents,
+                'status' => 'Pending Payment',
+                'payment_status' => 'pending',
+                'quest_submission_status' => 'pending',
+            ]
+        );
     }
 
     private function createStripeCheckoutSession(

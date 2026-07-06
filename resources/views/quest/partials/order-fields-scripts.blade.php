@@ -86,7 +86,16 @@ document.addEventListener('DOMContentLoaded', function () {
     @endif
 
     if (typeof $ !== 'undefined' && $.fn.select2) {
-        $('.select2-collection-sites').select2({
+        const siteSelect = $('.select2-collection-sites');
+        @if (!empty($initialCollectionSite))
+        const initialSite = @json($initialCollectionSite);
+        if (initialSite && initialSite.id) {
+            const option = new Option(initialSite.text, initialSite.id, true, true);
+            siteSelect.append(option);
+        }
+        @endif
+
+        siteSelect.select2({
             placeholder: 'Search collection sites…',
             allowClear: true,
             minimumInputLength: 2,

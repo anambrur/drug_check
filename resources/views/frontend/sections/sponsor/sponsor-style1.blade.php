@@ -2,117 +2,103 @@
     @can('section view')
         <div class="easier-mode">
             <div class="easier-section-area">
-            @endcan
+    @endcan
 @endif
 
 @if (is_countable($sponsors_style1) && count($sponsors_style1) > 0)
     <!--// Partners Section Start //-->
-    <div class="partners-section section">
-        <div class="container">
+    <section class="partners-section section sp-modern" aria-label="Partners and sponsors">
+        <div class="sp-modern-bg" aria-hidden="true"></div>
+        <div class="container position-relative">
             @if (Auth::user())
                 @can('section view')
-                    <!-- hover effect for mobile devices  -->
                     <div class="click-icon d-md-none text-center">
-                        <button class="custom-btn text-white">
-                            <i class="fa fa-mobile-alt text-white"></i> {{ __('content.touch') }}
+                        <button class="custom-btn text-white" type="button">
+                            <i class="fa fa-mobile-alt text-white" aria-hidden="true"></i> {{ __('content.touch') }}
                         </button>
                     </div>
                 @endcan
             @endif
-            <div class="owl-carousel owl-theme" id="partners-carousel">
-                @foreach ($sponsors_style1 as $item)
-                    <div class="item">
-                        @if (Auth::user())
-                            @can('section view')
-                                @php
-                                    $url = request()->path();
-                                    $modified_url = str_replace('/', '-bracket-', $url);
-                                @endphp
-                                <form method="POST" action="{{ route('site-url.index') }}" class="d-inline-block">
-                                    @csrf
-                                    <input type="hidden" name="route" value="sponsor.edit">
-                                    <input type="hidden" name="single_id" value="{{ $item->id }}">
-                                    <input type="hidden" name="site_url" value="{{ $modified_url }}">
-                                    <button type="submit" class="me-2 custom-pure-button ">
-                                        <i class="fa fa-edit text-info easier-custom-font-size-24"></i>
-                                    </button>
-                                </form>
-                            @endcan
-                        @endif
-                        <div class="partner-item">
-                            <a href="{{ $item->url }}">
-                                @if (!empty($item->section_image))
-                                    <img src="{{ asset('uploads/img/sponsor/' . $item->section_image) }}"
-                                        alt="sponsor image" class="img-fluid">
-                                @endif
-                            </a>
+
+            <div class="sp-section-head text-center wp-animate">
+                <p class="sp-eyebrow">Trusted By</p>
+                <h2 class="sp-title">Our Partners &amp; Sponsors</h2>
+            </div>
+
+            <div class="sp-carousel-wrap wp-animate" style="--wp-delay: .1s;">
+                <div class="owl-carousel owl-theme sp-carousel" id="partners-carousel">
+                    @foreach ($sponsors_style1 as $item)
+                        <div class="item">
+                            @if (Auth::user())
+                                @can('section view')
+                                    @php
+                                        $url = request()->path();
+                                        $modified_url = str_replace('/', '-bracket-', $url);
+                                    @endphp
+                                    <form method="POST" action="{{ route('site-url.index') }}" class="sp-admin-edit d-inline-block">
+                                        @csrf
+                                        <input type="hidden" name="route" value="sponsor.edit">
+                                        <input type="hidden" name="single_id" value="{{ $item->id }}">
+                                        <input type="hidden" name="site_url" value="{{ $modified_url }}">
+                                        <button type="submit" class="custom-pure-button" aria-label="Edit sponsor">
+                                            <i class="fa fa-edit text-info easier-custom-font-size-24"></i>
+                                        </button>
+                                    </form>
+                                @endcan
+                            @endif
+                            <div class="partner-item sp-partner-card">
+                                <a href="{{ $item->url }}" class="sp-partner-link">
+                                    @if (!empty($item->section_image))
+                                        <img src="{{ asset('uploads/img/sponsor/' . $item->section_image) }}"
+                                            alt="sponsor image" class="img-fluid sp-partner-logo">
+                                    @endif
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                @endforeach
-                @unset ($item)
+                    @endforeach
+                    @unset ($item)
+                </div>
             </div>
         </div>
-    </div>
+    </section>
     <!--// Partners Section End  //-->
 @else
     @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
         <!--// Partners Section Start //-->
-        <div class="partners-section section">
-            <div class="container">
+        <section class="partners-section section sp-modern" aria-label="Partners and sponsors">
+            <div class="sp-modern-bg" aria-hidden="true"></div>
+            <div class="container position-relative">
                 @if (Auth::user())
                     @can('section view')
-                        <!-- hover effect for mobile devices  -->
                         <div class="click-icon d-md-none text-center">
-                            <button class="custom-btn text-white">
-                                <i class="fa fa-mobile-alt text-white"></i> {{ __('content.touch') }}
+                            <button class="custom-btn text-white" type="button">
+                                <i class="fa fa-mobile-alt text-white" aria-hidden="true"></i> {{ __('content.touch') }}
                             </button>
                         </div>
                     @endcan
                 @endif
-                <div class="owl-carousel owl-theme" id="partners-carousel">
-                    <div class="item">
-                        <div class="partner-item">
-                            <a href="#">
-                                <img src="{{ asset('uploads/img/dummy/170x75.jpg') }}" alt="sponsor image"
-                                    class="img-fluid">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="item">
-                        <div class="partner-item">
-                            <a href="#">
-                                <img src="{{ asset('uploads/img/dummy/170x75.jpg') }}" alt="sponsor image"
-                                    class="img-fluid">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="item">
-                        <div class="partner-item">
-                            <a href="#">
-                                <img src="{{ asset('uploads/img/dummy/170x75.jpg') }}" alt="sponsor image"
-                                    class="img-fluid">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="item">
-                        <div class="partner-item">
-                            <a href="#">
-                                <img src="{{ asset('uploads/img/dummy/170x75.jpg') }}" alt="sponsor image"
-                                    class="img-fluid">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="item">
-                        <div class="partner-item">
-                            <a href="#">
-                                <img src="{{ asset('uploads/img/dummy/170x75.jpg') }}" alt="sponsor image"
-                                    class="img-fluid">
-                            </a>
-                        </div>
+
+                <div class="sp-section-head text-center wp-animate">
+                    <p class="sp-eyebrow">Trusted By</p>
+                    <h2 class="sp-title">Our Partners &amp; Sponsors</h2>
+                </div>
+
+                <div class="sp-carousel-wrap wp-animate" style="--wp-delay: .1s;">
+                    <div class="owl-carousel owl-theme sp-carousel" id="partners-carousel">
+                        @for ($i = 0; $i < 5; $i++)
+                            <div class="item">
+                                <div class="partner-item sp-partner-card">
+                                    <a href="#" class="sp-partner-link">
+                                        <img src="{{ asset('uploads/img/dummy/170x75.jpg') }}" alt="sponsor image"
+                                            class="img-fluid sp-partner-logo">
+                                    </a>
+                                </div>
+                            </div>
+                        @endfor
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
         <!--// Partners Section End  //-->
     @endif
 @endif
@@ -139,10 +125,29 @@
     @endcan
 @endif
 
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Pure vanilla JavaScript carousel
+        var spSection = document.querySelector('.sp-modern');
+        if (spSection) {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+                spSection.querySelectorAll('.wp-animate').forEach(function (el) {
+                    el.classList.add('wp-visible');
+                });
+            } else {
+                var revealObserver = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('wp-visible');
+                            revealObserver.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.15 });
+                spSection.querySelectorAll('.wp-animate').forEach(function (el) {
+                    revealObserver.observe(el);
+                });
+            }
+        }
+
         class AutoSlider {
             constructor(containerId, options = {}) {
                 this.container = document.getElementById(containerId);
@@ -164,10 +169,8 @@
             }
 
             init() {
-                // Wrap all items in a track
                 this.track = this.container.querySelector('.owl-stage');
                 if (!this.track) {
-                    // Create track if it doesn't exist
                     this.track = document.createElement('div');
                     this.track.className = 'owl-stage';
 
@@ -176,25 +179,18 @@
                         this.track.appendChild(item.cloneNode(true));
                     });
 
-                    // Clear container and add track
                     this.container.innerHTML = '';
                     this.container.appendChild(this.track);
                 }
 
-                // Clone items for infinite effect
                 this.cloneItems();
-
-                // Set up styles
                 this.setupStyles();
 
-                // Handle window resize
                 window.addEventListener('resize', () => this.updateVisibleItems());
                 this.updateVisibleItems();
 
-                // Start autoplay
                 this.startAutoPlay();
 
-                // Pause on hover
                 this.container.addEventListener('mouseenter', () => this.pauseAutoPlay());
                 this.container.addEventListener('mouseleave', () => this.startAutoPlay());
             }
@@ -203,7 +199,6 @@
                 const items = Array.from(this.track.children);
                 const totalItems = items.length;
 
-                // Clone first few items to end
                 for (let i = 0; i < totalItems; i++) {
                     const clone = items[i].cloneNode(true);
                     this.track.appendChild(clone);
@@ -211,15 +206,12 @@
             }
 
             setupStyles() {
-                // Container styles
                 this.container.style.overflow = 'hidden';
                 this.container.style.position = 'relative';
 
-                // Track styles
                 this.track.style.display = 'flex';
                 this.track.style.transition = `transform ${this.animationSpeed}ms ease-in-out`;
 
-                // Item styles
                 const items = this.track.children;
                 Array.from(items).forEach(item => {
                     item.style.flex = '0 0 auto';
@@ -229,15 +221,13 @@
 
             updateVisibleItems() {
                 const containerWidth = this.container.clientWidth;
-                const itemWidth = this.getItemWidth();
                 const itemsToShow = this.getItemsToShow();
 
                 this.itemWidth = containerWidth / itemsToShow;
 
-                // Update item widths
                 const items = this.track.children;
                 Array.from(items).forEach(item => {
-                    item.style.width = `${this.itemWidth - 30}px`; // Subtract margin
+                    item.style.width = `${this.itemWidth - 30}px`;
                 });
             }
 
@@ -246,7 +236,7 @@
                 if (items.length > 0) {
                     return items[0].clientWidth;
                 }
-                return 200; // Default width
+                return 200;
             }
 
             getItemsToShow() {
@@ -262,21 +252,19 @@
                 this.isAnimating = true;
 
                 const items = this.track.children;
-                const itemWidth = this.getItemWidth() + 30; // Include margin
+                const itemWidth = this.getItemWidth() + 30;
                 const totalItems = items.length;
 
                 this.currentPosition -= itemWidth;
 
                 this.track.style.transform = `translateX(${this.currentPosition}px)`;
 
-                // Handle infinite loop
                 setTimeout(() => {
                     if (Math.abs(this.currentPosition) >= (itemWidth * (totalItems / 2))) {
                         this.track.style.transition = 'none';
                         this.currentPosition = 0;
                         this.track.style.transform = `translateX(0px)`;
 
-                        // Force reflow
                         this.track.offsetHeight;
                         this.track.style.transition =
                             `transform ${this.animationSpeed}ms ease-in-out`;
@@ -302,10 +290,9 @@
             }
         }
 
-        // Initialize the carousel
         const carousel = new AutoSlider('partners-carousel', {
-            speed: 1000, // 1 second between slides
-            animationSpeed: 800, // 0.8 seconds animation
+            speed: 1000,
+            animationSpeed: 800,
             itemsToShow: {
                 desktop: 6,
                 tablet: 4,

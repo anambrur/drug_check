@@ -25,9 +25,9 @@
                 <div class="pf-icon-wrap">
                     <i class="fas fa-user pf-icon"></i>
                     <select id="employee_id" name="employee_id" class="pf-control" required>
-                        <option value="" disabled selected>Choose an employee…</option>
+                        <option value="" disabled @selected(!old('employee_id', $defaults['employee_id'] ?? ''))>Choose an employee…</option>
                         @foreach ($employees as $employee)
-                            <option value="{{ $employee->id }}" @selected(old('employee_id') == $employee->id)>
+                            <option value="{{ $employee->id }}" @selected(old('employee_id', $defaults['employee_id'] ?? '') == $employee->id)>
                                 {{ $employee->first_name }} {{ $employee->last_name }}
                             </option>
                         @endforeach
@@ -155,13 +155,14 @@
                 <div class="col-md-6">
                     <label class="pf-label" for="reason_for_test_id">Reason for Test <span class="pf-req">*</span></label>
                     <select id="reason_for_test_id" name="reason_for_test_id" class="pf-control" required>
-                        <option value="1" @selected(old('reason_for_test_id', '1') == '1')>Pre-Employment</option>
-                        <option value="2" @selected(old('reason_for_test_id') == '2')>Post Accident</option>
-                        <option value="3" @selected(old('reason_for_test_id') == '3')>Random</option>
-                        <option value="5" @selected(old('reason_for_test_id') == '5')>Reasonable Suspicion / Cause</option>
-                        <option value="6" @selected(old('reason_for_test_id') == '6')>Return to Duty</option>
-                        <option value="23" @selected(old('reason_for_test_id') == '23')>Follow-Up</option>
-                        <option value="99" @selected(old('reason_for_test_id') == '99')>Other</option>
+                        @php $reasonDefault = old('reason_for_test_id', $defaults['reason_for_test_id'] ?? '1'); @endphp
+                        <option value="1" @selected($reasonDefault == '1')>Pre-Employment</option>
+                        <option value="2" @selected($reasonDefault == '2')>Post Accident</option>
+                        <option value="3" @selected($reasonDefault == '3')>Random</option>
+                        <option value="5" @selected($reasonDefault == '5')>Reasonable Suspicion / Cause</option>
+                        <option value="6" @selected($reasonDefault == '6')>Return to Duty</option>
+                        <option value="23" @selected($reasonDefault == '23')>Follow-Up</option>
+                        <option value="99" @selected($reasonDefault == '99')>Other</option>
                     </select>
                 </div>
             @else
@@ -179,7 +180,7 @@
                 <label class="pf-label" for="end_datetime">Order Expiration <span class="pf-opt">Optional</span></label>
                 <div class="pf-icon-wrap">
                     <i class="fas fa-clock pf-icon"></i>
-                    <input type="datetime-local" id="end_datetime" name="end_datetime" class="pf-control" value="{{ old('end_datetime') }}">
+                    <input type="datetime-local" id="end_datetime" name="end_datetime" class="pf-control" value="{{ old('end_datetime', $defaults['end_datetime'] ?? '') }}">
                 </div>
                 <p class="pf-hint mt-1"><i class="fas fa-info-circle"></i> For ePhysical, must be within 7 days.</p>
             </div>
@@ -188,39 +189,39 @@
                 <select id="end_datetime_timezone_id" name="end_datetime_timezone_id" class="pf-control">
                     <option value="">Select Timezone</option>
                     @foreach ([1 => 'Eastern Time', 2 => 'Central Time', 3 => 'Mountain Time', 4 => 'Pacific Time', 5 => 'Hawaii-Aleutian', 6 => 'Alaskan Time', 7 => 'Atlantic Time', 8 => 'Guam Time'] as $id => $label)
-                        <option value="{{ $id }}" @selected(old('end_datetime_timezone_id') == $id)>{{ $label }}</option>
+                        <option value="{{ $id }}" @selected(old('end_datetime_timezone_id', $defaults['end_datetime_timezone_id'] ?? '') == $id)>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-6">
                 <label class="pf-label" for="observed_requested">Collection Type</label>
                 <select id="observed_requested" name="observed_requested" class="pf-control">
-                    <option value="N" @selected(old('observed_requested', 'N') == 'N')>Not Observed</option>
-                    <option value="Y" @selected(old('observed_requested') == 'Y')>Observed</option>
+                    <option value="N" @selected(old('observed_requested', $defaults['observed_requested'] ?? 'N') == 'N')>Not Observed</option>
+                    <option value="Y" @selected(old('observed_requested', $defaults['observed_requested'] ?? 'N') == 'Y')>Observed</option>
                 </select>
             </div>
             <div class="col-md-6">
                 <label class="pf-label" for="split_specimen_requested">Specimen Type</label>
                 <select id="split_specimen_requested" name="split_specimen_requested" class="pf-control">
-                    <option value="N" @selected(old('split_specimen_requested', 'N') == 'N')>Single Specimen</option>
-                    <option value="Y" @selected(old('split_specimen_requested') == 'Y')>Split Specimen</option>
+                    <option value="N" @selected(old('split_specimen_requested', $defaults['split_specimen_requested'] ?? 'N') == 'N')>Single Specimen</option>
+                    <option value="Y" @selected(old('split_specimen_requested', $defaults['split_specimen_requested'] ?? 'N') == 'Y')>Split Specimen</option>
                 </select>
             </div>
             <div class="col-md-6">
                 <label class="pf-label" for="csl">Client Site Location (CSL) <span class="pf-opt">Optional</span></label>
-                <input type="text" id="csl" name="csl" class="pf-control" value="{{ old('csl', config('services.quest.default_csl')) }}" maxlength="20">
+                <input type="text" id="csl" name="csl" class="pf-control" value="{{ old('csl', $defaults['csl'] ?? config('services.quest.default_csl')) }}" maxlength="20">
             </div>
             <div class="col-md-6 {{ $isEbat ? '' : 'd-none' }}" id="ebatContactField">
                 <label class="pf-label" for="contact_name">DER Contact Name @if($isEbat)<span class="pf-req">*</span>@else<span class="pf-opt">Optional</span>@endif</label>
-                <input type="text" id="contact_name" name="contact_name" class="pf-control" value="{{ old('contact_name', config('services.quest.default_contact_name')) }}" maxlength="45" @if($isEbat) required @endif>
+                <input type="text" id="contact_name" name="contact_name" class="pf-control" value="{{ old('contact_name', $defaults['contact_name'] ?? config('services.quest.default_contact_name')) }}" maxlength="45" @if($isEbat) required @endif>
             </div>
             <div class="col-md-6 {{ $isEbat ? '' : 'd-none' }}" id="ebatPhoneField">
                 <label class="pf-label" for="telephone_number">DER Phone Number @if($isEbat)<span class="pf-req">*</span>@else<span class="pf-opt">Optional</span>@endif</label>
-                <input type="tel" id="telephone_number" name="telephone_number" class="pf-control quest-phone-digits" value="{{ old('telephone_number', config('services.quest.default_telephone')) }}" maxlength="10" @if($isEbat) required @endif>
+                <input type="tel" id="telephone_number" name="telephone_number" class="pf-control quest-phone-digits" value="{{ old('telephone_number', $defaults['telephone_number'] ?? config('services.quest.default_telephone')) }}" maxlength="10" @if($isEbat) required @endif>
             </div>
             <div class="col-12">
                 <label class="pf-label" for="order_comments">Special Instructions <span class="pf-opt">Optional</span></label>
-                <textarea id="order_comments" name="order_comments" class="pf-control" maxlength="250" rows="3" placeholder="Any special instructions for the collection site…">{{ old('order_comments') }}</textarea>
+                <textarea id="order_comments" name="order_comments" class="pf-control" maxlength="250" rows="3" placeholder="Any special instructions for the collection site…">{{ old('order_comments', $defaults['order_comments'] ?? '') }}</textarea>
             </div>
         </div>
     </div>

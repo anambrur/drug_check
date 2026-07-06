@@ -6,153 +6,107 @@
 @endif
 
 <!--// How I Work Section Start //-->
-<section class="section bg-dark-blue pb-30">
-    <div class="container">
+<section class="section wp-modern" id="wp-modern-section" aria-labelledby="wp-modern-heading">
+    <div class="wp-modern-bg" aria-hidden="true"></div>
+
+    <div class="container position-relative">
         @if (Auth::user())
             @can('section view')
-                <!-- hover effect for mobile devices  -->
                 <div class="click-icon d-md-none text-center">
-                    <button class="custom-btn text-white">
-                        <i class="fa fa-mobile-alt text-white"></i> {{ __('content.touch') }}
+                    <button class="custom-btn text-white" type="button">
+                        <i class="fa fa-mobile-alt text-white" aria-hidden="true"></i> {{ __('content.touch') }}
                     </button>
                 </div>
             @endcan
         @endif
+
         @isset($work_process_section_style1)
-            <div class="row justify-content-center">
-                <div class="col-lg-12">
-                    <div class="section-heading">
-                        <span>@php echo html_entity_decode($work_process_section_style1->section_title); @endphp</span>
-                        <h2>@php echo html_entity_decode($work_process_section_style1->title); @endphp</h2>
-                        <p class="text-white">@php echo html_entity_decode($work_process_section_style1->short_description); @endphp</p>
-                    </div>
-                </div>
+            <div class="wp-section-head text-center wp-animate">
+                <p class="wp-eyebrow">@php echo html_entity_decode($work_process_section_style1->section_title); @endphp</p>
+                <h2 class="wp-title" id="wp-modern-heading">@php echo html_entity_decode($work_process_section_style1->title); @endphp</h2>
+                <p class="wp-subtitle">@php echo html_entity_decode($work_process_section_style1->short_description); @endphp</p>
             </div>
         @else
             @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
-                <div class="row justify-content-center">
-                    <div class="col-lg-6">
-                        <div class="section-heading">
-                            <span>How Our Work</span>
-                            <h2>Our prepare your projects in 3 stages</h2>
-                        </div>
-                    </div>
+                <div class="wp-section-head text-center wp-animate">
+                    <p class="wp-eyebrow">How Our Work</p>
+                    <h2 class="wp-title" id="wp-modern-heading">Our prepare your projects in 3 stages</h2>
                 </div>
             @endif
         @endisset
+
         @if (is_countable($work_processes_style1) && count($work_processes_style1) > 0)
-            <div class="row">
-                @php
-                    $i = 2;
-                    $t = 1;
-                @endphp
-                @foreach ($work_processes_style1->chunk(3) as $work_process)
-                    <div class="row">
-                        @foreach ($work_process as $item)
-                            <div class="col-md-4 wow fadeInUp" data-wow-duration="0.7s"
-                                data-wow-delay="0.{{ $i + 2 }}s">
-                                <div class="how-i-work-item">
-                                    @if (!$loop->last)
-                                        <img src="{{ asset('uploads/img/dummy/bg/arrow-img.png') }}" alt="Arrrow image"
-                                            class="arrow-dashed-img">
+            @php
+                $i = 2;
+                $t = 1;
+            @endphp
+            @foreach ($work_processes_style1->chunk(3) as $work_process)
+                <div class="row g-4 g-xl-5 justify-content-center wp-steps-row">
+                    @foreach ($work_process as $item)
+                        <div class="col-md-6 col-lg-4 wp-animate" style="--wp-delay: {{ $loop->index * 0.1 }}s;">
+                            <article class="wp-step-card {{ !$loop->last ? 'wp-step-card--has-connector' : '' }}">
+                                <div class="wp-step-num" aria-hidden="true">
+                                    <span>{{ str_pad($t++, 2, '0', STR_PAD_LEFT) }}</span>
+                                </div>
+
+                                @if (!empty($item->section_image))
+                                    <div class="wp-step-media">
+                                        <img src="{{ asset('uploads/img/work_process/' . $item->section_image) }}"
+                                             class="img-fluid" alt="@php echo strip_tags(html_entity_decode($item->title)); @endphp">
+                                    </div>
+                                @endif
+
+                                <div class="wp-step-body">
+                                    @if (!empty($item->short_description))
+                                        <p class="wp-step-desc">@php echo html_entity_decode($item->short_description); @endphp</p>
                                     @endif
 
-                                    <div class="number">
-                                        <span>0{{ $t++ }}</span>
-                                    </div>
-                                    <div class="number-border"></div>
-                                    @if (!empty($item->section_image))
-                                        <div class="img">
-                                            <img src="{{ asset('uploads/img/work_process/' . $item->section_image) }}"
-                                                class="img-fluid" alt="How i work">
-                                        </div>
-                                    @endif
-                                    <div class="description">
-                                        <p class="text-white" >@php echo html_entity_decode($item->short_description); @endphp</p>
-                                    </div>
-
-
-                                    <div class="text">
+                                    <div class="wp-step-title-row">
                                         @if (Auth::user())
                                             @can('section view')
                                                 @php
                                                     $url = request()->path();
                                                     $modified_url = str_replace('/', '-bracket-', $url);
                                                 @endphp
-                                                <form method="POST" action="{{ route('site-url.index') }}"
-                                                    class="d-inline-block">
+                                                <form method="POST" action="{{ route('site-url.index') }}" class="d-inline-block">
                                                     @csrf
                                                     <input type="hidden" name="route" value="work-process.edit">
                                                     <input type="hidden" name="single_id" value="{{ $item->id }}">
                                                     <input type="hidden" name="site_url" value="{{ $modified_url }}">
-                                                    <button type="submit" class="me-2 custom-pure-button ">
+                                                    <button type="submit" class="me-2 custom-pure-button" aria-label="Edit work process step">
                                                         <i class="fa fa-edit text-info easier-custom-font-size-24"></i>
                                                     </button>
                                                 </form>
                                             @endcan
                                         @endif
-                                        <h5>@php echo html_entity_decode($item->title); @endphp</h5>
+                                        <h3 class="wp-step-title">@php echo html_entity_decode($item->title); @endphp</h3>
                                     </div>
                                 </div>
-                            </div>
-                        @endforeach
-                        @unset ($item)
-                    </div>
-                @endforeach
-                @unset ($work_process)
-            </div>
+                            </article>
+                        </div>
+                    @endforeach
+                    @unset ($item)
+                </div>
+            @endforeach
+            @unset ($work_process)
         @else
             @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
-                <div class="row">
-                    <div class="col-md-4 wow fadeInUp" data-wow-duration="0.7s" data-wow-delay="0.2s">
-                        <div class="how-i-work-item">
-                            <img src="{{ asset('uploads/img/dummy/bg/arrow-img.png') }}" alt="Arrrow image"
-                                class="arrow-dashed-img">
-                            <div class="number">
-                                <span>01</span>
-                            </div>
-                            <div class="number-border"></div>
-                            <div class="img">
-                                <img src="{{ asset('uploads/img/dummy/328x328.jpg') }}" class="img-fluid"
-                                    alt="How i work">
-                            </div>
-                            <div class="text">
-                                <h5>Thinking</h5>
-                            </div>
+                <div class="row g-4 g-xl-5 justify-content-center wp-steps-row">
+                    @foreach (['Thinking', 'Research', 'Design'] as $placeholderTitle)
+                        <div class="col-md-6 col-lg-4 wp-animate" style="--wp-delay: {{ $loop->index * 0.1 }}s;">
+                            <article class="wp-step-card {{ !$loop->last ? 'wp-step-card--has-connector' : '' }}">
+                                <div class="wp-step-num" aria-hidden="true">
+                                    <span>{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
+                                </div>
+                                <div class="wp-step-media">
+                                    <img src="{{ asset('uploads/img/dummy/328x328.jpg') }}" class="img-fluid" alt="{{ $placeholderTitle }}">
+                                </div>
+                                <div class="wp-step-body">
+                                    <h3 class="wp-step-title">{{ $placeholderTitle }}</h3>
+                                </div>
+                            </article>
                         </div>
-                    </div>
-                    <div class="col-md-4 wow fadeInUp" data-wow-duration="0.7s" data-wow-delay="0.4s">
-                        <div class="how-i-work-item">
-                            <img src="{{ asset('uploads/img/dummy/bg/arrow-img.png') }}" alt="Arrrow image"
-                                class="arrow-dashed-img">
-                            <div class="number">
-                                <span>02</span>
-                            </div>
-                            <div class="number-border"></div>
-                            <div class="img">
-                                <img src="{{ asset('uploads/img/dummy/328x328.jpg') }}" class="img-fluid"
-                                    alt="How i work">
-                            </div>
-                            <div class="text">
-                                <h5>Research</h5>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 wow fadeInUp" data-wow-duration="0.7s" data-wow-delay="0.6s">
-                        <div class="how-i-work-item">
-                            <div class="number">
-                                <span>03</span>
-                            </div>
-                            <div class="number-border"></div>
-                            <div class="img">
-                                <img src="{{ asset('uploads/img/dummy/328x328.jpg') }}" class="img-fluid"
-                                    alt="How i work">
-                            </div>
-                            <div class="text">
-                                <h5>Design</h5>
-                            </div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             @endif
         @endif
@@ -190,3 +144,37 @@
         </div>
     @endcan
 @endif
+
+<script>
+(function () {
+    var section = document.getElementById('wp-modern-section');
+    if (!section) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        section.querySelectorAll('.wp-animate').forEach(function (el) {
+            el.classList.add('wp-visible');
+        });
+        return;
+    }
+
+    if (!('IntersectionObserver' in window)) {
+        section.querySelectorAll('.wp-animate').forEach(function (el) {
+            el.classList.add('wp-visible');
+        });
+        return;
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('wp-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    section.querySelectorAll('.wp-animate').forEach(function (el) {
+        observer.observe(el);
+    });
+})();
+</script>

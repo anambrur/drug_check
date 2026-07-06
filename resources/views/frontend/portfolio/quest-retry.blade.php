@@ -4,12 +4,12 @@
     <div class="pf-show-page svc-page ch-page" style="padding: 6rem 0 4rem;">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-lg-8">
+                <div class="col-lg-10">
                     <div class="pf-card">
                         <div class="pf-header">
                             <span class="pill">Quest Submission</span>
-                            <h4>Order Submission Pending</h4>
-                            <p>Your payment was successful, but we could not submit your order to Quest Diagnostics.</p>
+                            <h4>Update Order &amp; Resubmit</h4>
+                            <p>Your payment was successful, but we could not submit your order to Quest Diagnostics. Review and update the details below, then resubmit.</p>
                         </div>
                         <div class="pf-body">
                             @if (session('error'))
@@ -22,14 +22,29 @@
                             @if ($application->quest_submission_error)
                                 <div class="pf-alert pf-alert-danger mb-3">
                                     <i class="fas fa-exclamation-triangle mt-1"></i>
-                                    <div>{{ $application->quest_submission_error }}</div>
+                                    <div>
+                                        <strong>Quest rejected this order:</strong> {{ $application->quest_submission_error }}
+                                    </div>
                                 </div>
                             @endif
 
-                            <div class="pf-section">
+                            @if ($errors->any())
+                                <div class="pf-alert pf-alert-danger mb-3">
+                                    <i class="fas fa-exclamation-circle mt-1"></i>
+                                    <div>
+                                        <ul class="mb-0 ps-3">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="pf-section mb-4">
                                 <div class="pf-section-head">
-                                    <div class="icon-wrap"><i class="fas fa-clipboard-check"></i></div>
-                                    <h6>Order Summary</h6>
+                                    <div class="icon-wrap"><i class="fas fa-receipt"></i></div>
+                                    <h6>Payment Summary</h6>
                                 </div>
                                 <div class="pf-section-body">
                                     <dl class="row mb-0">
@@ -45,15 +60,31 @@
                                 </div>
                             </div>
 
-                            <form method="POST" action="{{ route('frontend.portfolio-test.resubmit', $application->id) }}" class="text-center pt-3">
+                            <div class="pf-alert pf-alert-success mb-4">
+                                <i class="fas fa-info-circle mt-1"></i>
+                                <div>
+                                    If Quest reported that the <strong>collection site cannot support this order</strong>, clear the collection site field or search for a different location before resubmitting. No additional payment is required.
+                                </div>
+                            </div>
+
+                            <form method="POST" action="{{ route('frontend.portfolio-test.resubmit', $application->id) }}">
                                 @csrf
-                                <button type="submit" class="pf-btn-submit">
-                                    <i class="fas fa-redo"></i>
-                                    Retry Quest Submission
-                                </button>
+
+                                @include('quest.partials.order-fields', [
+                                    'questDefaults' => $questDefaults,
+                                    'questIsPhysical' => $questIsPhysical,
+                                    'questIsEbat' => $questIsEbat,
+                                ])
+
+                                <div class="text-center pt-3">
+                                    <button type="submit" class="pf-btn-submit">
+                                        <i class="fas fa-redo"></i>
+                                        Update &amp; Resubmit to Quest
+                                    </button>
+                                </div>
                             </form>
 
-                            <p class="pf-secure mt-3">
+                            <p class="pf-secure mt-3 text-center">
                                 <a href="{{ route('default-portfolio-detail-show', ['portfolio_slug' => $application->portfolio->portfolio_slug]) }}">
                                     Return to portfolio page
                                 </a>
@@ -64,4 +95,12 @@
             </div>
         </div>
     </div>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    @include('quest.partials.order-fields-scripts', [
+        'questIsPhysical' => $questIsPhysical,
+        'initialCollectionSite' => $initialCollectionSite ?? null,
+    ])
 @endsection

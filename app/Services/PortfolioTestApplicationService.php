@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Admin\ClientProfile;
+use App\Models\Admin\CollectionSite;
 use App\Models\Admin\Employee;
 use App\Models\Admin\Portfolio;
 use App\Models\PortfolioTestApplication;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
@@ -198,6 +201,130 @@ class PortfolioTestApplicationService
         ];
     }
 
+    /**
+     * Form default values for quest order fields, pre-filled from a saved application.
+     *
+     * @return array<string, mixed>
+     */
+    public function questDefaultsFromApplication(PortfolioTestApplication $application): array
+    {
+        $endDatetime = $application->end_datetime
+            ? $application->end_datetime->format('Y-m-d\TH:i')
+            : null;
+
+        return [
+            'employee_id' => $application->employee_id,
+            'first_name' => $application->first_name,
+            'last_name' => $application->last_name,
+            'middle_name' => $application->middle_name,
+            'primary_id' => $application->primary_id,
+            'primary_id_type' => $application->primary_id_type,
+            'dob' => $application->dob,
+            'email' => $application->email,
+            'primary_phone' => $application->phone,
+            'secondary_phone' => $application->secondary_phone,
+            'zip_code' => $application->zip_code,
+            'dot_test' => $application->dot_test ?? ($application->isDot() ? 'T' : 'F'),
+            'testing_authority' => $application->testing_authority,
+            'reason_for_test_id' => $application->reason_for_test_id,
+            'physical_reason_for_test_id' => $application->physical_reason_for_test_id,
+            'collection_site_id' => $application->collection_site_id,
+            'end_datetime' => $endDatetime,
+            'end_datetime_timezone_id' => $application->end_datetime_timezone_id,
+            'observed_requested' => $application->observed_requested ?? 'N',
+            'split_specimen_requested' => $application->split_specimen_requested ?? 'N',
+            'csl' => $application->csl ?? config('services.quest.default_csl'),
+            'contact_name' => $application->contact_name ?? config('services.quest.default_contact_name'),
+            'telephone_number' => $application->telephone_number ?? config('services.quest.default_telephone'),
+            'order_comments' => $application->order_comments,
+        ];
+    }
+
+    /**
+     * Select2 initial option for the application's collection site, if any.
+     *
+     * @return array{id: string, text: string}|null
+     */
+    public function collectionSiteSelectOption(PortfolioTestApplication $application): ?array
+    {
+        if (!$application->collection_site_id) {
+            return null;
+        }
+
+        $site = CollectionSite::where('collection_site_code', $application->collection_site_id)->first();
+
+        if ($site) {
+            return [
+                'id' => $site->collection_site_code,
+                'text' => $this->formatCollectionSiteLabel($site),
+            ];
+        }
+
+        return [
+            'id' => $application->collection_site_id,
+            'text' => $application->collection_site_id,
+        ];
+    }
+
+    /**
+     * Active employees the user may select for DOT checkout / retry.
+     */
+    public function employeesForUser(?User $user = null): Collection
+    {
+        $user = $user ?? Auth::user();
+        if (!$user) {
+            return collect();
+        }
+
+        $role = $user->roles()->first();
+
+        return match ($role?->name) {
+            'super-admin' => Employee::with('clientProfile')->where('status', 'active')->get(),
+            'company' => Employee::with('clientProfile')
+                ->where('status', 'active')
+                ->where('client_profile_id', ClientProfile::where('user_id', $user->id)->value('id'))
+                ->get(),
+            default => collect(),
+        };
+    }
+
+    /**
+     * Map validated Quest form input to portfolio_test_applications columns.
+     *
+     * @return array<string, mixed>
+     */
+    public function questAttributesFromValidated(array $validated): array
+    {
+        $testType = $validated['test_type'] ?? 'non_dot';
+
+        return [
+            'employee_id' => $testType === 'dot' ? (int) $validated['employee_id'] : null,
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'],
+            'middle_name' => $this->nullIfEmpty($validated['middle_name'] ?? null),
+            'primary_id' => $validated['primary_id'],
+            'primary_id_type' => $this->nullIfEmpty($validated['primary_id_type'] ?? null),
+            'dob' => $this->nullIfEmpty($validated['dob'] ?? null),
+            'email' => $validated['email'],
+            'phone' => $this->nullIfEmpty($validated['primary_phone'] ?? null),
+            'secondary_phone' => $this->nullIfEmpty($validated['secondary_phone'] ?? null),
+            'zip_code' => $this->nullIfEmpty($validated['zip_code'] ?? null),
+            'dot_test' => $validated['dot_test'],
+            'testing_authority' => $this->nullIfEmpty($validated['testing_authority'] ?? null),
+            'reason_for_test_id' => $this->nullInt($validated['reason_for_test_id'] ?? null),
+            'physical_reason_for_test_id' => $this->nullIfEmpty($validated['physical_reason_for_test_id'] ?? null),
+            'collection_site_id' => $this->nullIfEmpty($validated['collection_site_id'] ?? null),
+            'end_datetime' => $this->nullIfEmpty($validated['end_datetime'] ?? null),
+            'end_datetime_timezone_id' => $this->nullInt($validated['end_datetime_timezone_id'] ?? null),
+            'observed_requested' => $this->nullIfEmpty($validated['observed_requested'] ?? null) ?? 'N',
+            'split_specimen_requested' => $this->nullIfEmpty($validated['split_specimen_requested'] ?? null) ?? 'N',
+            'csl' => $this->nullIfEmpty($validated['csl'] ?? null),
+            'contact_name' => $this->nullIfEmpty($validated['contact_name'] ?? null),
+            'telephone_number' => $this->nullIfEmpty($validated['telephone_number'] ?? null),
+            'order_comments' => $this->nullIfEmpty($validated['order_comments'] ?? null),
+        ];
+    }
+
     public function markPaymentCompleted(PortfolioTestApplication $application, ?string $paymentIntentId = null): void
     {
         if ($application->payment_status === 'completed') {
@@ -218,5 +345,33 @@ class PortfolioTestApplicationService
         }
 
         return self::REASON_LABELS[$reasonId] ?? 'Other';
+    }
+
+    private function formatCollectionSiteLabel(CollectionSite $site): string
+    {
+        $parts = array_filter([
+            $site->name,
+            implode(', ', array_filter([$site->address_1, $site->city, $site->state, $site->zip_code])),
+        ]);
+
+        return implode(' — ', $parts);
+    }
+
+    private function nullIfEmpty(mixed $value): mixed
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    private function nullInt(mixed $value): ?int
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        return (int) $value;
     }
 }
