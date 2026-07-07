@@ -1,5 +1,103 @@
 @extends('layouts.admin.master')
 
+@php
+    $display = fn ($value) => filled($value) ? $value : '—';
+@endphp
+
+@push('styles')
+    <style>
+        .cp-details-section {
+            --cp-border: #e3e6f0;
+            --cp-muted: #858796;
+            --cp-text: #2e384d;
+            --cp-primary: #4e73df;
+            --cp-primary-soft: rgba(78, 115, 223, 0.1);
+            --cp-success-soft: rgba(28, 200, 138, 0.12);
+            --cp-info-soft: rgba(54, 185, 204, 0.12);
+        }
+
+        .cp-details-section .cp-section-head {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--cp-border);
+        }
+
+        .cp-details-section .cp-section-head h5 {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--cp-text);
+        }
+
+        .cp-details-section .cp-section-head .icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            background: var(--cp-primary-soft);
+            color: var(--cp-primary);
+        }
+
+        .cp-details-section .cp-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .cp-details-section .cp-info-card {
+            border: 1px solid var(--cp-border);
+            border-radius: 12px;
+            padding: 1rem;
+            height: 100%;
+            background: #fff;
+        }
+
+        .cp-details-section .cp-info-card h6 {
+            margin: 0 0 0.85rem;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+            color: var(--cp-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .cp-details-section .cp-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .cp-details-section .cp-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .cp-details-section .cp-field-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--cp-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .cp-details-section .cp-field-value {
+            font-size: 0.95rem;
+            color: var(--cp-text);
+            font-weight: 500;
+            word-break: break-word;
+        }
+    </style>
+@endpush
+
 @section('content')
     <!-- Form row -->
     <div class="row">
@@ -7,90 +105,77 @@
             <div class="card card-body">
                 <h2 class="card-title">Client Profile</h2>
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="label_title">Company Name:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->company_name }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">Short Description:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->short_description }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">Address:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->address }}, {{ $clientProfile->city }}, {{ $clientProfile->state }},
-                                    {{ $clientProfile->zip }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">Phone:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->phone }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">Fax:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->fax }}</p>
-                            </div>
+                    <div class="col-md-12 cp-details-section">
+                        <div class="cp-section-head">
+                            <span class="icon"><i class="fas fa-id-card"></i></span>
+                            <h5>Company &amp; Contact Details</h5>
                         </div>
-                    </div>
+                        <div class="cp-info-grid">
+                            <div class="cp-info-card">
+                                <h6><i class="fas fa-building text-primary"></i> Company</h6>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Company Name</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->company_name) }}</span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Short Description</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->short_description) }}</span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Address</span>
+                                    <span class="cp-field-value">
+                                        {{ $display(trim(implode(', ', array_filter([
+                                            $clientProfile->address,
+                                            $clientProfile->city,
+                                            $clientProfile->state,
+                                            $clientProfile->zip,
+                                        ])))) }}
+                                    </span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Phone</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->phone) }}</span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Fax</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->fax) }}</span>
+                                </div>
+                            </div>
 
-                    <div class="col-md-4">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="label_title">Shipping Address:</p>
+                            <div class="cp-info-card">
+                                <h6><i class="fas fa-file-invoice-dollar text-success"></i> Billing</h6>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Shipping Address</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->shipping_address) }}</span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Billing Contact Name</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->billing_contact_name) }}</span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Billing Contact Email</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->billing_contact_email) }}</span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">Billing Contact Phone</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->billing_contact_phone) }}</span>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->shipping_address }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">Billing Contact Name:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->billing_contact_name }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">Billing Contact Email:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->billing_contact_email }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">Billing Contact Phone:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->billing_contact_phone }}</p>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="col-md-4">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="label_title">DER Contact Name:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->der_contact_name }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">DER Contact Email:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->der_contact_email }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="label_title">DER Contact Phone:</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p>{{ $clientProfile->der_contact_phone }}</p>
+                            <div class="cp-info-card">
+                                <h6><i class="fas fa-user-shield text-info"></i> DER Contact</h6>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">DER Contact Name</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->der_contact_name) }}</span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">DER Contact Email</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->der_contact_email) }}</span>
+                                </div>
+                                <div class="cp-field">
+                                    <span class="cp-field-label">DER Contact Phone</span>
+                                    <span class="cp-field-value">{{ $display($clientProfile->der_contact_phone) }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -311,7 +396,7 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label for="employee_id">Employee ID <span class="text-red">*</span></label>
+                                    <label for="employee_id">Driver's License / Employee ID <span class="text-red">*</span></label>
                                     <input id="employee_id" name="employee_id" type="text"
                                         class="form-control @error('employee_id') is-invalid @enderror"
                                         placeholder="Enter Employee ID" value="{{ old('employee_id') }}" required>

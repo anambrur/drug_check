@@ -113,7 +113,7 @@ use App\Http\Controllers\Admin\WorkProcessController;
 use App\Http\Controllers\Admin\WorkProcessSectionController;
 use App\Http\Controllers\Frontend\ContactController;
 use App\Http\Controllers\Frontend\HomeController;
-use App\Http\Controllers\Frontend\QuestDiagnosticsController;
+use App\Http\Controllers\Frontend\QuestOrderController as FrontendQuestOrderController;
 use App\Http\Controllers\Frontend\ZipSearchController;
 use App\Http\Controllers\Frontend\StripeWebhookController;
 use App\Http\Middleware\XSS;
@@ -198,15 +198,17 @@ Route::get('terms-and-conditions', [\App\Http\Controllers\Frontend\HomeControlle
 Route::get('privacy-policy', [\App\Http\Controllers\Frontend\HomeController::class, 'privacy_policy'])->name('frontend.privacy-policy')->middleware('XSS');
 
 Route::prefix('quest')->group(function () {
-    Route::get('/order-form', [QuestDiagnosticsController::class, 'showOrderForm'])->name('quest.order-form');
+    Route::get('/order-form', [FrontendQuestOrderController::class, 'showOrderForm'])->name('quest.order-form');
 
     Route::middleware('auth')->group(function () {
-        Route::get('/order-success/{quest_order_id}/{reference_test_id}', [QuestDiagnosticsController::class, 'orderSuccess'])->name('quest.order-success');
-        Route::get('/order/{id}/document/{docType}', [QuestDiagnosticsController::class, 'getDocument'])->name('quest.get-document');
-        Route::get('/order-details', [QuestDiagnosticsController::class, 'getOrderDetailsForm'])->name('quest.order-details.form');
-        Route::post('/order-details', [QuestDiagnosticsController::class, 'getOrderDetails'])->name('quest.order-details.submit');
-        Route::get('/order-details/show', [QuestDiagnosticsController::class, 'showOrderDetails'])->name('quest.order-details.show');
-        Route::get('/order-details/{questOrderId}/{referenceTestId?}', [QuestDiagnosticsController::class, 'getOrderDetails'])->name('quest.order-details.direct');
+        Route::get('/order-success/{quest_order_id}/{reference_test_id}', [FrontendQuestOrderController::class, 'orderSuccess'])->name('quest.order-success');
+        Route::get('/order/{id}/document/{docType}', [FrontendQuestOrderController::class, 'downloadDocument'])->name('quest.get-document');
+        Route::get('/order/{quest_order_id}/result/{screenType?}', [FrontendQuestOrderController::class, 'downloadResult'])->name('quest.download-result');
+        Route::get('/order/{quest_order_id}/mro-letter', [FrontendQuestOrderController::class, 'downloadMroLetter'])->name('quest.download-mro-letter');
+        Route::get('/order-details', [FrontendQuestOrderController::class, 'getOrderDetailsForm'])->name('quest.order-details.form');
+        Route::post('/order-details', [FrontendQuestOrderController::class, 'openPortal'])->name('quest.order-details.submit');
+        Route::get('/order-details/show', [FrontendQuestOrderController::class, 'showOrderDetails'])->name('quest.order-details.show');
+        Route::get('/order-details/{questOrderId}/{referenceTestId?}', [FrontendQuestOrderController::class, 'openPortal'])->name('quest.order-details.direct');
     });
 });
 
@@ -1063,11 +1065,18 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::get('quest-order', [QuestOrderController::class, 'index'])->name('quest-order.index')->middleware('permission:quest-order view');
     Route::get('quest-order/create', [QuestOrderController::class, 'create'])->name('quest-order.create')->middleware('permission:quest-order create');
     Route::post('quest-order', [QuestOrderController::class, 'store'])->name('quest-order.store')->middleware('permission:quest-order create');
+    Route::delete('quest-order/destroy-checked', [QuestOrderController::class, 'destroy_checked'])->name('quest-order.destroy_checked')->middleware('permission:quest-order delete');
+    Route::post('quest-order/{id}/cancel', [QuestOrderController::class, 'cancel'])->name('quest-order.cancel')->middleware('permission:quest-order edit');
+    Route::get('quest-order/{id}/portal', [QuestOrderController::class, 'portal'])->name('quest-order.portal')->middleware('permission:quest-order view');
+    Route::get('quest-order/{id}/document/{docType}', [QuestOrderController::class, 'downloadDocument'])->name('quest-order.document')->middleware('permission:quest-order view');
+    Route::get('quest-order/{id}/qpassport', [QuestOrderController::class, 'downloadQPassport'])->name('quest-order.qpassport')->middleware('permission:quest-order view');
+    Route::get('quest-order/{id}/result/refresh', [QuestOrderController::class, 'refreshResult'])->name('quest-order.result.refresh')->middleware('permission:quest-order edit');
+    Route::get('quest-order/{id}/result/{screenType?}', [QuestOrderController::class, 'downloadResult'])->name('quest-order.result')->middleware('permission:quest-order view');
+    Route::get('quest-order/{id}/mro-letter', [QuestOrderController::class, 'downloadMroLetter'])->name('quest-order.mro-letter')->middleware('permission:quest-order view');
     Route::get('quest-order/{id}', [QuestOrderController::class, 'show'])->name('quest-order.show')->middleware('permission:quest-order view');
     Route::get('quest-order/{id}/edit', [QuestOrderController::class, 'edit'])->name('quest-order.edit')->middleware('permission:quest-order edit');
     Route::put('quest-order/{id}', [QuestOrderController::class, 'update'])->name('quest-order.update')->middleware('permission:quest-order edit');
     Route::delete('quest-order/{id}', [QuestOrderController::class, 'destroy'])->name('quest-order.destroy')->middleware('permission:quest-order delete');
-    Route::delete('quest-order/destroy-checked', [QuestOrderController::class, 'destroy_checked'])->name('quest-order.destroy_checked')->middleware('permission:quest-order delete');
 });
 
 // ------------------------------------------------------------------
@@ -1096,14 +1105,14 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
 // DOT Test
 // ------------------------------------------------------------------
 Route::middleware($adminBase)->prefix('admin')->group(function () {
-    Route::get('dot-test/order-form/{reference}', [QuestDiagnosticsController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form');
-    Route::get('dot-test/{portfolioId}', [QuestDiagnosticsController::class, 'dotTest'])->name('dot-test.index');
+    Route::get('dot-test/order-form/{reference}', [FrontendQuestOrderController::class, 'showDotOrderForm'])->name('admin.dot-test.order-form');
+    Route::get('dot-test/{portfolioId}', [FrontendQuestOrderController::class, 'dotTest'])->name('dot-test.index');
 });
 
 // ------------------------------------------------------------------
 // Collection Sites Search (public)
 // ------------------------------------------------------------------
-Route::get('/collection-sites/search', [QuestDiagnosticsController::class, 'searchCollectionSites'])->name('collection-sites.search');
+Route::get('/collection-sites/search', [FrontendQuestOrderController::class, 'searchCollectionSites'])->name('collection-sites.search');
 
 // ------------------------------------------------------------------
 // Lab Admin (Laboratory, MRO, Panel, Test Admin, Dot Agency)

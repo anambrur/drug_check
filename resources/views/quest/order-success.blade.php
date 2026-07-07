@@ -60,15 +60,23 @@
                                             <i class="fas fa-file-alt"></i>
                                             Download QPassport
                                         </a>
+                                        @php $screenService = app(\App\Services\Quest\QuestOrderScreenService::class); @endphp
+                                        @if (isset($order) && $screenService->isResultAvailable($order))
+                                            <a href="{{ route('quest.download-result', ['quest_order_id' => $questOrderId]) }}"
+                                                class="pf-btn-submit text-decoration-none mb-2">
+                                                <i class="fas fa-file-pdf"></i>
+                                                Download Test Result (PDF)
+                                            </a>
+                                        @endif
                                         <a href="{{ route('quest.order-details.direct', ['questOrderId' => $questOrderId, 'referenceTestId' => $referenceTestId]) }}"
                                             class="pf-btn-submit pf-btn-secondary text-decoration-none mb-2">
                                             <i class="fas fa-eye"></i>
                                             View Order Details
                                         </a>
-                                        <button type="button" class="pf-btn-submit pf-btn-secondary mb-2" onclick="printOrderDetails()">
+                                        {{-- <button type="button" class="pf-btn-submit pf-btn-secondary mb-2" onclick="printOrderDetails()">
                                             <i class="fas fa-print"></i>
                                             Print This Page
-                                        </button>
+                                        </button> --}}
                                     </div>
                                     <p class="pf-hint text-center mt-3 mb-0">
                                         Some documents may not be available until later stages of the testing process.

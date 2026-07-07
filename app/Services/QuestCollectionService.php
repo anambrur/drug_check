@@ -19,18 +19,29 @@ class QuestCollectionService
 
     public function __construct()
     {
-        $this->client = new Client([
-            'verify' => false,
-            'timeout' => 900, // 15 minutes
-            'connect_timeout' => 60,
+        $sslVerify = config('services.quest.ssl.verify_peer', true);
+        $caBundle = config('services.quest.ssl.ca_bundle');
+
+        $clientOptions = [
+            'verify' => $sslVerify,
+            'timeout' => config('services.quest.timeouts.request', 900),
+            'connect_timeout' => config('services.quest.timeouts.connect', 60),
             'headers' => [
                 'Content-Type' => 'text/xml; charset=utf-8',
-            ]
-        ]);
+            ],
+        ];
 
-        $this->username = env('QUEST_USERNAME', 'cli_SkyrosUAT');
-        $this->password = env('QUEST_PASSWORD', 'kfIVZEUj46uM');
-        $this->endpoint = config('app.env') === 'production' ? $this->prodUrl : $this->devUrl;
+        if ($sslVerify && $caBundle) {
+            $clientOptions['verify'] = $caBundle;
+        }
+
+        $this->client = new Client($clientOptions);
+
+        $this->username = config('services.quest.username');
+        $this->password = config('services.quest.password');
+        $this->endpoint = app()->isProduction()
+            ? config('services.quest.urls.production', $this->prodUrl)
+            : config('services.quest.urls.staging', $this->devUrl);
     }
 
     /**

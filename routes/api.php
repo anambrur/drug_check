@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Frontend\QuestDiagnosticsController;
+use App\Http\Controllers\Frontend\QuestWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('quest')
-    ->middleware(['throttle:10,1']) // 10 requests per minute per IP
+    ->middleware(['throttle:60,1', 'quest.webhook'])
     ->group(function () {
-        Route::post('/order-status', [QuestDiagnosticsController::class, 'receiveWebhook'])
+        Route::post('/order-status', [QuestWebhookController::class, 'receive'])
             ->name('quest.order-status.webhook');
     });
 

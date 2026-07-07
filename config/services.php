@@ -76,6 +76,17 @@ return [
             'ttl'  => 86400, // seconds — 24 hours
         ],
 
+        // Inbound webhook (Quest → us) — separate from API credentials
+        'webhook' => [
+            'username' => env('QUEST_WEBHOOK_USERNAME'),
+            'password' => env('QUEST_WEBHOOK_PASSWORD'),
+            'max_body_bytes' => (int) env('QUEST_WEBHOOK_MAX_BYTES', 1048576),
+        ],
+
+        'doc_types' => [
+            'QPassport', 'LabReport', 'MROLetter', 'Copy1', 'Copy2', 'ATF', 'AlcoholReport', 'OHS',
+        ],
+
     ],
 
 

@@ -2195,6 +2195,93 @@ body.rtl-mode .web-design-process .design-process-video .design-process-video-bt
 }
 
 /*----------------------------------------*/
+/*  Legal Pages (Terms / Privacy)
+/*----------------------------------------*/
+.legal-page {
+    padding-bottom: 0;
+}
+
+.legal-page .legal-hero .svc-hero-stats {
+    margin-top: 1.25rem;
+}
+
+.legal-page .legal-hero-actions {
+    margin-top: 1.5rem;
+}
+
+.legal-page .legal-hero-btn {
+    display: inline-flex !important;
+    width: auto !important;
+    min-width: 220px;
+}
+
+.legal-page .legal-stepper {
+    max-width: 400px;
+    margin: 2rem auto 0;
+}
+
+.legal-page .legal-section {
+    padding: 3.5rem 0;
+    background: #fff;
+}
+
+.legal-page .legal-content-section {
+    padding-bottom: 4rem;
+}
+
+.legal-page .legal-highlight-card {
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.legal-page .legal-highlight-card:hover {
+    transform: translateY(-4px);
+}
+
+.legal-page .rc-animate.rc-visible,
+.no-js .legal-page .rc-animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.legal-page .dst-prose h1,
+.legal-page .dst-prose h2,
+.legal-page .dst-prose h3,
+.legal-page .dst-prose h4 {
+    font-family: var(--pf-font-head, var(--title-font, 'Poppins', sans-serif));
+    color: var(--pf-text, #171718);
+    margin-top: 1.5rem;
+    margin-bottom: .75rem;
+}
+
+.legal-page .dst-prose p,
+.legal-page .dst-prose li {
+    color: var(--pf-muted, #5c6578);
+    line-height: 1.75;
+}
+
+.legal-page .dst-prose ul,
+.legal-page .dst-prose ol {
+    padding-left: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .legal-page .legal-section {
+        padding: 2.5rem 0;
+    }
+
+    .legal-page .legal-stepper .rc-step-label {
+        font-size: .65rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .legal-page .legal-highlight-card:hover {
+        transform: none;
+    }
+}
+
+/*----------------------------------------*/
 /*  Work Process Style 1 — Modern
 /*----------------------------------------*/
 .wp-modern {
@@ -2787,15 +2874,20 @@ body.rtl-mode .web-design-process .design-process-video .design-process-video-bt
 }
 
 /*----------------------------------------*/
-/*  Footer Style 1 — Modern
+/*  Footer Style 1 — Modern SaaS
 /*----------------------------------------*/
 .ft-modern {
     --ft-primary: var(--main-color, #ff4500);
     --ft-secondary: var(--secondary-color, #171718);
     --ft-font-head: var(--title-font, 'Poppins', sans-serif);
+    --ft-surface: rgba(255, 255, 255, .04);
+    --ft-surface-hover: rgba(255, 255, 255, .07);
+    --ft-border: rgba(255, 255, 255, .09);
+    --ft-text: rgba(255, 255, 255, .78);
+    --ft-text-muted: rgba(255, 255, 255, .58);
     position: relative;
     overflow: hidden;
-    background: linear-gradient(165deg, var(--ft-secondary) 0%, color-mix(in srgb, var(--ft-primary) 18%, var(--ft-secondary)) 55%, var(--ft-secondary) 100%) !important;
+    background: linear-gradient(168deg, var(--ft-secondary) 0%, color-mix(in srgb, var(--ft-primary) 14%, var(--ft-secondary)) 48%, var(--ft-secondary) 100%) !important;
 }
 
 .ft-modern-bg {

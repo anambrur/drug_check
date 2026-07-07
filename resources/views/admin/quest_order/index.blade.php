@@ -16,14 +16,6 @@
                     </div>
 
                     @if (count($questOrders) > 0)
-                        <div>
-                            <input id="check_all" type="checkbox" onclick="showHideDeleteButton(this)">
-                            <label for="check_all">All</label>
-                            <a id="deleteChecked" class="ml-2" href="#" data-toggle="modal"
-                                data-target="#deleteCheckedModal">
-                                <i class="fa fa-trash text-danger font-18"></i>
-                            </a>
-                        </div>
                         <form onsubmit="return btnCheckListGet()" action="{{ route('quest-order.destroy_checked') }}"
                             method="POST">
                             @method('DELETE')
@@ -54,13 +46,16 @@
                                 </div>
                             </div>
                         </form>
-                        <table id="basic-datatable" class="table table-striped dt-responsive w-100">
+                        <div class="quest-order-table-wrap">
+                        <table id="" class="table table-striped dt-responsive w-100">
                             <thead>
                                 <tr>
-                                    <th scope="col">#</th>
+                                    {{-- <th scope="col">#</th> --}}
                                     <th>Quest Order ID</th>
-                                    <th>Donor Name</th>
-                                    <th>Client Reference</th>
+                                    <th>Company</th>
+                                    <th>Donor</th>
+                                    <th>Email</th>
+                                    <th>Test Type</th>
                                     <th>Status</th>
                                     <th>Result</th>
                                     <th>Created Date</th>
@@ -71,28 +66,53 @@
                             <tbody>
                                 @php $counter = 1; @endphp
                                 @foreach ($questOrders as $order)
+                                    @php
+                                        // dd($order);
+                                    @endphp
                                     <tr>
-                                        <td>
+                                        {{-- <td>
                                             <input name="check_list[]" type="checkbox" value="{{ $order->id }}"
                                                 onclick="showHideDeleteButton2(this)">
-                                        </td>
+                                        </td> --}}
                                         <td>{{ $order->quest_order_id ?? 'N/A' }}</td>
+                                        <td>{{ $order->user->name ?? 'N/A' }}</td>
                                         <td>{{ $order->first_name }} {{ $order->last_name }}</td>
-                                        <td>{{ $order->client_reference_id }}</td>
+                                        <td>{{ $order->email }}</td>
+                                        @if ($order->dot_test == 'T')
+                                            <td><span class="badge badge-pill badge-primary">DOT</span></td>
+                                        @else
+                                            <td><span class="badge badge-pill badge-secondary">Non-DOT</span></td>
+                                        @endif
+
                                         <td>
-                                            @if ($order->order_status)
+                                            @if ($order->screens->count())
+                                                @foreach ($order->screens as $screen)
+                                                    <span
+                                                        class="badge badge-pill badge-info d-block mb-1">{{ $screen->screen_type }}:
+                                                        {{ $screen->order_status ?? 'Pending' }}</span>
+                                                @endforeach
+                                            @elseif ($order->order_status)
                                                 <span class="badge badge-pill badge-info">{{ $order->order_status }}</span>
                                             @else
-                                                <span class="badge badge-pill badge-secondary">Pending</span>
+                                                <span class="badge badge-pill badge-info">Pending</span>
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($order->order_result)
+                                            @if ($order->screens->count())
+                                                @foreach ($order->screens as $screen)
+                                                    @if ($screen->order_result)
+                                                        <span
+                                                            class="badge badge-pill d-block mb-1 @if ($screen->order_result == 'Negative') badge-success @elseif($screen->order_result == 'Positive') badge-danger @else badge-warning @endif">
+                                                            {{ $screen->screen_type }}: {{ $screen->order_result }}
+                                                        </span>
+                                                    @endif
+                                                @endforeach
+                                                @if (!$order->screens->whereNotNull('order_result')->count())
+                                                    <span class="badge badge-pill badge-secondary">Not Available</span>
+                                                @endif
+                                            @elseif ($order->order_result)
                                                 <span
-                                                    class="badge badge-pill 
-                                                    @if ($order->order_result == 'Negative') badge-success
-                                                    @elseif($order->order_result == 'Positive') badge-danger
-                                                    @else badge-warning @endif">
+                                                    class="badge badge-pill @if ($order->order_result == 'Negative') badge-success @elseif($order->order_result == 'Positive') badge-danger @else badge-warning @endif">
                                                     {{ $order->order_result }}
                                                 </span>
                                             @else
@@ -100,29 +120,10 @@
                                             @endif
                                         </td>
                                         <td>{{ Carbon\Carbon::parse($order->created_at)->format('m/d/Y') }}</td>
-                                        <td>
-                                            <div>
-                                                @can('quest-order view')
-                                                    <a href="{{ route('quest-order.show', $order->id) }}" class="mr-2"
-                                                        title="View">
-                                                        <i class="fa fa-eye text-primary font-18"></i>
-                                                    </a>
-                                                @endcan
-
-                                                @can('quest-order edit')
-                                                    <a href="{{ route('quest-order.edit', $order->id) }}" class="mr-2"
-                                                        title="Edit">
-                                                        <i class="fa fa-edit text-info font-18"></i>
-                                                    </a>
-                                                @endcan
-
-                                                @can('quest-order delete')
-                                                    <a href="#" data-toggle="modal"
-                                                        data-target="#deleteModal{{ $order->id }}" title="Delete">
-                                                        <i class="fa fa-trash text-danger font-18"></i>
-                                                    </a>
-                                                @endcan
-                                            </div>
+                                        <td class="quest-order-actions-cell">
+                                            @include('admin.quest_order.partials.actions-dropdown', [
+                                                'order' => $order,
+                                            ])
                                         </td>
                                     </tr>
 
@@ -159,6 +160,7 @@
                                 @endforeach
                             </tbody>
                         </table>
+                        </div>
                     @else
                         <div class="text-center">
                             <p>No quest orders found.</p>
@@ -171,6 +173,8 @@
             </div> <!-- end card -->
         </div><!-- end col-->
     </div><!-- end row-->
+
+    @include('admin.quest_order.partials.actions-dropdown-styles')
 @endsection
 
 @push('scripts')

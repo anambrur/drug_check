@@ -114,6 +114,26 @@ class QuestOrder extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function screens()
+    {
+        return $this->hasMany(QuestOrderScreen::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(QuestOrderDocument::class);
+    }
+
+    public function hasQuestIds(): bool
+    {
+        return !empty($this->quest_order_id) && $this->create_response_status === 'SUCCESS';
+    }
+
+    public function questActionsEnabled(): bool
+    {
+        return $this->hasQuestIds();
+    }
+
     /**
      * Scopes
      */
