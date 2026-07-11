@@ -8,6 +8,7 @@ use App\Models\Admin\Favicon;
 use App\Models\Admin\PanelImage;
 use App\Models\Admin\RandomConsortium;
 use App\Models\ConsortiumEnrollment;
+use App\Services\ConsortiumEnrollmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Stripe\Checkout\Session as StripeSession;
@@ -191,7 +192,7 @@ class ConsortiumEnrollmentController extends Controller
     /**
      * Display the success/receipt page for the customer.
      */
-    public function success(Request $request, $id)
+    public function success(Request $request, $id, ConsortiumEnrollmentService $enrollmentService)
     {
         $enrollment = ConsortiumEnrollment::findOrFail($id);
 
@@ -202,14 +203,22 @@ class ConsortiumEnrollmentController extends Controller
                 Stripe::setApiKey(config('services.stripe.secret'));
                 $session = StripeSession::retrieve($sessionId);
                 if ($session->payment_status === 'paid') {
-                    $enrollment->update([
-                        'payment_status' => 'completed',
-                        'status' => 'Payment Completed',
-                        'stripe_payment_intent_id' => $session->payment_intent,
-                    ]);
+                    $enrollmentService->finalizePaidEnrollment(
+                        $enrollment,
+                        is_string($session->payment_intent) ? $session->payment_intent : ($session->payment_intent->id ?? null)
+                    );
+                    $enrollment->refresh();
                 }
             } catch (\Exception $e) {
                 // Keep the current local status if check fails, webhook will catch it
+            }
+        } elseif ($enrollment->payment_status === 'completed' && (!$enrollment->user_id || !$enrollment->notifications_sent_at)) {
+            // Payment already marked complete (e.g. webhook first) — ensure account + emails exist
+            try {
+                $enrollmentService->finalizePaidEnrollment($enrollment);
+                $enrollment->refresh();
+            } catch (\Exception $e) {
+                // Non-blocking for receipt page
             }
         }
 

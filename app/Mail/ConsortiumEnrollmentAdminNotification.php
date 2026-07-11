@@ -31,6 +31,6 @@ class ConsortiumEnrollmentAdminNotification extends Mailable
     {
         return $this->subject('New Paid Consortium Enrollment - ' . $this->enrollment->company_name)
             ->view('emails.consortium_enrollment_admin_notification')
-            ->from(config('mail.from.address', 'info@mydrugcheck.com'), config('mail.from.name', 'My Drug Check'));
+            ->from(config('mail.from.address', 'info@mydrugcheck.com'), config('mail.from.name', 'DrugCheckr'));
     }
 }

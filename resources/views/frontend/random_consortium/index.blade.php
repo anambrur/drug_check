@@ -325,7 +325,8 @@
                                 <div class="pf-icon-wrap rc-driver-input-wrap">
                                     <i class="fas fa-users pf-icon" aria-hidden="true"></i>
                                     <input type="number" id="driver_count" name="driver_count_display"
-                                           class="pf-control" value="1" min="1" max="1" required oninput="calculateTotal()">
+                                           class="pf-control" value="1" min="1" max="1" required
+                                           oninput="enforceDriverCount()" onblur="enforceDriverCount(true)">
                                 </div>
                                 <input type="hidden" id="driver_count_hidden" form="enrollment-form" name="driver_count" value="1">
                                 <p class="pf-hint danger" id="driver_count_help">Owner Operator plan is fixed to exactly 1 driver.</p>
@@ -507,12 +508,51 @@
             }
         }
 
+        // HTML min/max only constrain spinner arrows — typed values must be clamped in JS.
+        function enforceDriverCount(onBlur) {
+            const countInput = document.getElementById('driver_count');
+            if (!countInput || countInput.readOnly) {
+                calculateTotal();
+                return;
+            }
+
+            const raw = countInput.value;
+            if (raw === '' || raw === '-') {
+                if (onBlur) {
+                    countInput.value = activeMinDrivers;
+                }
+                calculateTotal();
+                return;
+            }
+
+            let drivers = parseInt(raw, 10);
+            if (isNaN(drivers)) {
+                if (onBlur) {
+                    countInput.value = activeMinDrivers;
+                }
+                calculateTotal();
+                return;
+            }
+
+            // Cap over-max immediately while typing; under-min only on blur so users can clear/retype.
+            if (drivers > activeMaxDrivers) {
+                drivers = activeMaxDrivers;
+                countInput.value = drivers;
+            } else if (onBlur && drivers < activeMinDrivers) {
+                drivers = activeMinDrivers;
+                countInput.value = drivers;
+            }
+
+            calculateTotal();
+        }
+
         function calculateTotal() {
             const planName = document.getElementById('selected_plan').value;
             const plan = PLANS.find(p => p.name === planName);
             if (!plan) return;
 
-            let drivers = parseInt(document.getElementById('driver_count').value) || 0;
+            const countInput = document.getElementById('driver_count');
+            let drivers = parseInt(countInput.value, 10) || 0;
             if (drivers < activeMinDrivers) drivers = activeMinDrivers;
             if (drivers > activeMaxDrivers) drivers = activeMaxDrivers;
 

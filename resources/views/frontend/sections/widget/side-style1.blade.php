@@ -7,18 +7,18 @@
 
     @if ($side_button_widget->status_whatsapp == 'enable')
         @if ($side_button_widget->contact == "fas fa-envelope")
-            <a href="mailto:{{ $side_button_widget->email_or_whatsapp }}" class="btn-whatsapp-pulse btn-whatsapp-pulse-border" style="@if ($side_button_widget->status_phone == 'disable') bottom:80px; @endif">
+            <a href="mailto:{{ $side_button_widget->email_or_whatsapp }}" class="btn-whatsapp-pulse btn-whatsapp-pulse-border" style="@if ($side_button_widget->status_phone == 'disable') bottom:70px; @endif">
                 <i class="fas fa-envelope"></i>
             </a>
         @else
-            <a href="{{ $side_button_widget->email_or_whatsapp }}" class="btn-whatsapp-pulse btn-whatsapp-pulse-border" style="@if ($side_button_widget->status_phone == 'disable') bottom:80px; @endif">
+            <a href="{{ $side_button_widget->email_or_whatsapp }}" class="btn-whatsapp-pulse btn-whatsapp-pulse-border" style="@if ($side_button_widget->status_phone == 'disable') bottom:70px; @endif">
                 <i class="fab fa-whatsapp"></i>
             </a>
         @endif
     @endif
 
     @if ($side_button_widget->status == 'enable')
-    <a href="{{ $side_button_widget->link }}" class="btn-whatsapp-pulse btn-whatsapp-pulse-border-2 custom-color-blue" style="@if ($side_button_widget->status_phone == 'disable' && $side_button_widget->status_whatsapp == 'disable') bottom:80px; @elseif ($side_button_widget->status_phone == 'disable') bottom:160px; @elseif ($side_button_widget->status_whatsapp == 'disable') bottom:160px; @endif">
+    <a href="{{ $side_button_widget->link }}" class="btn-whatsapp-pulse btn-whatsapp-pulse-border-2 custom-color-blue" style="@if ($side_button_widget->status_phone == 'disable' && $side_button_widget->status_whatsapp == 'disable') bottom:70px; @elseif ($side_button_widget->status_phone == 'disable') bottom:122px; @elseif ($side_button_widget->status_whatsapp == 'disable') bottom:122px; @endif">
         <i class="{{ $side_button_widget->social_media }}"></i>
     </a>
     @endif

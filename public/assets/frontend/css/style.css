@@ -673,7 +673,7 @@ p {
 .scroll-top-btn {
     bottom: 0;
     opacity: 0;
-    right: 10px;
+    right: 13px;
     padding: 5px;
     z-index: 144;
     position: fixed;
@@ -684,11 +684,11 @@ p {
     border: 2px solid var(--main-color);
 }
 .scroll-top-btn i {
-    width: 46px;
-    height: 46px;
-    font-size: 16px;
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
     color: #fff;
-    line-height: 46px;
+    line-height: 34px;
     text-align: center;
     border-radius: 50%;
     display: inline-block;

@@ -7,15 +7,11 @@ use App\Models\Payment;
 use App\Models\StripeWebhookEvent;
 use App\Models\PortfolioTestApplication;
 use App\Models\ConsortiumEnrollment;
-use App\Models\Admin\ConsortiumPlan;
-use App\Models\Admin\ContactInfoWidget;
-use App\Mail\ConsortiumEnrollmentConfirmed;
-use App\Mail\ConsortiumEnrollmentAdminNotification;
+use App\Services\ConsortiumEnrollmentService;
 use App\Services\QuestOrderSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
 
@@ -231,40 +227,22 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        // Avoid duplicate emails/updates if already completed
-        if ($enrollment->payment_status === 'completed') {
+        // Idempotent: still ensure user/profile + emails if payment already completed
+        if ($enrollment->payment_status === 'completed'
+            && $enrollment->user_id
+            && $enrollment->client_profile_id
+            && $enrollment->notifications_sent_at) {
             return;
         }
 
-        $enrollment->update([
-            'payment_status' => 'completed',
-            'status' => 'Payment Completed',
-            'stripe_payment_intent_id' => $session->payment_intent ?? null,
-        ]);
-
-        $pricing = ConsortiumPlan::where('name', $enrollment->selected_plan)->with('fees')->first() ?? ConsortiumPlan::first();
-
-        // 1. Send confirmation email to customer
         try {
-            Mail::to($enrollment->email)->send(new ConsortiumEnrollmentConfirmed($enrollment, $pricing));
-        } catch (\Exception $e) {
-            Log::error('Failed to send customer consortium enrollment confirmation email.', [
-                'enrollment_id' => $enrollment->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        // 2. Send notification email to admin
-        try {
-            $adminEmail = ContactInfoWidget::pluck('email')->first();
-            if ($adminEmail) {
-                Mail::to($adminEmail)->send(new ConsortiumEnrollmentAdminNotification($enrollment, $pricing));
-            } else {
-                Log::warning('Admin email not configured in ContactInfoWidget; skipping admin notification.');
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to send admin consortium enrollment notification email.', [
-                'enrollment_id' => $enrollment->id,
+            app(ConsortiumEnrollmentService::class)->finalizePaidEnrollment(
+                $enrollment,
+                $session->payment_intent ?? null
+            );
+        } catch (\Throwable $e) {
+            Log::error('Failed to finalize consortium enrollment after checkout.', [
+                'enrollment_id' => $enrollmentId,
                 'error' => $e->getMessage(),
             ]);
         }

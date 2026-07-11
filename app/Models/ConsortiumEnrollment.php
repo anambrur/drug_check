@@ -13,6 +13,8 @@ class ConsortiumEnrollment extends Model
     protected $table = 'consortium_enrollments';
 
     protected $fillable = [
+        'user_id',
+        'client_profile_id',
         'company_name',
         'dba_name',
         'dot_number',
@@ -36,7 +38,22 @@ class ConsortiumEnrollment extends Model
         'status',
         'payment_status',
         'internal_notes',
+        'notifications_sent_at',
     ];
+
+    protected $casts = [
+        'notifications_sent_at' => 'datetime',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function clientProfile()
+    {
+        return $this->belongsTo(\App\Models\Admin\ClientProfile::class);
+    }
 
     /**
      * Amount formatted as USD, e.g., "$122.50".
