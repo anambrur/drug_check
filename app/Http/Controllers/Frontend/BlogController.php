@@ -302,6 +302,7 @@ class BlogController extends Controller
         list($preloader, $favicon, $seo, $google_analytic, $tawk_to, $bottom_button_widget, $side_button_widget, $color_option, $breadcrumb_image, $font, $draft_view) = getCommonModel($language);
 
         $page_builder = PageBuilder::where('page_name', 'blog-search-index')->first();
+        $blog_index = PageBuilder::where('page_name', 'blog-index')->first();
 
         // Retrieve models
         $header_info_style1 = HeaderInfo::where('language_id', $language->id)->where('style', 'style1')->first();
@@ -330,6 +331,12 @@ class BlogController extends Controller
             ->orderBy('blogs.id', 'desc')
             ->paginate($blog_limit);
 
+        $blog_count_categories = Blog::select(DB::raw('count(*) as category_count, category_id'))
+            ->where('language_id', $language->id)
+            ->where('blogs.status', 'published')
+            ->groupBy('category_id')
+            ->get();
+
         $footer_image_style1 = FooterImage::where('style', 'style1')->first();
         $site_info = SiteInfo::where('language_id', $language->id)->first();
         $footers = Footer::join("footer_categories", 'footer_categories.id', '=', 'footers.category_id')
@@ -346,7 +353,8 @@ class BlogController extends Controller
         return view('frontend.blog.search-index', compact ( 'preloader', 'favicon', 'seo', 'google_analytic',
             'tawk_to', 'bottom_button_widget', 'side_button_widget', 'color_option', 'breadcrumb_image', 'font', 'draft_view',
             'socials', 'external_url', 'contact_info_widget_style1', 'menus', 'blogs_paginate_style', 'header_info_style1',
-            'header_image_style1', 'footer_image_style1', 'site_info', 'footers', 'footer_categories', 'page_builder'));
+            'header_image_style1', 'footer_image_style1', 'site_info', 'footers', 'footer_categories', 'page_builder',
+            'blog_index', 'blog_count_categories', 'search'));
     }
 
 }

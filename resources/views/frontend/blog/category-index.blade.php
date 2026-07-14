@@ -1,214 +1,231 @@
-<!DOCTYPE html>
-<html dir="@if (session()->has('language_direction_from_dropdown')) @if(session()->get('language_direction_from_dropdown') == 1) {{ __('rtl') }} @else {{ __('ltr') }} @endif @else {{ __('ltr') }} @endif" lang="@if (session()->has('language_code_from_dropdown')){{ str_replace('_', '-', session()->get('language_code_from_dropdown')) }}@else{{ str_replace('_', '-',   $language->language_code) }}@endif">
-<head>
-    <!-- Meta Tags -->
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <meta name="title" content="@if (!empty($category->category_name)) {{ $category->category_name }} @elseif (!empty($page_builder->meta_title)) {{ $page_builder->meta_title }} @elseif (isset($seo)){{ $seo->meta_title }} @endif">
-    <meta name="description" content="@if (!empty($page_builder->meta_description)) {{ $page_builder->meta_description }} @elseif (isset($seo)){{ $seo->meta_description }} @endif">
-    <meta name="keywords" content="@if (!empty($page_builder->meta_keyword)) {{ $page_builder->meta_keyword }} @elseif (isset($seo)){{ $seo->meta_keyword }} @endif">
-    <meta name="author" content="elsecolor">
-    <meta property="fb:app_id" content="@if (isset($seo)){{ $seo->fb_app_id }} @endif">
-    <meta property="og:title" content="@if (!empty($category->category_name)) {{ $category->category_name }} @elseif (!empty($page_builder->meta_title)) {{ $page_builder->meta_title }} @elseif (isset($seo)){{ $seo->meta_title }} @endif">
-    <meta property="og:url" content="@if (isset($seo) || isset($page_builder)){{ url()->current() }} @endif">
-    <meta property="og:description" content="@if (!empty($page_builder->meta_description)) {{ $page_builder->meta_description }} @elseif (isset($seo)){{ $seo->meta_description }} @endif">
-    <meta property="og:image" content="@if (!empty($favicon->favicon_image)){{ asset('uploads/img/general/'.$favicon->favicon_image) }} @endif">
-    <meta itemprop="image" content="@if (!empty($favicon->favicon_image)){{ asset('uploads/img/general/'.$favicon->favicon_image) }} @endif">
-    <meta property="og:type" content="website">
+@extends('layouts.frontend.master2')
 
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="@if (!empty($favicon->favicon_image)){{ asset('uploads/img/general/'.$favicon->favicon_image) }} @endif">
-    <meta property="twitter:title" content="@if (!empty($category->category_name)) {{ $category->category_name }} @elseif (!empty($page_builder->meta_title)) {{ $page_builder->meta_title }} @elseif (isset($seo)){{ $seo->meta_title }} @endif">
-    <meta property="twitter:description" content="@if (!empty($page_builder->meta_description)) {{ $page_builder->meta_description }} @elseif (isset($seo)){{ $seo->meta_description }} @endif">
-
-    <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <!-- Title -->
-    <title>@if (!empty($category->category_name)) {{ $category->category_name }} @elseif (!empty($page_builder->meta_title)) {{ $page_builder->meta_title }} @elseif  (isset($seo)) {{ $seo->meta_title }} @endif</title>
-
-    @if (!empty($favicon->favicon_image))
-        <!-- Favicon -->
-        <link href="{{ asset('uploads/img/general/'.$favicon->favicon_image) }}" sizes="128x128" rel="shortcut icon" type="image/x-icon" />
-        <link href="{{ asset('uploads/img/general/'.$favicon->favicon_image) }}" sizes="128x128" rel="shortcut icon" />
-    @else
-        <!-- Favicon -->
-        <link href="{{ asset('uploads/img/dummy/favicon.png') }}" sizes="128x128" rel="shortcut icon" type="image/x-icon" />
-        <link href="{{ asset('uploads/img/dummy/favicon.png') }}" sizes="128x128" rel="shortcut icon" />
+@section('content')
+    @if (Auth::user())
+        @can('blog view')
+            <div class="easier-mode">
+                <div class="easier-section-area">
+        @endcan
     @endif
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    @isset ($font)
-        <!-- Google Fonts -->
-        <link href="{{ $font->text_font_link }}" rel="stylesheet">
-        <link href="{{ $font->title_font_link }}" rel="stylesheet">
-    @else
-        <!-- Google Fonts -->
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,300;1,400;1,500;1,700;1,900&amp;display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800&amp;display=swap" rel="stylesheet">
-    @endisset
+    @php
+        $siteMainColor = (isset($color_option) && $color_option->color_option != 0)
+            ? $color_option->main_color
+            : '#ff4500';
+        $hasItems = is_countable($blogs_paginate_style) && count($blogs_paginate_style) > 0;
+        $totalPosts = $hasItems ? $blogs_paginate_style->total() : 0;
+        $categoryName = $category->category_name ?? __('frontend.all_blogs');
+    @endphp
 
+    <div class="svc-page ch-page" id="blog">
+        <div class="rc-scroll-progress" id="rc-scroll-progress" aria-hidden="true"><span></span></div>
 
-    <!--// Boostrap v5 //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/vendor/css/bootstrap.min.css') }}">
-    <!--// Magnific Popup //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/vendor/css/magnific.popup.min.css') }}">
-    <!--// Animate Css //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/vendor/css/animate.min.css') }}">
-    <!--// Vegas Slider Css //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/vendor/css/vegas.slider.min.css') }}">
-    <!--// Owl Carousel //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/vendor/css/owl.carousel.min.css') }}">
-    <!--// Owl Carousel Default //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/vendor/css/owl.carousel.default.min.css') }}">
-    <!--// Font Awesome //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/fonts/font_awesome/css/all.css') }}">
-    <!--// Flat Icons //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/fonts/flat_icons/flaticon.css') }}">
+        <section class="rc-hero rc-hero--blog">
+            <div class="rc-hero-bg" aria-hidden="true">
+                <div class="rc-hero-orb rc-hero-orb--1"></div>
+                <div class="rc-hero-orb rc-hero-orb--2"></div>
+                <div class="rc-hero-grid"></div>
+                <div class="rc-particles">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+            <div class="container position-relative">
+                <div class="rc-hero-content text-center">
+                    <span class="rc-badge rc-hero-item rc-hero-item--1">
+                        <i class="fas fa-bookmark" aria-hidden="true"></i>
+                        Category
+                        <span class="rc-badge-sep" aria-hidden="true"></span>
+                        {{ $totalPosts }} {{ \Illuminate\Support\Str::plural('Article', $totalPosts) }}
+                    </span>
+                    <h1 class="rc-hero-title rc-hero-item rc-hero-item--2" id="bl-cat-heading">{{ $categoryName }}</h1>
 
-    <style>
+                    @if (is_countable($blog_count_categories) && count($blog_count_categories) > 0)
+                        <nav class="rc-cat-bar rc-hero-item rc-hero-item--3" aria-label="Blog categories">
+                            @if (!empty($blog_index?->page_uri))
+                                <a href="{{ url($blog_index->page_uri) }}" class="rc-cat-chip">{{ __('frontend.all') }}</a>
+                            @endif
+                            @foreach ($blog_count_categories as $blog_count_category)
+                                @if (isset($blog_count_category->category->category_slug))
+                                    <a class="rc-cat-chip @if ($categoryName == $blog_count_category->category->category_name) is-active @endif"
+                                       href="{{ route('default-blog-category-index', $blog_count_category->category->category_slug) }}">
+                                        {{ $blog_count_category->category->category_name }}
+                                        <span class="rc-cat-count">{{ $blog_count_category->category_count }}</span>
+                                    </a>
+                                @endif
+                            @endforeach
+                            @unset($blog_count_category)
+                        </nav>
+                    @endif
+                </div>
+            </div>
+        </section>
 
-        :root {
-            @isset ($color_option)
+        <section class="plan-section svc-section" id="svc-catalog">
+            <div class="container">
+                @if (Auth::user())
+                    @can('blog view')
+                        <div class="svc-admin-touch d-md-none text-center rc-animate">
+                            <button type="button" class="svc-touch-btn">
+                                <i class="fa fa-mobile-alt" aria-hidden="true"></i> {{ __('content.touch') }}
+                            </button>
+                        </div>
+                    @endcan
+                @endif
 
-            @if ($color_option->color_option != 0)
-            --main-color: {{ $color_option->main_color }};
-            --secondary-color: {{ $color_option->secondary_color }};
-            --scroll-button-color: {{ $color_option->scroll_button_color }};
-            --bottom-button-color: {{ $color_option->bottom_button_color }};
-            --bottom-button-hover-color: {{ $color_option->bottom_button_hover_color }};
-            --side-button-color: {{ $color_option->side_button_color }};
-            @else
-            --main-color: #ff4500;
-            --secondary-color: #171718;
-            --scroll-button-color: #00baa3;
-            --bottom-button-color: #212529;
-            --bottom-button-hover-color: #333;
-            --side-button-color: #25d366;
-            @endif
+                @if ($hasItems)
+                    <div class="row g-4">
+                        @foreach ($blogs_paginate_style as $item)
+                            <div class="col-md-6 col-lg-4 portfolio-item rc-animate" style="--rc-delay: {{ ($loop->index % 9) * 0.06 }}s;">
+                                @if (Auth::user())
+                                    @can('blog view')
+                                        @php
+                                            $url = request()->path();
+                                            $modified_url = str_replace('/', '-bracket-', $url);
+                                        @endphp
+                                        <form method="POST" action="{{ route('site-url.index') }}" class="svc-admin-edit">
+                                            @csrf
+                                            <input type="hidden" name="route" value="blog.edit">
+                                            <input type="hidden" name="single_id" value="{{ $item->id }}">
+                                            <input type="hidden" name="site_url" value="{{ $modified_url }}">
+                                            <button type="submit" class="svc-edit-btn" title="Edit blog">
+                                                <i class="fa fa-edit" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                    @endcan
+                                @endif
 
-            @else
-            --main-color: #ff4500;
-            --secondary-color: #171718;
-            --scroll-button-color: #00baa3;
-            --bottom-button-color: #212529;
-            --bottom-button-hover-color: #333;
-            --side-button-color: #25d366;
-            @endisset
+                                <article class="svc-test-card h-100" style="--svc-accent: {{ $siteMainColor }};">
+                                    <a href="{{ route('default-blog-detail-show', ['slug' => $item->slug]) }}"
+                                       class="svc-test-link text-decoration-none">
+                                        @if (!empty($item->section_image))
+                                            <div class="svc-test-img">
+                                                <img src="{{ asset('uploads/img/blog/thumbnail/' . $item->section_image) }}"
+                                                     alt="{{ $item->title }}"
+                                                     loading="lazy">
+                                            </div>
+                                        @else
+                                            <div class="svc-test-img svc-test-img--placeholder" aria-hidden="true">
+                                                <i class="fas fa-newspaper"></i>
+                                            </div>
+                                        @endif
 
-            @isset ($font)
+                                        <div class="svc-test-body">
+                                            <h6 class="svc-test-title">{{ $item->title }}</h6>
+                                            <div class="svc-test-meta">
+                                                <span class="svc-test-code">
+                                                    <i class="far fa-bookmark" aria-hidden="true"></i>
+                                                    {{ $item->category_name }}
+                                                </span>
+                                                <span class="svc-test-code">
+                                                    <i class="far fa-user" aria-hidden="true"></i>
+                                                    @if ($item->type == 'with_this_account')
+                                                        {{ $item->author_name }}
+                                                    @else
+                                                        {{ __('frontend.anonymous') }}
+                                                    @endif
+                                                </span>
+                                            </div>
+                                            @if (!empty($item->short_description))
+                                                <p class="bl-svc-excerpt">{{ \Illuminate\Support\Str::limit($item->short_description, 90) }}</p>
+                                            @endif
+                                            <span class="svc-test-cta">
+                                                {{ __('frontend.read_more') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                                            </span>
+                                        </div>
+                                    </a>
+                                </article>
+                            </div>
+                        @endforeach
+                        @unset($item)
+                    </div>
 
-            --title-font:@php echo html_entity_decode($font->title_font_family); @endphp;
-            --text-font: @php echo html_entity_decode($font->text_font_family); @endphp;
+                    <div class="row">
+                        <div class="d-flex justify-content-center mt-4 mt-lg-5 svc-pagination rc-animate">
+                            {{ $blogs_paginate_style->links('vendor.pagination.bootstrap-5') }}
+                        </div>
+                    </div>
+                @else
+                    <div class="pf-card svc-empty-card text-center rc-animate">
+                        <div class="pf-body py-5">
+                            <div class="dst-empty-icon mx-auto mb-3">
+                                <i class="fas fa-bookmark" aria-hidden="true"></i>
+                            </div>
+                            <h3 class="dst-empty-title">{{ __('frontend.nothing_found') }}</h3>
+                            <p class="ch-text-muted mb-3">No articles found in this category.</p>
+                            @if (!empty($blog_index?->page_uri))
+                                <a href="{{ url($blog_index->page_uri) }}" class="svc-test-cta d-inline-flex">
+                                    {{ __('frontend.all_blogs') }} <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </section>
+    </div>
 
-            @else
-            --title-font: 'Poppins', sans-serif;
-            --text-font: 'Roboto', sans-serif;
-        @endisset
-
-
-        }
-
-    </style>
-
-    <!--// Theme Main Css //-->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/css/style.css') }}">
-    <!--// Theme Color Css //-->
-
-    <!--  helper style css file -->
-    <link rel="stylesheet" href="{{ asset('assets/frontend/css/helper-style.css') }}">
-
-    <style>
-        #counters {
-            background-image: url({{ asset('uploads/img/dummy/bg/counter-bg.png') }});
-        }
-    </style>
-
-    @if (isset($google_analytic))
-        <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id={{ $google_analytic->google_analytic }}"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-
-            gtag('config', '{{ $google_analytic->google_analytic }}');
-        </script>
+    @if (Auth::user())
+        @can('blog view')
+                </div>
+                <div class="easier-middle">
+                    @php
+                        $url = request()->path();
+                        $modified_url = str_replace('/', '-bracket-', $url);
+                    @endphp
+                    <form method="POST" action="{{ route('site-url.index') }}" class="d-inline-block">
+                        @csrf
+                        <input type="hidden" name="route" value="blog.create">
+                        <input type="hidden" name="style" value="">
+                        <input type="hidden" name="site_url" value="{{ $modified_url }}">
+                        <button type="submit" class="custom-btn text-white me-2 mb-2">
+                            <i class="fa fa-plus text-white"></i> {{ __('content.add_blog') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @endcan
     @endif
-    @livewireStyles
 
-</head>
-<body data-bs-spy="scroll" data-bs-target="#fixedNavbar" @if (session()->has('language_direction_from_dropdown')) @if(session()->get('language_direction_from_dropdown') == 1)  class="rtl-mode" @endif @elseif (isset($language)) @if ($language->direction == 1) class="rtl-mode" @endif  @endif >
-
-<!--// Page Wrapper Start //-->
-<div class="page-wrapper" id="wrapper">
-
-    @include('frontend.sections.header.header-style1')
-
-    <!--// Main Area Start //-->
-    <main class="main-area">
-
-        @include('frontend.sections.breadcrumb.breadcrumb-style1')
-        @include('frontend.blog.category-index-list')
-        @include('frontend.sections.footer.footer-style1')
-
-    </main>
-    <!--// Main Area End //-->
-
-    <a href="#" class="scroll-top-btn" data-scroll-goto="1">
-        <i class="fa fa-arrow-up"></i>
-    </a>
-    <!--// .scroll-top-btn // -->
-
-    @include('frontend.sections.preloader.preloader')
-
-</div>
-<!--// Page Wrapper End //-->
-
-@include('frontend.sections.widget.bottom-style1')
-@include('frontend.sections.widget.side-style1')
-
-
-
-<!--// JQuery //-->
-<script src="{{ asset('assets/frontend/vendor/js/jquery.min.js') }}"></script>
-<!--// Bootstrap //-->
-<script src="{{ asset('assets/frontend/vendor/js/bootstrap.min.js') }}"></script>
-<!--// Images Loaded Js //-->
-<script src="{{ asset('assets/frontend/vendor/js/images.loaded.min.js') }}"></script>
-<!--// Wow Js //-->
-<script src="{{ asset('assets/frontend/vendor/js/wow.min.js') }}"></script>
-<!--// Magnific Popup //-->
-<script src="{{ asset('assets/frontend/vendor/js/magnific.popup.min.js') }}"></script>
-<!--// Waypoint Js //-->
-<script src="{{ asset('assets/frontend/vendor/js/waypoint.min.js') }}"></script>
-<!--// Counter Up Js //-->
-<script src="{{ asset('assets/frontend/vendor/js/counter.up.min.js') }}"></script>
-<!--// JQuery Easing Functions //-->
-<script src="{{ asset('assets/frontend/vendor/js/jquery.easing.min.js') }}"></script>
-<!--// Owl Carousel //-->
-<script src="{{ asset('assets/frontend/vendor/js/owl.carousel.min.js') }}"></script>
-<!--// Form Validate //-->
-<script src="{{ asset('assets/frontend/vendor/js/validate.min.js') }}"></script>
-<!--// Form Validate //-->
-<script src="{{ asset('assets/frontend/vendor/js/custom.select.plugin.js') }}"></script>
-<!--// Scroll It //-->
-<script src="{{ asset('assets/frontend/vendor/js/scrollit.min.js') }}"></script>
-<!--// Isotope Js //-->
-<script src="{{ asset('assets/frontend/vendor/js/isotope.min.js') }}"></script>
-<!--// Main Js //-->
-<script src="{{ asset('assets/frontend/js/main.js') }}"></script>
-
-
-@isset ($tawk_to)
     <script>
-        @php echo html_entity_decode($tawk_to->tawk_to); @endphp
+    (function () {
+        document.querySelectorAll('.breadcrumb-section').forEach(function (el) {
+            el.style.display = 'none';
+        });
+
+        function initScrollAnimations() {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+                document.querySelectorAll('#blog.svc-page .rc-animate').forEach(function (el) {
+                    el.classList.add('rc-visible');
+                });
+                return;
+            }
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('rc-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+            document.querySelectorAll('#blog.svc-page .rc-animate').forEach(function (el) {
+                observer.observe(el);
+            });
+        }
+
+        function initScrollProgress() {
+            var bar = document.querySelector('#rc-scroll-progress span');
+            if (!bar) return;
+            window.addEventListener('scroll', function () {
+                var doc = document.documentElement;
+                var pct = (doc.scrollTop / (doc.scrollHeight - doc.clientHeight)) * 100;
+                bar.style.width = Math.min(100, Math.max(0, pct)) + '%';
+            }, { passive: true });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initScrollAnimations();
+            initScrollProgress();
+        });
+    })();
     </script>
-@endisset
-
-@livewireScripts
-
-</body>
-</html>
+@endsection

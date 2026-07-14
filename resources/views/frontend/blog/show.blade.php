@@ -150,7 +150,6 @@
     <!--// Main Area Start //-->
     <main class="main-area">
 
-        @include('frontend.sections.breadcrumb.breadcrumb-style1')
         @include('frontend.blog.blog-detail-show')
         @include('frontend.sections.footer.footer-style1')
 

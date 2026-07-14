@@ -3716,9 +3716,7 @@ header[style] {
 .blog-post-img {
     position: relative;
 }
-.blog-post-img img {
-    border-radius: 30px;
-}
+
 .blog-post-img .post-author-thumb {
     bottom: -60px;
     left: 0;
