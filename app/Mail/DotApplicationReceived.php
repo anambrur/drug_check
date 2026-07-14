@@ -28,7 +28,7 @@ class DotApplicationReceived extends Mailable
             subject: $this->getFormattedSubject(),
             from: new Address(
                 config('mail.from.address', 'noreply@mhanam.com'),
-                config('mail.from.name', 'My Drug Check')
+                config('mail.from.name', 'DrugCheckr')
             ),
             replyTo: [
                 new Address(

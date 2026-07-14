@@ -162,7 +162,7 @@
     </div>
     
     <div class="footer">
-        <p>&copy; {{ date('Y') }} My Drug Check. All rights reserved.</p>
+        <p>&copy; {{ date('Y') }} DrugCheckr. All rights reserved.</p>
         <p>This is a secure system notification.</p>
     </div>
 </div>

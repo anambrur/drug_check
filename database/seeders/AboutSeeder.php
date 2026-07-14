@@ -20,8 +20,8 @@ class AboutSeeder extends Seeder
             'video_type' => 'youtube',
             'video_url' => '',
             'section_title' => "About Us",
-            'title' => "Why Choose My Drug Checks",
-                    'description' => "My Drug Check stands as one of the nation's foremost providers of drug testing, alcohol testing, and DNA testing services catering to employers, courts, government agencies, and individuals. Our extensive network of drug testing centers spans across all states and cities. Our facilities conduct a variety of drug screenings, including 5, 10, 12, and 14-panel tests, offering instant results through FDA-approved products and utilizing SAMHSA Certified Laboratories.
+            'title' => "Why Choose DrugCheckrs",
+                    'description' => "DrugCheckr stands as one of the nation's foremost providers of drug testing, alcohol testing, and DNA testing services catering to employers, courts, government agencies, and individuals. Our extensive network of drug testing centers spans across all states and cities. Our facilities conduct a variety of drug screenings, including 5, 10, 12, and 14-panel tests, offering instant results through FDA-approved products and utilizing SAMHSA Certified Laboratories.
 
                     Our comprehensive drug testing methods encompass urine, hair, blood, and fingernail analyses. We also offer direct-to-lab testing services. Our testing services cater to various purposes, including employment screening, court-ordered tests, probation monitoring, post-accident assessments, reasonable suspicion testing, return-to-duty evaluations, and family-related testing. Additionally, we offer mobile drug and alcohol testing services for construction sites, warehouses, schools, and employers of all sizes.
 

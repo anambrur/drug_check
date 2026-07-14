@@ -141,7 +141,7 @@
     </div>
     
     <div class="footer">
-        <p>&copy; {{ date('Y') }} My Drug Check. Administrative Notification.</p>
+        <p>&copy; {{ date('Y') }} DrugCheckr. Administrative Notification.</p>
     </div>
 </div>
 

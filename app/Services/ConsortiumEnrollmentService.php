@@ -71,12 +71,6 @@ class ConsortiumEnrollmentService
                 'client_profile_id' => $clientProfile->id,
             ]);
 
-            Log::info('Consortium enrollment linked to existing user/profile.', [
-                'enrollment_id' => $enrollment->id,
-                'user_id' => $existingUser->id,
-                'client_profile_id' => $clientProfile->id,
-            ]);
-
             return;
         }
 
@@ -95,12 +89,6 @@ class ConsortiumEnrollmentService
         $clientProfile = $this->createClientProfile($enrollment, $companyUser);
 
         $enrollment->update([
-            'user_id' => $companyUser->id,
-            'client_profile_id' => $clientProfile->id,
-        ]);
-
-        Log::info('Created pending company user and inactive client profile for consortium enrollment.', [
-            'enrollment_id' => $enrollment->id,
             'user_id' => $companyUser->id,
             'client_profile_id' => $clientProfile->id,
         ]);
@@ -142,7 +130,7 @@ class ConsortiumEnrollmentService
 
     protected function sendEnrollmentNotifications(ConsortiumEnrollment $enrollment): void
     {
-        if ($enrollment->notifications_sent_at) {
+        if (!$enrollment) {
             return;
         }
 
@@ -150,47 +138,45 @@ class ConsortiumEnrollmentService
             ?? ConsortiumPlan::first();
 
         if (!$pricing) {
-            Log::warning('No consortium plan found for enrollment notification.', [
-                'enrollment_id' => $enrollment->id,
-                'selected_plan' => $enrollment->selected_plan,
-            ]);
             return;
         }
 
-        $companySent = false;
-        $adminSent = false;
+        $companyEmail = trim((string) $enrollment->email);
 
-        try {
-            Mail::to($enrollment->email)->send(new ConsortiumEnrollmentConfirmed($enrollment, $pricing));
-            $companySent = true;
-        } catch (\Exception $e) {
-            Log::error('Failed to send company consortium enrollment confirmation email.', [
-                'enrollment_id' => $enrollment->id,
-                'error' => $e->getMessage(),
-            ]);
+        if (!$enrollment->company_notified_at) {
+            if ($companyEmail !== '' && filter_var($companyEmail, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    Mail::to($companyEmail)->send(new ConsortiumEnrollmentConfirmed($enrollment, $pricing));
+                    $enrollment->update(['company_notified_at' => now()]);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to send company consortium enrollment confirmation email.', [
+                        'enrollment_id' => $enrollment->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
         }
 
-        try {
-            $adminEmail = optional(HeaderInfo::first())->email;
-            if ($adminEmail) {
-                Mail::to($adminEmail)->send(new ConsortiumEnrollmentAdminNotification($enrollment, $pricing));
-                $adminSent = true;
-            } else {
-                Log::warning('Admin email not configured in HeaderInfo; skipping admin notification.', [
+        if (!$enrollment->admin_notified_at) {
+            try {
+                $adminEmail = trim((string) (optional(HeaderInfo::first())->email ?? ''));
+
+                if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                    Mail::to($adminEmail)->send(new ConsortiumEnrollmentAdminNotification($enrollment, $pricing));
+                    $enrollment->update(['admin_notified_at' => now()]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to send admin consortium enrollment notification email.', [
                     'enrollment_id' => $enrollment->id,
+                    'error' => $e->getMessage(),
                 ]);
             }
-        } catch (\Exception $e) {
-            Log::error('Failed to send admin consortium enrollment notification email.', [
-                'enrollment_id' => $enrollment->id,
-                'error' => $e->getMessage(),
-            ]);
         }
 
-        if ($companySent || $adminSent) {
-            $enrollment->update([
-                'notifications_sent_at' => now(),
-            ]);
+        $enrollment->refresh();
+
+        if ($enrollment->company_notified_at && $enrollment->admin_notified_at && !$enrollment->notifications_sent_at) {
+            $enrollment->update(['notifications_sent_at' => now()]);
         }
     }
 }

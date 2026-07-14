@@ -39,10 +39,14 @@ class ConsortiumEnrollment extends Model
         'payment_status',
         'internal_notes',
         'notifications_sent_at',
+        'company_notified_at',
+        'admin_notified_at',
     ];
 
     protected $casts = [
         'notifications_sent_at' => 'datetime',
+        'company_notified_at' => 'datetime',
+        'admin_notified_at' => 'datetime',
     ];
 
     public function user()

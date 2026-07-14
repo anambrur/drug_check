@@ -212,7 +212,11 @@ class ConsortiumEnrollmentController extends Controller
             } catch (\Exception $e) {
                 // Keep the current local status if check fails, webhook will catch it
             }
-        } elseif ($enrollment->payment_status === 'completed' && (!$enrollment->user_id || !$enrollment->notifications_sent_at)) {
+        } elseif ($enrollment->payment_status === 'completed' && (
+            !$enrollment->user_id
+            || !$enrollment->company_notified_at
+            || !$enrollment->admin_notified_at
+        )) {
             // Payment already marked complete (e.g. webhook first) — ensure account + emails exist
             try {
                 $enrollmentService->finalizePaidEnrollment($enrollment);

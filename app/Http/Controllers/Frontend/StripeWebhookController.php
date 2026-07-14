@@ -227,11 +227,12 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        // Idempotent: still ensure user/profile + emails if payment already completed
+        // Idempotent: still ensure user/profile + emails if anything is missing
         if ($enrollment->payment_status === 'completed'
             && $enrollment->user_id
             && $enrollment->client_profile_id
-            && $enrollment->notifications_sent_at) {
+            && $enrollment->company_notified_at
+            && $enrollment->admin_notified_at) {
             return;
         }
 
