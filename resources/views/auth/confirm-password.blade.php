@@ -1,28 +1,36 @@
-<x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+@extends('auth.layout')
 
-        <div class="mb-4 text-sm text-gray-600">
-            {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
+@section('title', __('Confirm password'))
+@section('heading', __('Confirm password'))
+@section('description', __('This is a secure area. Please confirm your password before continuing.'))
+
+@section('content')
+    @include('auth.partials.validation-errors')
+
+    <form method="POST" action="{{ route('password.confirm') }}" class="auth-form" data-auth-form>
+        @csrf
+
+        <div class="auth-field">
+            <label class="auth-label" for="password">{{ __('Password') }}</label>
+            <div class="auth-password-wrap">
+                <input
+                    id="password"
+                    class="auth-input @error('password') is-invalid @enderror"
+                    type="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    autofocus
+                >
+                <button type="button" class="auth-password-toggle" data-auth-password-toggle aria-label="{{ __('Show password') }}">
+                    {{ __('Show') }}
+                </button>
+            </div>
         </div>
 
-        <x-validation-errors class="mb-4" />
-
-        <form method="POST" action="{{ route('password.confirm') }}">
-            @csrf
-
-            <div>
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" autofocus />
-            </div>
-
-            <div class="flex justify-end mt-4">
-                <x-button class="ml-4">
-                    {{ __('Confirm') }}
-                </x-button>
-            </div>
-        </form>
-    </x-authentication-card>
-</x-guest-layout>
+        <button type="submit" class="auth-btn" data-auth-submit data-loading-text="{{ __('Confirming…') }}">
+            <span class="auth-spinner" aria-hidden="true"></span>
+            <span class="auth-btn-label">{{ __('Confirm') }}</span>
+        </button>
+    </form>
+@endsection

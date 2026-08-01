@@ -635,7 +635,7 @@ p {
     background: var(--main-color);
 }
 .primary-btn .text {
-    padding: 0 20px 0 30px;
+    padding: 0 20px 0 20px;
     text-transform: uppercase;
     color: #fff !important;
 }
@@ -1102,11 +1102,30 @@ header[style] {
     margin-right: 0;
     text-transform: capitalize;
     padding-left: 70px;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
 }
 .header .navbar-brand img {
     display: none;
+    height: 48px;
+    width: auto;
+    max-width: 180px;
+    object-fit: contain;
 }
 .header .navbar-brand img.logo-transparent {
+    display: block;
+}
+.header.bg-white .navbar-brand img.logo-transparent {
+    display: none;
+}
+.header.bg-white .navbar-brand img.logo-normal {
+    display: block;
+}
+.header-shrink .navbar-brand img.logo-transparent {
+    display: none;
+}
+.header-shrink .navbar-brand img.logo-normal {
     display: block;
 }
 .header .navbar-btn-resp .primary-btn:hover {
@@ -1315,6 +1334,10 @@ header[style] {
     }
     .header .navbar-brand {
         padding: 10px 0 10px 15px;
+    }
+    .header .navbar-brand img {
+        height: 40px;
+        max-width: 140px;
     }
     .header .main-menu {
         background: #fff;

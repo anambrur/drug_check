@@ -46,15 +46,32 @@ class RegistrationTest extends TestCase
             return;
         }
 
+        $this->seed(\Database\Seeders\PermissionSeeder::class);
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'company_name' => 'Test Company',
+            'phone' => '555-0100',
+            'address' => '123 Main St',
+            'city' => 'Austin',
+            'state' => 'TX',
+            'zip' => '78701',
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
         ]);
 
         $this->assertAuthenticated();
         $response->assertRedirect(RouteServiceProvider::HOME);
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+            'status' => 1,
+            'type' => 2,
+        ]);
+        $this->assertDatabaseHas('client_profiles', [
+            'company_name' => 'Test Company',
+            'status' => 'active',
+        ]);
     }
 }

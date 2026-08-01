@@ -6,17 +6,17 @@
                 @isset ($header_image_style1)
                     <a class="navbar-brand" title="Home" href="{{ url('/') }}">
                         @if (!empty($header_image_style1->section_image))
-                            <img src="{{ asset('uploads/img/general/'.$header_image_style1->section_image) }}" alt="Logo White" class="img-fluid logo-transparent">
+                            <img src="{{ asset('uploads/img/general/'.$header_image_style1->section_image) }}" alt="Logo White" class="img-fluid logo-transparent" width="180" height="48">
                         @endif
                         @if (!empty($header_image_style1->section_image_2))
-                            <img src="{{ asset('uploads/img/general/'.$header_image_style1->section_image_2) }}" alt="Logo Black" class="img-fluid logo-normal">
+                            <img src="{{ asset('uploads/img/general/'.$header_image_style1->section_image_2) }}" alt="Logo Black" class="img-fluid logo-normal" width="180" height="48">
                         @endif
                     </a>
                 @else
                     @if (Auth::user() || $draft_view == null || $draft_view->status == 'enable')
                         <a class="navbar-brand" title="Home" href="#">
-                            <img src="{{ asset('uploads/img/dummy/your-logo.jpg') }}" alt="Logo White" class="img-fluid logo-transparent">
-                            <img src="{{ asset('uploads/img/dummy/your-logo.jpg') }}" alt="Logo Black" class="img-fluid logo-normal">
+                            <img src="{{ asset('uploads/img/dummy/your-logo.jpg') }}" alt="Logo White" class="img-fluid logo-transparent" width="180" height="48">
+                            <img src="{{ asset('uploads/img/dummy/your-logo.jpg') }}" alt="Logo Black" class="img-fluid logo-normal" width="180" height="48">
                         </a>
                     @endif
                 @endisset
@@ -68,6 +68,12 @@
                                 @endif
                             @endforeach
                             @unset ($menu)
+
+                            <li class="nav-item d-flex align-items-center">
+                                <a href="{{ url('/login') }}" class="primary-btn py-1">
+                                    <span class="text">Login</span>
+                                </a>
+                            </li>
 
                             @if (is_countable($display_dropdowns) && count($display_dropdowns) > 0)
                                 @php
