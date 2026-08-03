@@ -73,11 +73,49 @@
         }
     }
 
+    function initDotToggle(root) {
+        var form = root.querySelector('[data-auth-dot-form]');
+        if (!form) return;
+
+        var input = form.querySelector('[data-auth-dot-input]');
+        var fields = form.querySelector('[data-auth-dot-fields]');
+        var options = form.querySelectorAll('[data-auth-dot-value]');
+        var requiredFields = form.querySelectorAll('[data-auth-dot-required]');
+
+        function setDot(isDot) {
+            if (input) input.value = isDot ? '1' : '0';
+            if (fields) fields.classList.toggle('auth-hidden', !isDot);
+
+            options.forEach(function (btn) {
+                var active = btn.getAttribute('data-auth-dot-value') === (isDot ? '1' : '0');
+                btn.classList.toggle('is-active', active);
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+
+            requiredFields.forEach(function (field) {
+                if (isDot) {
+                    field.setAttribute('required', 'required');
+                } else {
+                    field.removeAttribute('required');
+                }
+            });
+        }
+
+        options.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setDot(btn.getAttribute('data-auth-dot-value') === '1');
+            });
+        });
+
+        setDot(input && input.value === '1');
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         var root = document.querySelector('.auth-page');
         if (!root) return;
         initPasswordToggles(root);
         initLoadingButtons(root);
         initTwoFactorToggle(root);
+        initDotToggle(root);
     });
 })();

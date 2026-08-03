@@ -21,18 +21,38 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        Validator::make($input, [
+        $isDot = (string) ($input['is_dot'] ?? '0') === '1';
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => $this->passwordRules(),
-            'company_name' => ['required', 'string', 'max:191'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'address' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:100'],
-            'state' => ['required', 'string', 'max:100'],
-            'zip' => ['required', 'string', 'max:20'],
+            'is_dot' => ['nullable', 'in:0,1'],
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
-        ])->validate();
+        ];
+
+        if ($isDot) {
+            $rules = array_merge($rules, [
+                'company_name' => ['required', 'string', 'max:191'],
+                'phone' => ['nullable', 'string', 'max:20'],
+                'address' => ['required', 'string', 'max:255'],
+                'city' => ['required', 'string', 'max:100'],
+                'state' => ['required', 'string', 'max:100'],
+                'zip' => ['required', 'string', 'max:20'],
+            ]);
+        }
+
+        Validator::make($input, $rules)->validate();
+
+        if (!$isDot) {
+            return User::create([
+                'name' => $input['name'],
+                'email' => $input['email'],
+                'password' => Hash::make($input['password']),
+                'type' => 2,
+                'status' => 1,
+            ]);
+        }
 
         return DB::transaction(function () use ($input) {
             $user = User::create([

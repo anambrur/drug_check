@@ -6,114 +6,145 @@
 @section('card_class', 'auth-card--wide auth-card--compact')
 
 @section('content')
+    @php
+        $isDot = (string) old('is_dot', '0') === '1';
+    @endphp
+
     @include('auth.partials.validation-errors')
 
-    <form method="POST" action="{{ route('register') }}" class="auth-form auth-form--compact" data-auth-form>
+    <form method="POST" action="{{ route('register') }}" class="auth-form auth-form--compact" data-auth-form data-auth-dot-form>
         @csrf
 
-        <div class="auth-row">
-            <div class="auth-field">
-                <label class="auth-label" for="name">{{ __('Full Name') }}</label>
-                <input
-                    id="name"
-                    class="auth-input @error('name') is-invalid @enderror"
-                    type="text"
-                    name="name"
-                    value="{{ old('name') }}"
-                    required
-                    autofocus
-                    autocomplete="name"
-                >
-            </div>
-            <div class="auth-field">
-                <label class="auth-label" for="company_name">{{ __('Company Name') }}</label>
-                <input
-                    id="company_name"
-                    class="auth-input @error('company_name') is-invalid @enderror"
-                    type="text"
-                    name="company_name"
-                    value="{{ old('company_name') }}"
-                    required
-                    autocomplete="organization"
-                >
-            </div>
-        </div>
+        <input type="hidden" name="is_dot" id="is_dot" value="{{ old('is_dot', '0') }}" data-auth-dot-input>
 
-        <div class="auth-row">
-            <div class="auth-field">
-                <label class="auth-label" for="email">{{ __('Email') }}</label>
-                <input
-                    id="email"
-                    class="auth-input @error('email') is-invalid @enderror"
-                    type="email"
-                    name="email"
-                    value="{{ old('email') }}"
-                    required
-                    autocomplete="username"
-                >
-            </div>
-            <div class="auth-field">
-                <label class="auth-label" for="phone">{{ __('Phone') }} <span class="auth-optional">({{ __('optional') }})</span></label>
-                <input
-                    id="phone"
-                    class="auth-input @error('phone') is-invalid @enderror"
-                    type="tel"
-                    name="phone"
-                    value="{{ old('phone') }}"
-                    autocomplete="tel"
-                >
-            </div>
+        <div class="auth-dot-toggle" role="group" aria-label="{{ __('Registration type') }}" data-auth-dot-toggle>
+            <button
+                type="button"
+                class="auth-dot-option {{ !$isDot ? 'is-active' : '' }}"
+                data-auth-dot-value="0"
+                aria-pressed="{{ !$isDot ? 'true' : 'false' }}"
+            >
+                {{ __('Not DOT user') }}
+            </button>
+            <button
+                type="button"
+                class="auth-dot-option {{ $isDot ? 'is-active' : '' }}"
+                data-auth-dot-value="1"
+                aria-pressed="{{ $isDot ? 'true' : 'false' }}"
+            >
+                {{ __('DOT user') }}
+            </button>
         </div>
 
         <div class="auth-field">
-            <label class="auth-label" for="address">{{ __('Address') }}</label>
+            <label class="auth-label" for="name">{{ __('Full Name') }}</label>
             <input
-                id="address"
-                class="auth-input @error('address') is-invalid @enderror"
+                id="name"
+                class="auth-input @error('name') is-invalid @enderror"
                 type="text"
-                name="address"
-                value="{{ old('address') }}"
+                name="name"
+                value="{{ old('name') }}"
                 required
-                autocomplete="street-address"
+                autofocus
+                autocomplete="name"
             >
         </div>
 
-        <div class="auth-row auth-row--3">
+        <div class="auth-field">
+            <label class="auth-label" for="email">{{ __('Email') }}</label>
+            <input
+                id="email"
+                class="auth-input @error('email') is-invalid @enderror"
+                type="email"
+                name="email"
+                value="{{ old('email') }}"
+                required
+                autocomplete="username"
+            >
+        </div>
+
+        <div class="auth-dot-fields {{ $isDot ? '' : 'auth-hidden' }}" data-auth-dot-fields>
+            <div class="auth-row">
+                <div class="auth-field">
+                    <label class="auth-label" for="company_name">{{ __('Company Name') }}</label>
+                    <input
+                        id="company_name"
+                        class="auth-input @error('company_name') is-invalid @enderror"
+                        type="text"
+                        name="company_name"
+                        value="{{ old('company_name') }}"
+                        @if ($isDot) required @endif
+                        autocomplete="organization"
+                        data-auth-dot-required
+                    >
+                </div>
+                <div class="auth-field">
+                    <label class="auth-label" for="phone">{{ __('Phone') }} <span class="auth-optional">({{ __('optional') }})</span></label>
+                    <input
+                        id="phone"
+                        class="auth-input @error('phone') is-invalid @enderror"
+                        type="tel"
+                        name="phone"
+                        value="{{ old('phone') }}"
+                        autocomplete="tel"
+                    >
+                </div>
+            </div>
+
             <div class="auth-field">
-                <label class="auth-label" for="city">{{ __('City') }}</label>
+                <label class="auth-label" for="address">{{ __('Address') }}</label>
                 <input
-                    id="city"
-                    class="auth-input @error('city') is-invalid @enderror"
+                    id="address"
+                    class="auth-input @error('address') is-invalid @enderror"
                     type="text"
-                    name="city"
-                    value="{{ old('city') }}"
-                    required
-                    autocomplete="address-level2"
+                    name="address"
+                    value="{{ old('address') }}"
+                    @if ($isDot) required @endif
+                    autocomplete="street-address"
+                    data-auth-dot-required
                 >
             </div>
-            <div class="auth-field">
-                <label class="auth-label" for="state">{{ __('State') }}</label>
-                <input
-                    id="state"
-                    class="auth-input @error('state') is-invalid @enderror"
-                    type="text"
-                    name="state"
-                    value="{{ old('state') }}"
-                    required
-                    autocomplete="address-level1"
-                >
-            </div>
-            <div class="auth-field">
-                <label class="auth-label" for="zip">{{ __('ZIP') }}</label>
-                <input
-                    id="zip"
-                    class="auth-input @error('zip') is-invalid @enderror"
-                    type="text"
-                    name="zip"
-                    value="{{ old('zip') }}"
-                    required
-                    autocomplete="postal-code"
-                >
+
+            <div class="auth-row auth-row--3">
+                <div class="auth-field">
+                    <label class="auth-label" for="city">{{ __('City') }}</label>
+                    <input
+                        id="city"
+                        class="auth-input @error('city') is-invalid @enderror"
+                        type="text"
+                        name="city"
+                        value="{{ old('city') }}"
+                        @if ($isDot) required @endif
+                        autocomplete="address-level2"
+                        data-auth-dot-required
+                    >
+                </div>
+                <div class="auth-field">
+                    <label class="auth-label" for="state">{{ __('State') }}</label>
+                    <input
+                        id="state"
+                        class="auth-input @error('state') is-invalid @enderror"
+                        type="text"
+                        name="state"
+                        value="{{ old('state') }}"
+                        @if ($isDot) required @endif
+                        autocomplete="address-level1"
+                        data-auth-dot-required
+                    >
+                </div>
+                <div class="auth-field">
+                    <label class="auth-label" for="zip">{{ __('ZIP') }}</label>
+                    <input
+                        id="zip"
+                        class="auth-input @error('zip') is-invalid @enderror"
+                        type="text"
+                        name="zip"
+                        value="{{ old('zip') }}"
+                        @if ($isDot) required @endif
+                        autocomplete="postal-code"
+                        data-auth-dot-required
+                    >
+                </div>
             </div>
         </div>
 

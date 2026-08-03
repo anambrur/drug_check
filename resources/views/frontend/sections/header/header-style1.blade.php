@@ -70,9 +70,15 @@
                             @unset ($menu)
 
                             <li class="nav-item d-flex align-items-center">
-                                <a href="{{ url('/login') }}" class="primary-btn py-1">
-                                    <span class="text">Login</span>
-                                </a>
+                                @auth
+                                    <a href="{{ url('/admin/dashboard') }}" class="primary-btn py-1">
+                                        <span class="text">Dashboard</span>
+                                    </a>
+                                @else
+                                    <a href="{{ url('/login') }}" class="primary-btn py-1">
+                                        <span class="text">Login</span>
+                                    </a>
+                                @endauth
                             </li>
 
                             @if (is_countable($display_dropdowns) && count($display_dropdowns) > 0)

@@ -38,7 +38,36 @@ class RegistrationTest extends TestCase
         $response->assertStatus(404);
     }
 
-    public function test_new_users_can_register(): void
+    public function test_new_users_can_register_as_not_dot(): void
+    {
+        if (! Features::enabled(Features::registration())) {
+            $this->markTestSkipped('Registration support is not enabled.');
+
+            return;
+        }
+
+        $response = $this->post('/register', [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'is_dot' => '0',
+            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(RouteServiceProvider::HOME);
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+            'status' => 1,
+            'type' => 2,
+        ]);
+        $this->assertDatabaseMissing('client_profiles', [
+            'der_contact_email' => 'test@example.com',
+        ]);
+    }
+
+    public function test_new_users_can_register_as_dot(): void
     {
         if (! Features::enabled(Features::registration())) {
             $this->markTestSkipped('Registration support is not enabled.');
@@ -50,9 +79,10 @@ class RegistrationTest extends TestCase
 
         $response = $this->post('/register', [
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'email' => 'dot@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'is_dot' => '1',
             'company_name' => 'Test Company',
             'phone' => '555-0100',
             'address' => '123 Main St',
@@ -65,7 +95,7 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
         $response->assertRedirect(RouteServiceProvider::HOME);
         $this->assertDatabaseHas('users', [
-            'email' => 'test@example.com',
+            'email' => 'dot@example.com',
             'status' => 1,
             'type' => 2,
         ]);

@@ -159,6 +159,11 @@
                 </li>
             </ul>
             <ul class="top-navbar-area navbar-nav navbar-nav-right">
+                <li class="nav-item">
+                    <a href="{{ url('/non-dot-testing') }}" class="badge badge-primary d-none d-md-block">
+                        Place Order
+                    </a>
+                </li>
                 <li class="nav-item dropdown dropdown-animate">
                     <a href="{{ url('/') }}" class="badge badge-primary d-none d-md-block">
                         {{ __('content.site') }}
