@@ -1,0 +1,16 @@
+# cPanel Cron Job — Laravel database queue worker
+#
+# In cPanel → Cron Jobs, run every minute:
+#   Minute: *  Hour: *  Day: *  Month: *  Weekday: *
+#
+# Replace YOUR_CPANEL_USER, the project path, and the PHP binary path.
+# Find PHP path in cPanel Terminal: which php
+#
+# Common PHP paths:
+#   /usr/local/bin/php
+#   /opt/cpanel/ea-php82/root/usr/bin/php
+
+* * * * * cd /home/YOUR_CPANEL_USER/public_html/mydrugchecklive && /usr/local/bin/php artisan queue:work database --stop-when-empty --max-time=55 --sleep=3 --tries=1 --timeout=3600 >> storage/logs/queue-cron.log 2>&1
+
+# Alternative: process one job per cron run (better for very long imports on strict hosts)
+# * * * * * cd /home/YOUR_CPANEL_USER/public_html/mydrugchecklive && /usr/local/bin/php artisan queue:work database --once --timeout=3600 >> storage/logs/queue-cron.log 2>&1

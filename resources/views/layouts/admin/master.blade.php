@@ -194,36 +194,30 @@
                     </li>
                 @endif
 
-                <li class="nav-item dropdown dropdown-animate">
-                    <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
-                        data-toggle="dropdown">
+                <li class="nav-item dropdown dropdown-animate" id="orderNotificationBell">
+                    <a class="nav-link count-indicator dropdown-toggle" id="orderNotificationDropdown" href="#"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="far fa-bell"></i>
-                        @if (count($general_unread_message_count) > 0)
-                            <span class="count"></span>
-                        @endif
+                        <span class="count order-notification-badge d-none" id="orderNotificationBadge">0</span>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list"
-                        aria-labelledby="notificationDropdown">
-                        <p class="mb-0 font-weight-normal float-left dropdown-header">
-                            {{ __('content.notifications') }}</p>
-
-                        @can('contact message view')
-                            <a href="{{ url('admin/contact-message') }}"
-                                class="dropdown-item preview-item d-flex align-items-center">
-                                <div class="notification-thumbnail">
-                                    <div class="preview-icon bg-primary">
-                                        <i class="ti-info-alt mx-0"></i>
-                                    </div>
-                                </div>
-                                <div class="notification-item-content">
-                                    <h6>{{ __('content.messages') }}</h6>
-                                    <p class="mb-0">
-                                        {{ count($general_unread_message_count) }}
-                                    </p>
-                                </div>
-                            </a>
-                        @endcan
-
+                    <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list order-notification-menu"
+                        aria-labelledby="orderNotificationDropdown">
+                        <div class="d-flex align-items-center justify-content-between px-3 pt-2 pb-1">
+                            <p class="mb-0 font-weight-normal dropdown-header p-0">Order Notifications</p>
+                            <button type="button" class="btn btn-link btn-sm p-0 text-muted"
+                                id="orderNotificationMarkAll" style="font-size: 12px; display: none;">Mark all read</button>
+                        </div>
+                        <div id="orderNotificationList">
+                            <div class="dropdown-item text-muted small py-3" id="orderNotificationEmpty">
+                                No order notifications yet
+                            </div>
+                        </div>
+                        <div class="dropdown-divider mb-0"></div>
+                        <div class="px-3 py-2 d-flex flex-wrap" style="gap: 8px;">
+                            <a href="{{ route('admin.orders.dot-testing') }}" class="small">DOT</a>
+                            <a href="{{ route('admin.orders.non-dot-testing') }}" class="small">Non-DOT</a>
+                            <a href="{{ route('consortium-enrollments.index') }}" class="small">Consortium</a>
+                        </div>
                     </div>
                 </li>
 
@@ -279,90 +273,260 @@
                         <span class="menu-title">{{ __('content.dashboard') }}</span>
                     </a>
                 </li>
-                @can('payment view')
-                <li class="nav-item {{ request()->is('admin/payments*') ? 'active' : '' }}">
-                    <a class="nav-link" href="{{ route('admin.payments.index') }}">
-                        <i class="fas fa-credit-card menu-icon"></i>
-                        <span class="menu-title">Payments</span>
-                    </a>
-                </li>
-                @endcan
-                @can('page builder view')
+                
+
+                @if(auth()->user()->can('quest-order view') || auth()->user()->can('random consortium view'))
                     <li
-                        class="nav-item {{ request()->is('admin/page-name/create') ||
-                        request()->is('admin/page-name/*/edit') ||
-                        request()->is('admin/page-builder/create') ||
-                        request()->is('admin/page-builder/*/edit')
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#page_builders" aria-expanded="false"
-                            aria-controls="page_builders">
-                            <i class="fa fa-home menu-icon"></i>
-                            <span class="menu-title">{{ __('content.page_builder') }}</span>
+                        class="nav-item {{ request()->is('admin/orders*') || request()->is('admin/consortium-enrollments*') ? 'active' : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#customer-orders" aria-expanded="false"
+                            aria-controls="customer-orders">
+                            <i class="fas fa-shopping-bag menu-icon"></i>
+                            <span class="menu-title">Orders</span>
                             <i class="ti-angle-right"></i>
                         </a>
-                        <div class="collapse {{ request()->is('admin/page-name/create') ||
-                        request()->is('admin/page-name/*/edit') ||
-                        request()->is('admin/page-builder/create') ||
-                        request()->is('admin/page-builder/*/edit')
+                        <div class="collapse {{ request()->is('admin/orders*') || request()->is('admin/consortium-enrollments*') ? 'show' : '' }}"
+                            id="customer-orders">
+                            <ul class="nav flex-column sub-menu">
+                                @can('quest-order view')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/orders/dot-testing') || (($ordersActiveType ?? null) === 'dot') ? 'active' : '' }}"
+                                        href="{{ route('admin.orders.dot-testing') }}">DOT Testing</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/orders/non-dot-testing') || (($ordersActiveType ?? null) === 'non_dot') ? 'active' : '' }}"
+                                        href="{{ route('admin.orders.non-dot-testing') }}">Non-DOT Testing</a>
+                                </li>
+                                @endcan
+                                @can('random consortium view')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/consortium-enrollments*') ? 'active' : '' }}"
+                                        href="{{ route('consortium-enrollments.index') }}">Random Consortium</a>
+                                </li>
+                                @endcan
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/orders/clearing-house') ? 'active' : '' }}"
+                                        href="{{ route('admin.orders.clearing-house') }}">
+                                        Clearing House
+                                        <span class="badge badge-secondary badge-pill ml-1" style="font-size: 9px;">Coming soon</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/orders/dot-supervisor-training') ? 'active' : '' }}"
+                                        href="{{ route('admin.orders.dot-supervisor-training') }}">
+                                        DOT Supervisor Training
+                                        <span class="badge badge-secondary badge-pill ml-1" style="font-size: 9px;">Coming soon</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                @endif
+
+                @can('quest-order view')
+                    <li
+                        class="nav-item {{ request()->is('admin/quest-order*') 
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#quest-orders" aria-expanded="false"
+                            aria-controls="quest-orders">
+                            <i class="fas fa-receipt menu-icon"></i>    
+                            <span class="menu-title">Lab / Quest Orders</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/quest-order*') 
                             ? 'show'
                             : '' }}"
-                            id="page_builders">
+                            id="quest-orders">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-order') && !request()->is('admin/quest-order/create') && !request()->is('admin/quest-order/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-order') }}">Quest Order List
+                                    </a>
+                                </li>
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-order/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-order/create') }}">Create Order
+                                    </a>
+                                </li>
+                                
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
+                @can('client profile view')
+                    <li
+                        class="nav-item {{ request()->is('admin/client-profile') ||
+                        request()->is('admin/client-profile/create') ||
+                        request()->is('admin/client-profile/*/edit') ||
+                        request()->is('admin/client-profile/*/show') ||
+                        request()->is('admin/client-profile-image/*/create') ||
+                        request()->is('admin/client-profile-image/*/*/edit') ||
+                        request()->is('admin/client-profile-detail/*/create') ||
+                        request()->is('admin/client-profile-detail/*/*/edit') ||
+                        request()->is('admin/employee/*/edit') 
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#client-profiles" aria-expanded="false"
+                            aria-controls="client-profiles">
+                            <i class="fas fa-user menu-icon"></i>
+                            <span class="menu-title">Client Profile</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/client-profile') ||
+                        request()->is('admin/client-profile/create') ||
+                        request()->is('admin/client-profile/*/edit') ||
+                        request()->is('admin/client-profile/*/show') ||
+                        request()->is('admin/client-profile-image/*/create') ||
+                        request()->is('admin/client-profile-image/*/*/edit') ||
+                        request()->is('admin/client-profile-detail/*/create') ||
+                        request()->is('admin/client-profile-detail/*/*/edit') ||
+                        request()->is('admin/employee/*/edit')
+                            ? 'show'
+                            : '' }}"
+                            id="client-profiles">
+                            <ul class="nav flex-column sub-menu">
+                                @can('client profile create')
+                                    <li class="nav-item"> <a
+                                            class="nav-link {{ request()->is('admin/client-profile/create') ? 'active' : '' }}"
+                                            href="{{ url('admin/client-profile/create') }}">Add Client Profile
+                                        </a>
+                                    </li>
+                                @endcan
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/client-profile') ||
+                                        request()->is('admin/client-profile/*/edit') ||
+                                        request()->is('admin/client-profile-image/*/create') ||
+                                        request()->is('admin/client-profile-image/*/*/edit') ||
+                                        request()->is('admin/client-profile-detail/*/create') ||
+                                        request()->is('admin/client-profile-detail/*/*/edit')
+                                            ? 'active'
+                                            : '' }}"
+                                        href="{{ url('admin/client-profile') }}">Client Profile</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
+                @can('result recording view')
+                    <li
+                        class="nav-item  {{ request()->is('admin/result-recording/create') ||
+                        request()->is('admin/result-recording') ||
+                        request()->is('admin/result-recording/*/edit') ||
+                        request()->is('admin/result-recording/*/show')
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" href="{{ url('admin/result-recording') }}">
+                            <i class="fas fa-chart-line menu-icon"></i>  
+                            <span class="menu-title">Result Recording</span>
+                        </a>
+                    </li>
+                @endcan
+
+                @can('random selection view')
+                    <li
+                        class="nav-item {{ request()->is('admin/random-selection') ||
+                        request()->is('admin/random-selection/create') ||
+                        request()->is('admin/random-selection/*/edit') ||
+                        request()->is('admin/random-selection/*/show') ||
+                        request()->is('admin/random-selection/results/*') ||
+                        request()->is('admin/admin/random-selection/execute/*') ||
+                        request()->is('admin/random-selection/executions/*') 
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#random-selections" aria-expanded="false"
+                            aria-controls="random-selections">
+                            <i class="fas fa-random menu-icon"></i>
+                            <span class="menu-title">Random Selection</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/random-selection') ||
+                        request()->is('admin/random-selection/create') ||
+                        request()->is('admin/random-selection/*/edit') ||
+                        request()->is('admin/random-selection/*/show') ||
+                        request()->is('admin/random-selection/results/*') ||
+                        request()->is('admin/admin/random-selection/execute/*') ||
+                        request()->is('admin/random-selection/executions/*') 
+                            ? 'show'
+                            : '' }}"
+                            id="random-selections">
+                            <ul class="nav flex-column sub-menu">
+                                
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/random-selection/create') ? 'active' : '' }}"
+                                        href="{{ url('admin/random-selection/create') }}">Create Random Selection</a></li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/random-selection') ||
+                                        request()->is('admin/random-selection/*/edit') ||
+                                        request()->is('admin/random-selection-image/*/create') ||
+                                        request()->is('admin/random-selection-image/*/*/edit') ||
+                                        request()->is('admin/random-selection-detail/*/create') ||
+                                        request()->is('admin/random-selection-detail/*/*/edit')
+                                            ? 'active'
+                                            : '' }}"
+                                        href="{{ url('admin/random-selection') }}">Random Selection</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
+                @can('test view')
+                    <li
+                        class="nav-item {{ request()->is('admin/portfolio/style1') ||
+                        request()->is('admin/portfolio-content/*/create') ||
+                        request()->is('admin/portfolio/create/*') ||
+                        request()->is('admin/portfolio/*/edit') ||
+                        request()->is('admin/portfolio-category/create') ||
+                        request()->is('admin/portfolio-category/*/edit') ||
+                        request()->is('admin/portfolio-detail/*/create') ||
+                        request()->is('admin/portfolio-detail/*/*/edit') ||
+                        request()->is('admin/portfolio-image/*/create') ||
+                        request()->is('admin/portfolio-image/*/*/edit')
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#portfolios" aria-expanded="false"
+                            aria-controls="portfolios">
+                            <i class="fas fa-briefcase menu-icon"></i>
+                            <span class="menu-title">Our Tests</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/portfolio/style1') ||
+                        request()->is('admin/portfolio-content/*/create') ||
+                        request()->is('admin/portfolio/create/*') ||
+                        request()->is('admin/portfolio/*/edit') ||
+                        request()->is('admin/portfolio-category/create') ||
+                        request()->is('admin/portfolio-category/*/edit') ||
+                        request()->is('admin/portfolio-detail/*/create') ||
+                        request()->is('admin/portfolio-detail/*/*/edit') ||
+                        request()->is('admin/portfolio-image/*/create') ||
+                        request()->is('admin/portfolio-image/*/*/edit')
+                            ? 'show'
+                            : '' }}"
+                            id="portfolios">
                             <ul class="nav flex-column sub-menu">
                                 <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/page-name/create') || request()->is('admin/page-name/*/edit') ? 'active' : '' }}"
-                                        href="{{ url('admin/page-name/create') }}">{{ __('content.page_names') }}</a>
+                                        class="nav-link {{ request()->is('admin/portfolio-category/create') || request()->is('admin/portfolio-category/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/portfolio-category/create') }}">{{ __('content.categories') }}</a>
                                 </li>
                                 <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/page-builder/create') || request()->is('admin/page-builder/*/edit') ? 'active' : '' }}"
-                                        href="{{ url('admin/page-builder/create') }}">{{ __('content.pages') }}</a></li>
+                                        class="nav-link {{ request()->is('admin/portfolio/style1') ||
+                                        request()->is('admin/portfolio-content/*/create') ||
+                                        request()->is('admin/portfolio/create/*') ||
+                                        request()->is('admin/portfolio-detail/*/create') ||
+                                        request()->is('admin/portfolio-detail/*/*/edit') ||
+                                        request()->is('admin/portfolio-image/*/create') ||
+                                        request()->is('admin/portfolio-image/*/*/edit')
+                                            ? 'active'
+                                            : '' }}"
+                                        href="{{ url('admin/portfolio/style1') }}">{{ __('content.test_name') }}</a>
+                                </li>
                             </ul>
                         </div>
                     </li>
                 @endcan
-                @can('menu view')
-                    <li
-                        class="nav-item {{ request()->is('admin/menu/create') ||
-                        request()->is('admin/menu/*/edit') ||
-                        request()->is('admin/submenu/create') ||
-                        request()->is('admin/submenu/*/edit')
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#menus" aria-expanded="false"
-                            aria-controls="menus">
-                            <i class="fa fa-bars menu-icon"></i>
-                            <span class="menu-title">{{ __('content.menus') }}</span>
-                            <i class="ti-angle-right"></i>
-                        </a>
-                        <div class="collapse {{ request()->is('admin/menu/create') ||
-                        request()->is('admin/menu/*/edit') ||
-                        request()->is('admin/submenu/create') ||
-                        request()->is('admin/submenu/*/edit')
-                            ? 'show'
-                            : '' }}"
-                            id="menus">
-                            <ul class="nav flex-column sub-menu">
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/menu/create') || request()->is('admin/menu/*/edit') ? 'active' : '' }}"
-                                        href="{{ url('admin/menu/create') }}">{{ __('content.menu') }}</a></li>
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/submenu/create') || request()->is('admin/submenu/*/edit') ? 'active' : '' }}"
-                                        href="{{ url('admin/submenu/create') }}">{{ __('content.submenu') }}</a></li>
-                            </ul>
-                        </div>
-                    </li>
-                @endcan
-                @can('upload view')
-                    <li
-                        class="nav-item  {{ request()->is('admin/photo/create') || request()->is('admin/photo/*/edit') ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ url('admin/photo/create') }}">
-                            <i class="fas fa-cloud-upload-alt menu-icon"></i>
-                            <span class="menu-title">{{ __('content.uploads') }}</span>
-                        </a>
-                    </li>
-                @endcan
-
-
+                
                 @can('blog view')
                     <li
                         class="nav-item {{ request()->is('admin/blog') ||
@@ -447,41 +611,6 @@
                     </li>
                 @endcan
 
-                @can('quest-order view')
-                    <li
-                        class="nav-item {{ request()->is('admin/quest-order*') 
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#quest-orders" aria-expanded="false"
-                            aria-controls="quest-orders">
-                            <i class="fas fa-receipt menu-icon"></i>    
-                            <span class="menu-title">Quest Order</span>
-                            <i class="ti-angle-right"></i>
-                        </a>
-                        <div class="collapse {{ request()->is('admin/quest-order*') 
-                            ? 'show'
-                            : '' }}"
-                            id="quest-orders">
-                            <ul class="nav flex-column sub-menu">
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/quest-order') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-order') }}">Quest Order
-                                    </a>
-                                </li>
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/quest-order/create') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-order/create') }}">Create Order
-                                    </a>
-                                </li>
-                                
-                            </ul>
-                        </div>
-                    </li>
-                @endcan
-
-
                 @can('lab admin view')
                     <li
                         class="nav-item {{ request()->is('admin/laboratory-list*') ||
@@ -534,75 +663,6 @@
                                 </li>
                             </ul>
                         </div>
-                    </li>
-                @endcan
-
-                @can('client profile view')
-                    <li
-                        class="nav-item {{ request()->is('admin/client-profile') ||
-                        request()->is('admin/client-profile/create') ||
-                        request()->is('admin/client-profile/*/edit') ||
-                        request()->is('admin/client-profile/*/show') ||
-                        request()->is('admin/client-profile-image/*/create') ||
-                        request()->is('admin/client-profile-image/*/*/edit') ||
-                        request()->is('admin/client-profile-detail/*/create') ||
-                        request()->is('admin/client-profile-detail/*/*/edit') ||
-                        request()->is('admin/employee/*/edit') 
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#client-profiles" aria-expanded="false"
-                            aria-controls="client-profiles">
-                            <i class="fas fa-user menu-icon"></i>
-                            <span class="menu-title">Client Profile</span>
-                            <i class="ti-angle-right"></i>
-                        </a>
-                        <div class="collapse {{ request()->is('admin/client-profile') ||
-                        request()->is('admin/client-profile/create') ||
-                        request()->is('admin/client-profile/*/edit') ||
-                        request()->is('admin/client-profile/*/show') ||
-                        request()->is('admin/client-profile-image/*/create') ||
-                        request()->is('admin/client-profile-image/*/*/edit') ||
-                        request()->is('admin/client-profile-detail/*/create') ||
-                        request()->is('admin/client-profile-detail/*/*/edit') ||
-                        request()->is('admin/employee/*/edit')
-                            ? 'show'
-                            : '' }}"
-                            id="client-profiles">
-                            <ul class="nav flex-column sub-menu">
-                                @can('client profile create')
-                                    <li class="nav-item"> <a
-                                            class="nav-link {{ request()->is('admin/client-profile/create') ? 'active' : '' }}"
-                                            href="{{ url('admin/client-profile/create') }}">Add Client Profile
-                                        </a>
-                                    </li>
-                                @endcan
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/client-profile') ||
-                                        request()->is('admin/client-profile/*/edit') ||
-                                        request()->is('admin/client-profile-image/*/create') ||
-                                        request()->is('admin/client-profile-image/*/*/edit') ||
-                                        request()->is('admin/client-profile-detail/*/create') ||
-                                        request()->is('admin/client-profile-detail/*/*/edit')
-                                            ? 'active'
-                                            : '' }}"
-                                        href="{{ url('admin/client-profile') }}">Client Profile</a></li>
-                            </ul>
-                        </div>
-                    </li>
-                @endcan
-
-                @can('result recording view')
-                    <li
-                        class="nav-item  {{ request()->is('admin/result-recording/create') ||
-                        request()->is('admin/result-recording') ||
-                        request()->is('admin/result-recording/*/edit') ||
-                        request()->is('admin/result-recording/*/show')
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" href="{{ url('admin/result-recording') }}">
-                            <i class="fas fa-chart-line menu-icon"></i>  
-                            <span class="menu-title">Result Recording</span>
-                        </a>
                     </li>
                 @endcan
 
@@ -687,55 +747,6 @@
                     </li>
                 @endcan
 
-
-                @can('random selection view')
-                    <li
-                        class="nav-item {{ request()->is('admin/random-selection') ||
-                        request()->is('admin/random-selection/create') ||
-                        request()->is('admin/random-selection/*/edit') ||
-                        request()->is('admin/random-selection/*/show') ||
-                        request()->is('admin/random-selection/results/*') ||
-                        request()->is('admin/admin/random-selection/execute/*') ||
-                        request()->is('admin/random-selection/executions/*') 
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#random-selections" aria-expanded="false"
-                            aria-controls="random-selections">
-                            <i class="fas fa-random menu-icon"></i>
-                            <span class="menu-title">Random Selection</span>
-                            <i class="ti-angle-right"></i>
-                        </a>
-                        <div class="collapse {{ request()->is('admin/random-selection') ||
-                        request()->is('admin/random-selection/create') ||
-                        request()->is('admin/random-selection/*/edit') ||
-                        request()->is('admin/random-selection/*/show') ||
-                        request()->is('admin/random-selection/results/*') ||
-                        request()->is('admin/admin/random-selection/execute/*') ||
-                        request()->is('admin/random-selection/executions/*') 
-                            ? 'show'
-                            : '' }}"
-                            id="random-selections">
-                            <ul class="nav flex-column sub-menu">
-                                
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/random-selection/create') ? 'active' : '' }}"
-                                        href="{{ url('admin/random-selection/create') }}">Create Random Selection</a></li>
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/random-selection') ||
-                                        request()->is('admin/random-selection/*/edit') ||
-                                        request()->is('admin/random-selection-image/*/create') ||
-                                        request()->is('admin/random-selection-image/*/*/edit') ||
-                                        request()->is('admin/random-selection-detail/*/create') ||
-                                        request()->is('admin/random-selection-detail/*/*/edit')
-                                            ? 'active'
-                                            : '' }}"
-                                        href="{{ url('admin/random-selection') }}">Random Selection</a></li>
-                            </ul>
-                        </div>
-                    </li>
-                @endcan
-
-                
 
                 @can('section view')
                     <li
@@ -1048,60 +1059,7 @@
                 @endcan
 
 
-                @can('test view')
-                    <li
-                        class="nav-item {{ request()->is('admin/portfolio/style1') ||
-                        request()->is('admin/portfolio-content/*/create') ||
-                        request()->is('admin/portfolio/create/*') ||
-                        request()->is('admin/portfolio/*/edit') ||
-                        request()->is('admin/portfolio-category/create') ||
-                        request()->is('admin/portfolio-category/*/edit') ||
-                        request()->is('admin/portfolio-detail/*/create') ||
-                        request()->is('admin/portfolio-detail/*/*/edit') ||
-                        request()->is('admin/portfolio-image/*/create') ||
-                        request()->is('admin/portfolio-image/*/*/edit')
-                            ? 'active'
-                            : '' }}">
-                        <a class="nav-link" data-toggle="collapse" href="#portfolios" aria-expanded="false"
-                            aria-controls="portfolios">
-                            <i class="fas fa-briefcase menu-icon"></i>
-                            <span class="menu-title">{{ __('content.test_name') }}</span>
-                            <i class="ti-angle-right"></i>
-                        </a>
-                        <div class="collapse {{ request()->is('admin/portfolio/style1') ||
-                        request()->is('admin/portfolio-content/*/create') ||
-                        request()->is('admin/portfolio/create/*') ||
-                        request()->is('admin/portfolio/*/edit') ||
-                        request()->is('admin/portfolio-category/create') ||
-                        request()->is('admin/portfolio-category/*/edit') ||
-                        request()->is('admin/portfolio-detail/*/create') ||
-                        request()->is('admin/portfolio-detail/*/*/edit') ||
-                        request()->is('admin/portfolio-image/*/create') ||
-                        request()->is('admin/portfolio-image/*/*/edit')
-                            ? 'show'
-                            : '' }}"
-                            id="portfolios">
-                            <ul class="nav flex-column sub-menu">
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/portfolio-category/create') || request()->is('admin/portfolio-category/*/edit') ? 'active' : '' }}"
-                                        href="{{ url('admin/portfolio-category/create') }}">{{ __('content.categories') }}</a>
-                                </li>
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/portfolio/style1') ||
-                                        request()->is('admin/portfolio-content/*/create') ||
-                                        request()->is('admin/portfolio/create/*') ||
-                                        request()->is('admin/portfolio-detail/*/create') ||
-                                        request()->is('admin/portfolio-detail/*/*/edit') ||
-                                        request()->is('admin/portfolio-image/*/create') ||
-                                        request()->is('admin/portfolio-image/*/*/edit')
-                                            ? 'active'
-                                            : '' }}"
-                                        href="{{ url('admin/portfolio/style1') }}">{{ __('content.test_name') }}</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                @endcan
+                
                 {{-- @can('team view')
                     <li
                         class="nav-item {{ request()->is('admin/team/style1') ||
@@ -1273,6 +1231,91 @@
                         </div>
                     </li>
                 @endcan --}}
+
+                @can('page builder view')
+                    <li
+                        class="nav-item {{ request()->is('admin/page-name/create') ||
+                        request()->is('admin/page-name/*/edit') ||
+                        request()->is('admin/page-builder/create') ||
+                        request()->is('admin/page-builder/*/edit')
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#page_builders" aria-expanded="false"
+                            aria-controls="page_builders">
+                            <i class="fa fa-home menu-icon"></i>
+                            <span class="menu-title">{{ __('content.page_builder') }}</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/page-name/create') ||
+                        request()->is('admin/page-name/*/edit') ||
+                        request()->is('admin/page-builder/create') ||
+                        request()->is('admin/page-builder/*/edit')
+                            ? 'show'
+                            : '' }}"
+                            id="page_builders">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/page-name/create') || request()->is('admin/page-name/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/page-name/create') }}">{{ __('content.page_names') }}</a>
+                                </li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/page-builder/create') || request()->is('admin/page-builder/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/page-builder/create') }}">{{ __('content.pages') }}</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+                @can('menu view')
+                    <li
+                        class="nav-item {{ request()->is('admin/menu/create') ||
+                        request()->is('admin/menu/*/edit') ||
+                        request()->is('admin/submenu/create') ||
+                        request()->is('admin/submenu/*/edit')
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#menus" aria-expanded="false"
+                            aria-controls="menus">
+                            <i class="fa fa-bars menu-icon"></i>
+                            <span class="menu-title">{{ __('content.menus') }}</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/menu/create') ||
+                        request()->is('admin/menu/*/edit') ||
+                        request()->is('admin/submenu/create') ||
+                        request()->is('admin/submenu/*/edit')
+                            ? 'show'
+                            : '' }}"
+                            id="menus">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/menu/create') || request()->is('admin/menu/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/menu/create') }}">{{ __('content.menu') }}</a></li>
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/submenu/create') || request()->is('admin/submenu/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/submenu/create') }}">{{ __('content.submenu') }}</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+                {{-- @can('upload view')
+                    <li
+                        class="nav-item  {{ request()->is('admin/photo/create') || request()->is('admin/photo/*/edit') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ url('admin/photo/create') }}">
+                            <i class="fas fa-cloud-upload-alt menu-icon"></i>
+                            <span class="menu-title">{{ __('content.uploads') }}</span>
+                        </a>
+                    </li>
+                @endcan --}}
+
+                @can('payment view')
+                <li class="nav-item {{ request()->is('admin/payments*') ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.payments.index') }}">
+                        <i class="fas fa-credit-card menu-icon"></i>
+                        <span class="menu-title">Orders & Payments</span>
+                    </a>
+                </li>
+                @endcan
+
                 @can('setting view')
                     <li
                         class="nav-item {{ request()->is('admin/preloader/create') ||
@@ -1307,7 +1350,6 @@
                         request()->is('admin/dot-supervisor-training/*/edit') ||
                         request()->is('admin/random-consortium/create') ||
                         request()->is('admin/random-consortium/*/edit') ||
-                        request()->is('admin/consortium-enrollments*') ||
                         request()->is('admin/consortium-plans*') ||
                         request()->is('admin/quick-access/create')
                             ? 'active'
@@ -1350,7 +1392,6 @@
                         request()->is('admin/dot-supervisor-training/*/edit') ||
                         request()->is('admin/random-consortium/create') ||
                         request()->is('admin/random-consortium/*/edit') ||
-                        request()->is('admin/consortium-enrollments*') ||
                         request()->is('admin/consortium-plans*') ||
                         request()->is('admin/quick-access/create')
                             ? 'show'
@@ -1437,12 +1478,6 @@
                                         class="nav-link {{ request()->is('admin/random-consortium/create') ? 'active' : '' }}"
                                         href="{{ url('admin/random-consortium/create') }}">Random Consortium Text</a>
                                 </li>
-                                @can('random consortium view')
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/consortium-enrollments*') ? 'active' : '' }}"
-                                        href="{{ url('admin/consortium-enrollments') }}">Consortium Enrollments</a>
-                                </li>
-                                @endcan
                                 @can('random consortium edit')
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/consortium-plans*') ? 'active' : '' }}"
@@ -1971,8 +2006,146 @@
         }(jQuery));
     </script>
 
-    
+    <script>
+        (function($) {
+            "use strict";
 
+            var pollUrl = @json(route('admin.order-notifications.index'));
+            var markAllUrl = @json(route('admin.order-notifications.read-all'));
+            var markReadUrlTemplate = @json(url('admin/order-notifications/__ID__/read'));
+            var csrfToken = $('meta[name="csrf-token"]').attr('content');
+            var pollIntervalMs = 30000;
+            var pollTimer = null;
+
+            function escapeHtml(text) {
+                return $('<div>').text(text == null ? '' : String(text)).html();
+            }
+
+            function iconClassForType(type) {
+                if (type === 'dot') return 'ti-shield';
+                if (type === 'non_dot') return 'ti-clipboard';
+                if (type === 'consortium') return 'ti-briefcase';
+                return 'ti-bell';
+            }
+
+            function updateBadge(count) {
+                var $badge = $('#orderNotificationBadge');
+                if (count > 0) {
+                    $badge.text(count > 99 ? '99+' : String(count)).removeClass('d-none');
+                } else {
+                    $badge.addClass('d-none').text('0');
+                }
+                $('#orderNotificationMarkAll').toggle(count > 0);
+            }
+
+            function renderItems(items) {
+                var $list = $('#orderNotificationList');
+                $list.empty();
+
+                if (!items || !items.length) {
+                    $list.append(
+                        '<div class="dropdown-item text-muted small py-3" id="orderNotificationEmpty">No order notifications yet</div>'
+                    );
+                    return;
+                }
+
+                items.forEach(function(item) {
+                    var unreadClass = item.is_unread ? ' unread' : '';
+                    var body = item.body ? '<p class="meta mb-0">' + escapeHtml(item.body) + '</p>' : '';
+                    var time = item.created_at_human ? '<span class="meta">' + escapeHtml(item.created_at_human) + '</span>' : '';
+                    var html =
+                        '<a href="' + escapeHtml(item.list_url) + '" class="dropdown-item preview-item order-notification-item' + unreadClass + '" data-id="' + item.id + '" data-unread="' + (item.is_unread ? '1' : '0') + '">' +
+                            '<div class="notification-thumbnail">' +
+                                '<div class="preview-icon bg-primary"><i class="' + iconClassForType(item.type) + ' mx-0"></i></div>' +
+                            '</div>' +
+                            '<div class="notification-item-content pl-2">' +
+                                '<div class="type-label">' + escapeHtml(item.type_label) + '</div>' +
+                                '<h6>' + escapeHtml(item.title) + '</h6>' +
+                                body +
+                                time +
+                            '</div>' +
+                        '</a>';
+                    $list.append(html);
+                });
+            }
+
+            function fetchNotifications() {
+                $.ajax({
+                    url: pollUrl,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        updateBadge(data.unread_count || 0);
+                        renderItems(data.items || []);
+                    }
+                });
+            }
+
+            function markRead(id) {
+                $.ajax({
+                    url: markReadUrlTemplate.replace('__ID__', id),
+                    method: 'POST',
+                    data: { _token: csrfToken },
+                    dataType: 'json',
+                    success: function(data) {
+                        updateBadge(data.unread_count || 0);
+                    }
+                });
+            }
+
+            function startPolling() {
+                stopPolling();
+                pollTimer = setInterval(function() {
+                    if (document.visibilityState === 'visible') {
+                        fetchNotifications();
+                    }
+                }, pollIntervalMs);
+            }
+
+            function stopPolling() {
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                    pollTimer = null;
+                }
+            }
+
+            $(document).on('click', '#orderNotificationList .order-notification-item', function() {
+                var id = $(this).data('id');
+                var unread = String($(this).data('unread')) === '1';
+                if (unread && id) {
+                    markRead(id);
+                }
+            });
+
+            $('#orderNotificationMarkAll').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $.ajax({
+                    url: markAllUrl,
+                    method: 'POST',
+                    data: { _token: csrfToken },
+                    dataType: 'json',
+                    success: function() {
+                        fetchNotifications();
+                    }
+                });
+            });
+
+            $(document).on('visibilitychange', function() {
+                if (document.visibilityState === 'visible') {
+                    fetchNotifications();
+                    startPolling();
+                } else {
+                    stopPolling();
+                }
+            });
+
+            if ($('#orderNotificationBell').length) {
+                fetchNotifications();
+                startPolling();
+            }
+        }(jQuery));
+    </script>
 
     </body>
 

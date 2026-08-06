@@ -6,10 +6,10 @@
                 @isset ($header_image_style1)
                     <a class="navbar-brand" title="Home" href="{{ url('/') }}">
                         @if (!empty($header_image_style1->section_image))
-                            <img src="{{ asset('uploads/img/general/'.$header_image_style1->section_image) }}" alt="Logo White" class="img-fluid logo-transparent" width="180" height="48">
+                            <img src="{{ asset('uploads/img/general/'.$header_image_style1->section_image) }}" alt="Logo White" class="img-fluid logo-transparent" width="210" height="48">
                         @endif
                         @if (!empty($header_image_style1->section_image_2))
-                            <img src="{{ asset('uploads/img/general/'.$header_image_style1->section_image_2) }}" alt="Logo Black" class="img-fluid logo-normal" width="180" height="48">
+                            <img src="{{ asset('uploads/img/general/'.$header_image_style1->section_image_2) }}" alt="Logo Black" class="img-fluid logo-normal" width="210" height="48">
                         @endif
                     </a>
                 @else
@@ -72,7 +72,7 @@
                             <li class="nav-item d-flex align-items-center">
                                 @auth
                                     <a href="{{ url('/admin/dashboard') }}" class="primary-btn py-1">
-                                        <span class="text">Dashboard</span>
+                                        <span class="text">My Account</span>
                                     </a>
                                 @else
                                     <a href="{{ url('/login') }}" class="primary-btn py-1">

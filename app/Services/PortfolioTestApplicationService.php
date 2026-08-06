@@ -100,7 +100,11 @@ class PortfolioTestApplicationService
         $user = User::find($application->user_id);
 
         if ($application->isDot() && $employee) {
-            $profile = $employee->clientProfile;
+            $employee->loadMissing('clientProfile');
+            // DOT company lives on client_profiles via employees.client_profile_id.
+            // Fallback to the ordering user's client profile (users.id -> client_profiles.user_id).
+            $profile = $employee->clientProfile
+                ?: ($user?->clientProfile ?: ClientProfile::where('user_id', $application->user_id)->first());
 
             return [
                 'gender' => null,
@@ -121,8 +125,8 @@ class PortfolioTestApplicationService
             'date' => now()->format('m-d-Y'),
             'preferred_location' => null,
             'employee_name' => $user?->name ?? trim(($application->first_name ?? '') . ' ' . ($application->last_name ?? '')),
-            'company_name' => null,
-            'accounting_email' => $user?->email,
+            'company_name' => $user?->clientProfile?->company_name,
+            'accounting_email' => $user?->email ?? $application->email,
             'country' => 'US',
             'reason_for_testing' => $this->reasonLabel($application->reason_for_test_id),
         ];
@@ -336,6 +340,10 @@ class PortfolioTestApplicationService
             'status' => 'Payment Completed',
             'stripe_payment_intent_id' => $paymentIntentId ?: $application->stripe_payment_intent_id,
         ]);
+
+        $application->refresh();
+
+        app(AdminOrderNotificationService::class)->notifyPaidApplication($application);
     }
 
     private function reasonLabel(?int $reasonId): string

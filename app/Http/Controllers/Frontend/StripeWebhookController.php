@@ -8,6 +8,7 @@ use App\Models\StripeWebhookEvent;
 use App\Models\PortfolioTestApplication;
 use App\Models\ConsortiumEnrollment;
 use App\Services\ConsortiumEnrollmentService;
+use App\Services\PortfolioTestApplicationService;
 use App\Services\QuestOrderSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -128,24 +129,75 @@ class StripeWebhookController extends Controller
             $chargeId = (string) $pi->latest_charge;
         }
 
-        // ── Metadata (must be extracted before customer fallback block) ────────
-        $metadata = (array) ($pi->metadata ?? []);
+        // ── Metadata ────────────────────────────────────────────────────────
+        // StripeObject must use toArray(); (array) cast exposes internal props only.
+        $metadata = [];
+        if (is_object($pi->metadata ?? null) && method_exists($pi->metadata, 'toArray')) {
+            $metadata = $pi->metadata->toArray();
+        } elseif (is_array($pi->metadata ?? null)) {
+            $metadata = $pi->metadata;
+        }
+
+        $application = null;
+        $applicationId = isset($metadata['portfolio_test_application_id'])
+            ? (int) $metadata['portfolio_test_application_id']
+            : 0;
+        if ($applicationId > 0) {
+            $application = PortfolioTestApplication::with('portfolio')->find($applicationId);
+        }
 
         // ── Customer name / email / phone ───────────────────────────────────
-        // Priority: billing_details > metadata > receipt_email
-        $customerName  = !empty($billingDetails->name)
+        // Priority: billing_details > PI metadata > receipt_email > local application
+        $customerName = !empty($billingDetails->name)
             ? (string) $billingDetails->name
-            : (isset($metadata['customer_name']) ? (string) $metadata['customer_name'] : null);
+            : (!empty($metadata['customer_name']) ? (string) $metadata['customer_name'] : null);
 
         $customerEmail = !empty($billingDetails->email)
             ? (string) $billingDetails->email
             : (!empty($pi->receipt_email)
                 ? (string) $pi->receipt_email
-                : (isset($metadata['customer_email']) ? (string) $metadata['customer_email'] : null));
+                : (!empty($metadata['customer_email']) ? (string) $metadata['customer_email'] : null));
 
         $customerPhone = !empty($billingDetails->phone)
             ? (string) $billingDetails->phone
-            : (isset($metadata['customer_phone']) ? (string) $metadata['customer_phone'] : null);
+            : (!empty($metadata['customer_phone']) ? (string) $metadata['customer_phone'] : null);
+
+        if ($application) {
+            if ($customerName === null) {
+                $customerName = trim(implode(' ', array_filter([
+                    $application->first_name,
+                    $application->last_name,
+                ]))) ?: null;
+            }
+            if ($customerEmail === null && !empty($application->email)) {
+                $customerEmail = (string) $application->email;
+            }
+            if ($customerPhone === null && !empty($application->phone)) {
+                $customerPhone = (string) $application->phone;
+            }
+        }
+
+        $userId = null;
+        if (!empty($metadata['user_id'])) {
+            $userId = (int) $metadata['user_id'];
+        } elseif ($application?->user_id) {
+            $userId = (int) $application->user_id;
+        }
+
+        $portfolioId = null;
+        if (!empty($metadata['portfolio_id'])) {
+            $portfolioId = (int) $metadata['portfolio_id'];
+        } elseif ($application?->portfolio_id) {
+            $portfolioId = (int) $application->portfolio_id;
+        }
+
+        $testName = !empty($metadata['test_name'])
+            ? (string) $metadata['test_name']
+            : ($application?->portfolio?->title ? (string) $application->portfolio->title : null);
+
+        $country = !empty($metadata['country'])
+            ? (string) $metadata['country']
+            : ($application?->country ? (string) $application->country : null);
 
         // ── Other fields ────────────────────────────────────────────────────
         $description = !empty($pi->description) ? (string) $pi->description : null;
@@ -160,21 +212,19 @@ class StripeWebhookController extends Controller
         Payment::query()->updateOrCreate(
             ['stripe_payment_intent_id' => $stripePaymentIntentId],
             [
-                'portfolio_id'   => isset($metadata['portfolio_id']) ? (int) $metadata['portfolio_id'] : null,
+                'user_id'        => $userId,
+                'portfolio_id'   => $portfolioId,
                 'stripe_charge_id' => $chargeId ?: null,
                 'amount'         => $amount,
                 'currency'       => $currency,
                 'status'         => $status,
                 'app_tag'        => isset($metadata['app_tag'])  ? (string) $metadata['app_tag']  : null,
                 'app_env'        => isset($metadata['app_env'])  ? (string) $metadata['app_env']  : null,
-                'country'        => isset($metadata['country']) && $metadata['country'] !== ''
-                                        ? (string) $metadata['country'] : null,
-                'test_name'      => isset($metadata['test_name']) ? (string) $metadata['test_name'] : null,
-                // ── Customer info ──
+                'country'        => $country,
+                'test_name'      => $testName,
                 'customer_name'  => $customerName,
                 'customer_email' => $customerEmail,
                 'customer_phone' => $customerPhone,
-                // ──────────────────
                 'description'    => $description,
                 'paid_at'        => $paidAt,
                 'failure_message'=> $failureMessage,
@@ -257,14 +307,11 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        if ($application->payment_status !== 'completed') {
-            $application->update([
-                'payment_status' => 'completed',
-                'status' => 'Payment Completed',
-                'stripe_payment_intent_id' => $session->payment_intent ?? $application->stripe_payment_intent_id,
-            ]);
-            $application->refresh();
-        }
+        app(PortfolioTestApplicationService::class)->markPaymentCompleted(
+            $application,
+            $session->payment_intent ?? null
+        );
+        $application->refresh();
 
         if ($application->quest_submission_status === 'submitted') {
             return;

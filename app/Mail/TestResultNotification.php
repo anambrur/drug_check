@@ -12,7 +12,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\File;
 
-class TestResultNotification extends Mailable
+class TestResultNotification extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

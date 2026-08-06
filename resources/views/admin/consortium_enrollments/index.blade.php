@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-20">
-                        <h6 class="card-title mb-0">Consortium Enrollments</h6>
+                        <h6 class="card-title mb-0">Random Consortium Orders</h6>
                     </div>
 
                     @if (count($enrollments) > 0)

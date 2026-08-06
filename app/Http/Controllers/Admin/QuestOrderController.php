@@ -18,10 +18,13 @@ use App\Services\Quest\QuestOrderScreenService;
 use App\Services\Quest\QuestXmlBuilder;
 use App\Services\QuestOrderSubmissionService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class QuestOrderController extends Controller
 {
@@ -34,13 +37,193 @@ class QuestOrderController extends Controller
         private readonly PortfolioTestApplicationService $applicationService,
     ) {}
 
-    public function index()
+    public function index(): View
     {
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
-        $questOrders = QuestOrder::with('screens','user')->orderBy('id', 'desc')->get();
+        $stats = $this->questOrderStats();
+        $dataUrl = route('quest-order.data');
 
-        return view('admin.quest_order.index', compact('favicon', 'panel_image', 'questOrders'));
+        return view('admin.quest_order.index', compact('favicon', 'panel_image', 'stats', 'dataUrl'));
+    }
+
+    public function data(Request $request): JsonResponse
+    {
+        $query = QuestOrder::query()
+            ->with(['screens', 'user:id,name'])
+            ->select('quest_orders.*');
+
+        if ($testType = $request->input('test_type')) {
+            if ($testType === 'dot') {
+                $query->where('dot_test', 'T');
+            } elseif ($testType === 'non_dot') {
+                $query->where(function ($q) {
+                    $q->where('dot_test', '!=', 'T')->orWhereNull('dot_test');
+                });
+            }
+        }
+
+        if ($status = $request->input('order_status')) {
+            if ($status === 'pending') {
+                $query->where(function ($q) {
+                    $q->whereNull('order_status')->orWhere('order_status', '');
+                })->whereDoesntHave('screens', function ($q) {
+                    $q->whereNotNull('order_status')->where('order_status', '!=', '');
+                });
+            } else {
+                $query->where(function ($q) use ($status) {
+                    $q->where('order_status', $status)
+                        ->orWhereHas('screens', fn ($s) => $s->where('order_status', $status));
+                });
+            }
+        }
+
+        if ($result = $request->input('order_result')) {
+            if ($result === 'none') {
+                $query->where(function ($q) {
+                    $q->whereNull('order_result')->orWhere('order_result', '');
+                })->whereDoesntHave('screens', function ($q) {
+                    $q->whereNotNull('order_result')->where('order_result', '!=', '');
+                });
+            } else {
+                $query->where(function ($q) use ($result) {
+                    $q->where('order_result', $result)
+                        ->orWhereHas('screens', fn ($s) => $s->where('order_result', $result));
+                });
+            }
+        }
+
+        if ($createStatus = $request->input('create_status')) {
+            $query->where('create_response_status', $createStatus);
+        }
+
+        if ($dateFrom = $request->input('date_from')) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo = $request->input('date_to')) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        return DataTables::eloquent($query)
+            ->addIndexColumn()
+            ->addColumn('quest_id', function (QuestOrder $row) {
+                $id = e($row->quest_order_id ?: 'N/A');
+
+                return '<div class="font-weight-bold text-primary">' . $id . '</div>'
+                    . ($row->reference_test_id
+                        ? '<small class="text-muted">Ref: ' . e($row->reference_test_id) . '</small>'
+                        : '');
+            })
+            ->addColumn('company', fn (QuestOrder $row) => e($row->user->name ?? 'N/A'))
+            ->addColumn('donor', function (QuestOrder $row) {
+                $name = e(trim($row->first_name . ' ' . $row->last_name) ?: 'N/A');
+                $email = e($row->email ?: '');
+                $phone = e($row->primary_phone ?: '');
+
+                return '<div class="font-weight-bold">' . $name . '</div>'
+                    . ($email !== '' ? '<small class="text-muted d-block">' . $email . '</small>' : '')
+                    . ($phone !== '' ? '<small class="text-muted">' . $phone . '</small>' : '');
+            })
+            ->addColumn('test_type_badge', function (QuestOrder $row) {
+                return $row->dot_test === 'T'
+                    ? '<span class="badge badge-pill badge-primary">DOT</span>'
+                    : '<span class="badge badge-pill badge-secondary">Non-DOT</span>';
+            })
+            ->addColumn('status_badge', function (QuestOrder $row) {
+                if ($row->screens->count()) {
+                    return $row->screens->map(function ($screen) {
+                        $status = $screen->order_status ?: 'Pending';
+
+                        return '<span class="badge badge-pill badge-info d-block mb-1">'
+                            . e($screen->screen_type) . ': ' . e($status) . '</span>';
+                    })->implode('');
+                }
+
+                $status = $row->order_status ?: 'Pending';
+
+                return '<span class="badge badge-pill badge-info">' . e($status) . '</span>';
+            })
+            ->addColumn('result_badge', function (QuestOrder $row) {
+                if ($row->screens->count()) {
+                    $badges = $row->screens
+                        ->filter(fn ($s) => filled($s->order_result))
+                        ->map(function ($screen) {
+                            $class = match ($screen->order_result) {
+                                'Negative' => 'success',
+                                'Positive' => 'danger',
+                                default => 'warning',
+                            };
+
+                            return '<span class="badge badge-pill badge-' . $class . ' d-block mb-1">'
+                                . e($screen->screen_type) . ': ' . e($screen->order_result) . '</span>';
+                        });
+
+                    if ($badges->isEmpty()) {
+                        return '<span class="badge badge-pill badge-secondary">Not Available</span>';
+                    }
+
+                    return $badges->implode('');
+                }
+
+                if ($row->order_result) {
+                    $class = match ($row->order_result) {
+                        'Negative' => 'success',
+                        'Positive' => 'danger',
+                        default => 'warning',
+                    };
+
+                    return '<span class="badge badge-pill badge-' . $class . '">' . e($row->order_result) . '</span>';
+                }
+
+                return '<span class="badge badge-pill badge-secondary">Not Available</span>';
+            })
+            ->addColumn('created_us', fn (QuestOrder $row) => $row->created_at?->format('m/d/Y g:i A') ?? '—')
+            ->addColumn('action', function (QuestOrder $row) {
+                return view('admin.quest_order.partials.actions-cell', ['order' => $row])->render();
+            })
+            ->filterColumn('quest_id', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('quest_order_id', 'like', "%{$keyword}%")
+                        ->orWhere('reference_test_id', 'like', "%{$keyword}%")
+                        ->orWhere('client_reference_id', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('company', function ($query, $keyword) {
+                $query->whereHas('user', function ($q) use ($keyword) {
+                    $q->where('name', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('donor', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('first_name', 'like', "%{$keyword}%")
+                        ->orWhere('last_name', 'like', "%{$keyword}%")
+                        ->orWhere('middle_name', 'like', "%{$keyword}%")
+                        ->orWhere('email', 'like', "%{$keyword}%")
+                        ->orWhere('primary_phone', 'like', "%{$keyword}%");
+                });
+            })
+            ->rawColumns(['quest_id', 'donor', 'test_type_badge', 'status_badge', 'result_badge', 'action'])
+            ->toJson();
+    }
+
+    private function questOrderStats(): array
+    {
+        $base = QuestOrder::query();
+
+        return [
+            'total' => (clone $base)->count(),
+            'dot' => (clone $base)->where('dot_test', 'T')->count(),
+            'non_dot' => (clone $base)->where(function ($q) {
+                $q->where('dot_test', '!=', 'T')->orWhereNull('dot_test');
+            })->count(),
+            'with_result' => (clone $base)->where(function ($q) {
+                $q->whereNotNull('order_result')->where('order_result', '!=', '')
+                    ->orWhereHas('screens', fn ($s) => $s->whereNotNull('order_result')->where('order_result', '!=', ''));
+            })->count(),
+            'success' => (clone $base)->where('create_response_status', 'SUCCESS')->count(),
+            'failed' => (clone $base)->where('create_response_status', 'FAILURE')->count(),
+        ];
     }
 
     public function create()

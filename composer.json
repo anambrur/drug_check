@@ -19,6 +19,7 @@
         "mews/purifier": "^3.4",
         "spatie/laravel-permission": "^6.0",
         "stripe/stripe-php": "^16.6",
+        "yajra/laravel-datatables-oracle": "^11.0",
         "yoeunes/toastr": "^2.3"
     },
     "require-dev": {

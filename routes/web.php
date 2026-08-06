@@ -28,6 +28,8 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DemoModeController;
 use App\Http\Controllers\Admin\DotAgencyController;
 use App\Http\Controllers\Admin\DotSupervisorTrainingController;
+use App\Http\Controllers\Admin\OrdersAdminController;
+use App\Http\Controllers\Admin\OrderNotificationController;
 use App\Http\Controllers\Admin\DraftViewController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\ErrorPageController;
@@ -189,8 +191,8 @@ Route::get('random-consortium/success/{id}', [\App\Http\Controllers\Frontend\Con
 Route::post('portfolio-test/checkout/dot', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'checkoutDot'])->name('frontend.portfolio-test.checkout.dot')->middleware('XSS');
 Route::post('portfolio-test/checkout/non-dot', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'checkoutNonDot'])->name('frontend.portfolio-test.checkout.non-dot')->middleware('XSS');
 Route::get('portfolio-test/success/{id}', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'success'])->name('frontend.portfolio-test.success');
-Route::get('portfolio-test/retry/{id}', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'retry'])->name('frontend.portfolio-test.retry')->middleware('auth');
-Route::post('portfolio-test/retry/{id}/resubmit', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'resubmit'])->name('frontend.portfolio-test.resubmit')->middleware('auth');
+Route::get('portfolio-test/retry/{id}', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'retry'])->name('frontend.portfolio-test.retry');
+Route::post('portfolio-test/retry/{id}/resubmit', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'resubmit'])->name('frontend.portfolio-test.resubmit');
 Route::get('dot-supervisor-training', [\App\Http\Controllers\Frontend\HomeController::class, 'dot_supervisor_training'])->name('frontend.dot-supervisor-training')->middleware('XSS');
 Route::get('clearing-house', [\App\Http\Controllers\Frontend\HomeController::class, 'clearing_house'])->name('frontend.clearing-house')->middleware('XSS');
 Route::get('background-checks-services', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks_services'])->name('frontend.background-check-services')->middleware('XSS');
@@ -1010,14 +1012,16 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::patch('consortium-plans/{id}/restore', [\App\Http\Controllers\Admin\ConsortiumPlanController::class, 'restore'])
         ->name('admin.consortium-plans.restore')->middleware('permission:random consortium edit');
 
-    // Consortium Enrollments
-    Route::get('consortium-enrollments', [\App\Http\Controllers\Admin\ConsortiumEnrollmentAdminController::class, 'index'])
+    // Consortium Enrollments (Orders)
+    Route::get('consortium-enrollments', [OrdersAdminController::class, 'consortium'])
         ->name('consortium-enrollments.index')->middleware('permission:random consortium view');
-    Route::get('consortium-enrollments/{id}', [\App\Http\Controllers\Admin\ConsortiumEnrollmentAdminController::class, 'show'])
+    Route::get('consortium-enrollments/data', [OrdersAdminController::class, 'consortiumData'])
+        ->name('consortium-enrollments.data')->middleware('permission:random consortium view');
+    Route::get('consortium-enrollments/{id}', [OrdersAdminController::class, 'showConsortium'])
         ->name('consortium-enrollments.show')->middleware('permission:random consortium view');
-    Route::put('consortium-enrollments/{id}/status', [\App\Http\Controllers\Admin\ConsortiumEnrollmentAdminController::class, 'updateStatus'])
+    Route::put('consortium-enrollments/{id}/status', [OrdersAdminController::class, 'updateConsortiumStatus'])
         ->name('consortium-enrollments.updateStatus')->middleware('permission:random consortium edit');
-    Route::put('consortium-enrollments/{id}/notes', [\App\Http\Controllers\Admin\ConsortiumEnrollmentAdminController::class, 'updateNotes'])
+    Route::put('consortium-enrollments/{id}/notes', [OrdersAdminController::class, 'updateConsortiumNotes'])
         ->name('consortium-enrollments.updateNotes')->middleware('permission:random consortium edit');
 });
 
@@ -1063,6 +1067,7 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
 // ------------------------------------------------------------------
 Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::get('quest-order', [QuestOrderController::class, 'index'])->name('quest-order.index')->middleware('permission:quest-order view');
+    Route::get('quest-order/data', [QuestOrderController::class, 'data'])->name('quest-order.data')->middleware('permission:quest-order view');
     Route::get('quest-order/create', [QuestOrderController::class, 'create'])->name('quest-order.create')->middleware('permission:quest-order create');
     Route::post('quest-order', [QuestOrderController::class, 'store'])->name('quest-order.store')->middleware('permission:quest-order create');
     Route::delete('quest-order/destroy-checked', [QuestOrderController::class, 'destroy_checked'])->name('quest-order.destroy_checked')->middleware('permission:quest-order delete');
@@ -1088,6 +1093,32 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
 });
 
 // ------------------------------------------------------------------
+// Customer Orders (DOT / Non-DOT applications + coming-soon stubs)
+// ------------------------------------------------------------------
+Route::middleware($adminBase)->prefix('admin')->group(function () {
+    Route::get('order-notifications', [OrderNotificationController::class, 'index'])
+        ->name('admin.order-notifications.index');
+    Route::post('order-notifications/read-all', [OrderNotificationController::class, 'markAllRead'])
+        ->name('admin.order-notifications.read-all');
+    Route::post('order-notifications/{orderNotification}/read', [OrderNotificationController::class, 'markRead'])
+        ->name('admin.order-notifications.read');
+
+    Route::get('orders/dot-testing', [OrdersAdminController::class, 'dotTesting'])
+        ->name('admin.orders.dot-testing')->middleware('permission:quest-order view');
+    Route::get('orders/non-dot-testing', [OrdersAdminController::class, 'nonDotTesting'])
+        ->name('admin.orders.non-dot-testing')->middleware('permission:quest-order view');
+    Route::get('orders/applications/data/{type}', [OrdersAdminController::class, 'applicationsData'])
+        ->name('admin.orders.applications.data')->middleware('permission:quest-order view');
+    Route::get('orders/applications/{id}', [OrdersAdminController::class, 'showApplication'])
+        ->name('admin.orders.applications.show')->middleware('permission:quest-order view');
+
+    Route::get('orders/clearing-house', [OrdersAdminController::class, 'clearingHouse'])
+        ->name('admin.orders.clearing-house');
+    Route::get('orders/dot-supervisor-training', [OrdersAdminController::class, 'dotSupervisorTraining'])
+        ->name('admin.orders.dot-supervisor-training');
+});
+
+// ------------------------------------------------------------------
 // Quest Site Sync
 // ------------------------------------------------------------------
 Route::middleware($adminBase)->prefix('admin')->group(function () {
@@ -1099,6 +1130,7 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::get('quest-sync/status', [QuestSyncController::class, 'syncStatus'])->name('quest-sync.status')->middleware('permission:quest-site view');
     Route::get('quest-site/collection-site-insert', [QuestSyncController::class, 'collectionSiteInsert'])->name('quest-site.collectionSiteInsert')->middleware('permission:quest-site edit');
     Route::post('quest-site/process-collection-sites', [QuestSyncController::class, 'processCollectionSites'])->name('quest-site.process-collection-sites')->middleware('permission:quest-site edit');
+    Route::get('quest-site/import-status', [QuestSyncController::class, 'importStatus'])->name('quest-site.import-status')->middleware('permission:quest-site edit');
 });
 
 // ------------------------------------------------------------------
@@ -1164,6 +1196,7 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
 // ------------------------------------------------------------------
 Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::get('result-recording', [ResultRecordingController::class, 'index'])->name('result-recording.index')->middleware('permission:result recording view');
+    Route::get('result-recording/data', [ResultRecordingController::class, 'data'])->name('result-recording.data')->middleware('permission:result recording view');
     Route::get('result-recording/create', [ResultRecordingController::class, 'create'])->name('result-recording.create')->middleware('permission:result recording create');
     Route::post('result-recording', [ResultRecordingController::class, 'store'])->name('result-recording.store')->middleware('permission:result recording create');
     Route::get('result-recording/{id}/edit', [ResultRecordingController::class, 'edit'])->name('result-recording.edit')->middleware('permission:result recording edit');

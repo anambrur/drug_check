@@ -944,7 +944,7 @@
                         <div class="card stat-card gradient-blue">
                             <div class="card-body">
                                 <div class="stat-icon icon-blue"><i class="fas fa-money-bill-wave"></i></div>
-                                <div class="stat-value">${{ number_format($payment_stats['total_revenue'] ?? 0, 2) }}</div>
+                                <div class="stat-value">${{ number_format(($payment_stats['total_revenue'] ?? 0) / 100, 2) }}</div>
                                 <div class="stat-label">Total Revenue</div>
                             </div>
                         </div>
@@ -953,7 +953,7 @@
                         <div class="card stat-card gradient-green">
                             <div class="card-body">
                                 <div class="stat-icon icon-green"><i class="fas fa-hand-holding-usd"></i></div>
-                                <div class="stat-value">${{ number_format($payment_stats['today_revenue'] ?? 0, 2) }}</div>
+                                <div class="stat-value">${{ number_format(($payment_stats['today_revenue'] ?? 0) / 100, 2) }}</div>
                                 <div class="stat-label">Today's Revenue</div>
                             </div>
                         </div>

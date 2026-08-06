@@ -11,6 +11,14 @@ class PortfolioTestCheckoutRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        if ($this->routeIs('frontend.portfolio-test.checkout.dot')) {
+            return auth()->check();
+        }
+
+        if ($this->routeIs('frontend.portfolio-test.checkout.non-dot')) {
+            return true;
+        }
+
         return auth()->check();
     }
 

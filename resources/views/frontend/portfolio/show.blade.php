@@ -73,9 +73,9 @@
                         <span class="rc-step-label">Pricing</span>
                     </div>
                     <div class="rc-step-line" aria-hidden="true"><span class="rc-step-line-fill" data-line="2"></span></div>
-                    <div class="rc-step" data-step="3" role="button" tabindex="0" aria-label="{{ auth()->check() ? 'Go to scheduling' : 'Go to sign in' }}">
+                    <div class="rc-step" data-step="3" role="button" tabindex="0" aria-label="{{ auth()->check() ? 'Go to scheduling' : ($isNonDot ? 'Go to checkout' : 'Go to sign in') }}">
                         <span class="rc-step-num">3</span>
-                        <span class="rc-step-label">{{ auth()->check() ? 'Order' : 'Sign In' }}</span>
+                        <span class="rc-step-label">{{ auth()->check() ? 'Order' : ($isNonDot ? 'Checkout' : 'Sign In') }}</span>
                     </div>
                 </nav>
             </div>
@@ -105,7 +105,11 @@
                             <ul class="pf-show-benefits rc-animate" aria-label="Service highlights">
                                 <li><i class="fas fa-network-wired" aria-hidden="true"></i> Quest Diagnostics collection network</li>
                                 <li><i class="fas fa-shield-alt" aria-hidden="true"></i> Secure Stripe checkout</li>
-                                <li><i class="fas fa-user-check" aria-hidden="true"></i> Tracked under your account</li>
+                                @if (auth()->check() || !$isNonDot)
+                                    <li><i class="fas fa-user-check" aria-hidden="true"></i> Tracked under your account</li>
+                                @else
+                                    <li><i class="fas fa-user" aria-hidden="true"></i> Guest checkout available — no account required</li>
+                                @endif
                             </ul>
                         </div>
                     </div>
@@ -158,10 +162,17 @@
                                 Price is calculated server-side at checkout. You will complete scheduling after payment.
                             </div>
                             @guest
-                                <button type="button" class="pf-btn-submit pf-show-scroll-cta" data-reveal-login="true">
-                                    <i class="fas fa-arrow-down"></i>
-                                    Continue to Sign In
-                                </button>
+                                @if ($isNonDot)
+                                    <button type="button" class="pf-btn-submit pf-show-scroll-cta" data-reveal-choice="true">
+                                        <i class="fas fa-arrow-down"></i>
+                                        Continue to Checkout
+                                    </button>
+                                @else
+                                    <button type="button" class="pf-btn-submit pf-show-scroll-cta" data-reveal-login="true">
+                                        <i class="fas fa-arrow-down"></i>
+                                        Continue to Sign In
+                                    </button>
+                                @endif
                             @else
                                 <a href="#application-form" class="pf-btn-submit pf-show-scroll-cta">
                                     <i class="fas fa-arrow-down"></i>
@@ -184,7 +195,11 @@
                             <h2 id="pf-cta-heading">{{ auth()->check() ? 'Ready to Schedule?' : 'When You\'re Ready' }}</h2>
                             <p class="sub">
                                 @guest
-                                    Review the service details and pricing above, then sign in when you are ready to proceed.
+                                    @if ($isNonDot)
+                                        Review the service details and pricing above, then continue as a guest or sign in to proceed.
+                                    @else
+                                        Review the service details and pricing above, then sign in when you are ready to proceed.
+                                    @endif
                                 @else
                                     {{ $isNonDot ? 'Complete your application details below, then proceed to secure checkout.' : 'Select the employee who will take this test, then proceed to checkout.' }}
                                 @endguest
@@ -192,29 +207,56 @@
                         </div>
 
                         @guest
-                            {{-- Teaser: shown first; login form hidden until user opts in --}}
-                            <div id="pf-login-teaser" class="pf-card pf-show-teaser rc-animate {{ $revealLoginPanel ? 'd-none' : '' }}">
-                                <div class="pf-body text-center py-4 px-3">
-                                    <div class="pf-show-teaser-icon mx-auto mb-3" aria-hidden="true">
-                                        <i class="fas fa-user-lock"></i>
+                            @if ($isNonDot)
+                                {{-- Non-DOT: guest checkout or sign in --}}
+                                <div id="pf-choice-teaser" class="pf-card pf-show-teaser rc-animate {{ $revealLoginPanel ? 'd-none' : '' }}">
+                                    <div class="pf-body text-center py-4 px-3">
+                                        <div class="pf-show-teaser-icon mx-auto mb-3" aria-hidden="true">
+                                            <i class="fas fa-clipboard-check"></i>
+                                        </div>
+                                        <h3 class="pf-show-teaser-title">Ready to schedule this test?</h3>
+                                        <p class="pf-show-teaser-text">Continue as a guest to complete checkout now, or sign in to track your order under your account.</p>
+                                        <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center mt-3">
+                                            <button type="button" class="pf-btn-submit" data-reveal-guest="true">
+                                                <i class="fas fa-user"></i>
+                                                Continue as Guest
+                                            </button>
+                                            <button type="button" class="pf-btn-submit pf-btn-outline" data-reveal-login="true">
+                                                <i class="fas fa-sign-in-alt"></i>
+                                                Sign In
+                                            </button>
+                                        </div>
                                     </div>
-                                    <h3 class="pf-show-teaser-title">Ready to schedule this test?</h3>
-                                    <p class="pf-show-teaser-text">Sign in to apply for {{ $portfolio->title }}, complete checkout, and track your order under your account.</p>
-                                    <button type="button" class="pf-btn-submit pf-show-reveal-login" data-reveal-login="true">
-                                        <i class="fas fa-sign-in-alt"></i>
-                                        Sign In to Continue
-                                    </button>
                                 </div>
-                            </div>
+
+                                <div id="pf-guest-checkout-panel" class="pf-show-login-panel">
+                                    @include('frontend.portfolio.partials.checkout-form-card')
+                                </div>
+                            @else
+                                {{-- DOT: sign in required --}}
+                                <div id="pf-login-teaser" class="pf-card pf-show-teaser rc-animate {{ $revealLoginPanel ? 'd-none' : '' }}">
+                                    <div class="pf-body text-center py-4 px-3">
+                                        <div class="pf-show-teaser-icon mx-auto mb-3" aria-hidden="true">
+                                            <i class="fas fa-user-lock"></i>
+                                        </div>
+                                        <h3 class="pf-show-teaser-title">Ready to schedule this test?</h3>
+                                        <p class="pf-show-teaser-text">Sign in to apply for {{ $portfolio->title }}, complete checkout, and track your order under your account.</p>
+                                        <button type="button" class="pf-btn-submit pf-show-reveal-login" data-reveal-login="true">
+                                            <i class="fas fa-sign-in-alt"></i>
+                                            Continue
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
 
                             <div id="pf-login-panel" class="pf-show-login-panel {{ $revealLoginPanel ? 'is-visible' : '' }}">
                             <div class="pf-card rc-animate">
                                 <div class="pf-header">
                                     <div class="d-flex align-items-start justify-content-between gap-3">
                                         <div>
-                                            <span class="pill">Account Required</span>
+                                            <span class="pill">{{ $isNonDot ? 'Sign In' : 'Account Required' }}</span>
                                             <h4>Sign in to schedule your test</h4>
-                                            <p>Login is required to apply for {{ $portfolio->title }} and track your tests.</p>
+                                            <p>{{ $isNonDot ? 'Sign in to apply for ' . $portfolio->title . ' and track your order under your account.' : 'Login is required to apply for ' . $portfolio->title . ' and track your tests.' }}</p>
                                         </div>
                                         <div class="pf-header-icon d-none d-sm-flex">
                                             <i class="fas fa-user-lock"></i>
@@ -310,89 +352,18 @@
                                             @endif
                                         </div>
                                     </form>
+
+                                    @if (Route::has('register'))
+                                        <p class="text-center mt-4 mb-0">
+                                            Don't have an account?
+                                            <a href="{{ route('register') }}" class="pf-login-link"><strong>Create an Account</strong></a>
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
                             </div>{{-- /pf-login-panel --}}
                         @else
-                            <div class="pf-card rc-animate">
-                                <div class="pf-header">
-                                    <div class="d-flex align-items-start justify-content-between gap-3">
-                                        <div>
-                                            <span class="pill">{{ $isNonDot ? 'Non-DOT Testing' : 'DOT Testing' }}</span>
-                                            <h4>{{ $isNonDot ? 'Apply for' : 'Schedule' }} {{ $portfolio->title }}</h4>
-                                            <p>Complete your order details below, then proceed to secure Stripe checkout. Your order will be submitted to Quest Diagnostics automatically after payment.</p>
-                                        </div>
-                                        <div class="pf-header-icon d-none d-sm-flex">
-                                            <i class="fas {{ $isNonDot ? 'fa-clipboard-list' : 'fa-users' }}"></i>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="pf-body pb-0">
-                                    <div id="pf-form-errors" class="pf-alert pf-alert-danger d-none mb-3" role="alert">
-                                        <i class="fas fa-exclamation-triangle mt-1"></i>
-                                        <div id="pf-form-errors-body"></div>
-                                    </div>
-                                    @if (session('success'))
-                                        <div class="pf-alert pf-alert-success mb-3" role="alert">
-                                            <i class="fas fa-check-circle mt-1"></i>
-                                            <div>{{ session('success') }}</div>
-                                        </div>
-                                    @endif
-                                    @if (session('info'))
-                                        <div class="pf-alert pf-alert-success mb-3" role="alert">
-                                            <i class="fas fa-info-circle mt-1"></i>
-                                            <div>{{ session('info') }}</div>
-                                        </div>
-                                    @endif
-                                    @if (session('error'))
-                                        <div class="pf-alert pf-alert-danger mb-3" role="alert">
-                                            <i class="fas fa-exclamation-circle mt-1"></i>
-                                            <div>{{ session('error') }}</div>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div class="pf-body pt-2">
-                                    <form id="portfolio-checkout-form">
-                                        @csrf
-                                        <input type="hidden" name="portfolio_id" value="{{ $portfolio->id }}">
-                                        <input type="hidden" name="test_type" value="{{ $isNonDot ? 'non_dot' : 'dot' }}">
-
-                                        @include('quest.partials.order-fields', [
-                                            'questDefaults' => $questDefaults,
-                                            'questIsPhysical' => $questIsPhysical,
-                                            'questIsEbat' => $questIsEbat,
-                                        ])
-
-                                        <div class="pf-price-display mb-4">
-                                            <div>
-                                                <div class="label">Total Amount Due</div>
-                                                <div style="font-size:.75rem;color:var(--pf-muted);margin-top:2px;">{{ $portfolio->title }}</div>
-                                            </div>
-                                            <div class="amount">${{ $priceFormatted }}</div>
-                                        </div>
-
-                                        @if (!$isNonDot && $employees->isEmpty())
-                                            {{-- checkout disabled when no employees --}}
-                                        @else
-                                            <div class="pf-terms mb-4">
-                                                <input type="checkbox" id="terms-check" required>
-                                                <label class="pf-terms-label" for="terms-check">
-                                                    I agree to the <a href="{{ route('frontend.terms-and-conditions') }}" target="_blank" rel="noopener">Terms and Conditions</a>
-                                                    and <a href="{{ route('frontend.privacy-policy') }}" target="_blank" rel="noopener">Privacy Policy</a>.
-                                                </label>
-                                            </div>
-
-                                            <button type="button" id="portfolio-checkout-btn" class="pf-btn-submit">
-                                                <i class="fas fa-lock"></i>
-                                                Continue to Checkout — ${{ $priceFormatted }}
-                                            </button>
-                                            <p class="pf-secure"><i class="fas fa-shield-alt"></i> Secure payment via Stripe Checkout</p>
-                                        @endif
-                                    </form>
-                                </div>
-                            </div>
+                            @include('frontend.portfolio.partials.checkout-form-card')
                         @endguest
                     </div>
                 </div>
@@ -472,10 +443,14 @@
             }
 
             function revealLoginPanel() {
+                var choiceTeaser = document.getElementById('pf-choice-teaser');
                 var teaser = document.getElementById('pf-login-teaser');
                 var panel = document.getElementById('pf-login-panel');
+                var guestPanel = document.getElementById('pf-guest-checkout-panel');
                 var cta = document.getElementById('application-form');
+                if (choiceTeaser) choiceTeaser.classList.add('d-none');
                 if (teaser) teaser.classList.add('d-none');
+                if (guestPanel) guestPanel.classList.remove('is-visible');
                 if (panel) panel.classList.add('is-visible');
                 if (cta) {
                     cta.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -484,6 +459,30 @@
                         if (email) email.focus();
                     }, 450);
                 }
+            }
+
+            function revealGuestPanel() {
+                var choiceTeaser = document.getElementById('pf-choice-teaser');
+                var panel = document.getElementById('pf-guest-checkout-panel');
+                var loginPanel = document.getElementById('pf-login-panel');
+                var cta = document.getElementById('application-form');
+                if (choiceTeaser) choiceTeaser.classList.add('d-none');
+                if (loginPanel) loginPanel.classList.remove('is-visible');
+                if (panel) panel.classList.add('is-visible');
+                if (cta) {
+                    cta.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    window.setTimeout(function () {
+                        var firstName = document.getElementById('first_name');
+                        if (firstName) firstName.focus();
+                    }, 450);
+                }
+            }
+
+            function revealChoicePanel() {
+                var choiceTeaser = document.getElementById('pf-choice-teaser');
+                var cta = document.getElementById('application-form');
+                if (choiceTeaser) choiceTeaser.classList.remove('d-none');
+                if (cta) cta.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
             function updateStepper(activeStep) {
@@ -515,6 +514,11 @@
                 function goToStep(n) {
                     var selector = targets[n];
                     var el = selector ? document.querySelector(selector) : null;
+                    if (n === 3 && document.getElementById('pf-choice-teaser')) {
+                        revealChoicePanel();
+                        updateStepper(3);
+                        return;
+                    }
                     if (n === 3 && document.getElementById('pf-login-teaser')) {
                         revealLoginPanel();
                         updateStepper(3);
@@ -582,6 +586,21 @@
                 });
             });
 
+            document.querySelectorAll('[data-reveal-guest="true"]').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    revealGuestPanel();
+                });
+            });
+
+            document.querySelectorAll('[data-reveal-choice="true"]').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    revealChoicePanel();
+                    updateStepper(3);
+                });
+            });
+
             document.querySelectorAll('a.pf-show-scroll-cta').forEach(function (link) {
                 link.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -590,8 +609,14 @@
                 });
             });
 
-            if (window.location.hash === '#application-form' || window.location.hash === '#sign-in') {
+            if (window.location.hash === '#sign-in') {
                 revealLoginPanel();
+            } else if (window.location.hash === '#application-form') {
+                if (document.getElementById('pf-choice-teaser')) {
+                    revealChoicePanel();
+                } else {
+                    revealLoginPanel();
+                }
             }
 
             const loader = document.getElementById('loader-overlay');

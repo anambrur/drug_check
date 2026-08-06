@@ -22,44 +22,175 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Admin\Employee;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class ResultRecordingController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(): View
     {
-        // Retrieving models
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $laboratories = Laboratory::orderBy('id', 'desc')->get();
         $mros = MRO::orderBy('id', 'desc')->get();
         $clientProfiles = ClientProfile::with('employees')->orderBy('id', 'desc')->get();
         $test_admins = TestAdmin::with('laboratory', 'mro', 'panel')->orderBy('id', 'desc')->get();
+        $dataUrl = route('result-recording.data');
+        $isCompany = auth()->user()->hasRole('company');
+        $stats = $this->resultRecordingStats($isCompany ? auth()->user()->clientProfile?->id : null);
 
-        // Check if user is client
-        if (auth()->user()->hasRole('company')) {
-            $clientProfile = auth()->user()->clientProfile;
-
-            $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')
-                ->when(
-                    $clientProfile,
-                    fn ($query) => $query->where('company_id', $clientProfile->id),
-                    fn ($query) => $query->whereRaw('1 = 0')
-                )
-                ->orderBy('id', 'desc')
-                ->get();
-
-            return view('admin.result_recording.company-index', compact('favicon', 'panel_image', 'laboratories',  'mros', 'clientProfiles', 'test_admins', 'recoding_results'));
+        if ($isCompany) {
+            return view('admin.result_recording.company-index', compact(
+                'favicon',
+                'panel_image',
+                'laboratories',
+                'mros',
+                'clientProfiles',
+                'test_admins',
+                'stats',
+                'dataUrl'
+            ));
         }
 
-        $recoding_results = ResultRecording::with('clientProfile', 'employee', 'testAdmin', 'laboratory', 'mro', 'resultPanel')->orderBy('id', 'desc')->get();
+        return view('admin.result_recording.index', compact(
+            'favicon',
+            'panel_image',
+            'laboratories',
+            'mros',
+            'clientProfiles',
+            'test_admins',
+            'stats',
+            'dataUrl'
+        ));
+    }
 
+    public function data(Request $request): JsonResponse
+    {
+        $query = ResultRecording::query()
+            ->with([
+                'clientProfile:id,company_name,phone,der_contact_name,der_contact_email',
+                'employee:id,first_name,last_name',
+                'testAdmin:id,test_name',
+            ])
+            ->select('result_recordings.*');
 
-        return view('admin.result_recording.index', compact('favicon', 'panel_image', 'laboratories',  'mros', 'clientProfiles', 'test_admins', 'recoding_results'));
+        if (auth()->user()->hasRole('company')) {
+            $clientProfile = auth()->user()->clientProfile;
+            if ($clientProfile) {
+                $query->where('company_id', $clientProfile->id);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        } elseif ($companyId = $request->input('company_id')) {
+            $query->where('company_id', $companyId);
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($reason = $request->input('reason_for_test')) {
+            $query->where('reason_for_test', $reason);
+        }
+
+        if ($dateFrom = $request->input('date_from')) {
+            $query->whereDate('collection_datetime', '>=', $dateFrom);
+        }
+
+        if ($dateTo = $request->input('date_to')) {
+            $query->whereDate('collection_datetime', '<=', $dateTo);
+        }
+
+        $canEdit = auth()->user()->can('result recording edit');
+        $canView = auth()->user()->can('result recording view');
+        $canDelete = auth()->user()->can('result recording delete');
+        $demoMode = view()->shared('demo_mode', 'off');
+
+        return DataTables::eloquent($query)
+            ->addIndexColumn()
+            ->addColumn('collected_us', function (ResultRecording $row) {
+                return $row->collection_datetime
+                    ? \Carbon\Carbon::parse($row->collection_datetime)->format('m/d/Y g:i A')
+                    : '—';
+            })
+            ->addColumn('company', fn (ResultRecording $row) => e($row->clientProfile->company_name ?? 'N/A'))
+            ->addColumn('employee_name', function (ResultRecording $row) {
+                $first = $row->employee->first_name ?? '';
+                $last = $row->employee->last_name ?? '';
+                $name = trim($first . ' ' . $last);
+
+                return e($name !== '' ? $name : 'N/A');
+            })
+            ->addColumn('reason', fn (ResultRecording $row) => e($row->reason_for_test ?? 'N/A'))
+            ->addColumn('test_name', fn (ResultRecording $row) => e($row->testAdmin->test_name ?? 'N/A'))
+            ->addColumn('status_badge', function (ResultRecording $row) {
+                $status = str_replace(' ', '_', strtolower((string) $row->status));
+                $label = ucwords(str_replace('_', ' ', $status));
+                $class = match ($status) {
+                    'positive' => 'danger',
+                    'negative' => 'success',
+                    'refused' => 'dark',
+                    'excused' => 'warning',
+                    'cancelled' => 'secondary',
+                    'pending' => 'info',
+                    'saved' => 'primary',
+                    'collection_only', 'collection only' => 'light',
+                    default => 'secondary',
+                };
+
+                return '<span class="badge badge-pill badge-' . $class . '">' . e($label) . '</span>';
+            })
+            ->addColumn('action', function (ResultRecording $row) use ($canEdit, $canView, $canDelete, $demoMode) {
+                return view('admin.result_recording.partials.actions-cell', [
+                    'result' => $row,
+                    'canEdit' => $canEdit,
+                    'canView' => $canView,
+                    'canDelete' => $canDelete,
+                    'demoMode' => $demoMode,
+                ])->render();
+            })
+            ->filterColumn('company', function ($query, $keyword) {
+                $query->whereHas('clientProfile', function ($q) use ($keyword) {
+                    $q->where('company_name', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('employee_name', function ($query, $keyword) {
+                $query->whereHas('employee', function ($q) use ($keyword) {
+                    $q->where('first_name', 'like', "%{$keyword}%")
+                        ->orWhere('last_name', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('test_name', function ($query, $keyword) {
+                $query->whereHas('testAdmin', function ($q) use ($keyword) {
+                    $q->where('test_name', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('reason', function ($query, $keyword) {
+                $query->where('reason_for_test', 'like', "%{$keyword}%");
+            })
+            ->rawColumns(['status_badge', 'action'])
+            ->toJson();
+    }
+
+    private function resultRecordingStats(?int $companyId = null): array
+    {
+        $base = ResultRecording::query();
+        if ($companyId) {
+            $base->where('company_id', $companyId);
+        }
+
+        return [
+            'total' => (clone $base)->count(),
+            'positive' => (clone $base)->where('status', 'positive')->count(),
+            'negative' => (clone $base)->where('status', 'negative')->count(),
+            'pending' => (clone $base)->where('status', 'pending')->count(),
+            'saved' => (clone $base)->where('status', 'saved')->count(),
+            'other' => (clone $base)->whereNotIn('status', ['positive', 'negative', 'pending', 'saved'])->count(),
+        ];
     }
 
     public function resultByEmployee($id)

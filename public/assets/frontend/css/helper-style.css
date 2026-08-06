@@ -2066,6 +2066,18 @@ body.rtl-mode .web-design-process .design-process-video .design-process-video-bt
     animation: rc-fade-in .45s ease;
 }
 
+.pf-btn-outline {
+    background: transparent !important;
+    color: var(--main-color) !important;
+    border: 1.5px solid color-mix(in srgb, var(--main-color) 35%, var(--pf-border));
+    box-shadow: none !important;
+}
+
+.pf-btn-outline:hover {
+    background: var(--pf-primary-light) !important;
+    color: var(--main-color) !important;
+}
+
 .pf-show-teaser {
     border: 1.5px dashed color-mix(in srgb, var(--main-color) 28%, var(--pf-border));
     box-shadow: var(--pf-shadow-md);
@@ -4518,6 +4530,146 @@ body.rtl-mode .web-design-process .design-process-video .design-process-video-bt
     .ft-modern .footer-social-links a:hover,
     .ft-modern .ft-social-link:hover {
         transform: none;
+    }
+}
+
+/*----------------------------------------*/
+/*  Interactive header menu
+/*----------------------------------------*/
+.header .nav-item .nav-link {
+    transition: color 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+}
+
+.header .nav-item .nav-link:after {
+    height: 2px;
+    bottom: 12px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    border-radius: 2px;
+    background: var(--main-color);
+    opacity: 0;
+    transform: scaleX(0.4);
+    transform-origin: center;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.header .nav-item .nav-link:not(.active):after {
+    height: 2px;
+    bottom: 12px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    background: var(--main-color);
+    transform: scaleX(0.4);
+    transform-origin: center;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.header .nav-item .nav-link:hover,
+.header .nav-item .nav-link:focus-visible,
+.header .nav-item:hover > a {
+    color: var(--main-color) !important;
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+.header .nav-item .nav-link:hover:after,
+.header .nav-item .nav-link:focus-visible:after,
+.header .nav-item .nav-link:not(.active):hover:after,
+.header .nav-item.dropdown:hover .nav-link:after {
+    opacity: 1;
+    transform: scaleX(1);
+    transform-origin: center;
+}
+
+.header .nav-item .nav-link.active {
+    color: var(--main-color) !important;
+    opacity: 1;
+}
+
+.header .nav-item .nav-link.active:after {
+    opacity: 1;
+    transform: scaleX(1);
+}
+
+.header .nav-item.dropdown .dropdown-toggle:before {
+    transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.header .nav-item.dropdown:hover .dropdown-toggle:before,
+.header .nav-item.dropdown .dropdown-toggle[aria-expanded="true"]:before {
+    color: var(--main-color);
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.header .nav-item.dropdown .dropdown-menu {
+    margin-top: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    animation: headerDropdownIn 0.22s ease;
+}
+
+.header .nav-item.dropdown .dropdown-menu .dropdown-item {
+    padding: 10px 18px;
+    transition: background 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
+}
+
+.header .nav-item.dropdown .dropdown-menu .dropdown-item:hover,
+.header .nav-item.dropdown .dropdown-menu .dropdown-item:focus {
+    padding-left: 22px;
+    color: #fff;
+    background: var(--main-color);
+}
+
+@keyframes headerDropdownIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .header .nav-item .nav-link:hover,
+    .header .nav-item .nav-link:focus-visible,
+    .header .nav-item:hover > a {
+        transform: none;
+    }
+
+    .header .nav-item .nav-link:after,
+    .header .nav-item .nav-link:not(.active):after {
+        bottom: 6px;
+    }
+
+    .header .nav-item.dropdown .dropdown-menu {
+        animation: none;
+        box-shadow: none;
+        border-radius: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .header .nav-item .nav-link,
+    .header .nav-item .nav-link:after,
+    .header .nav-item .nav-link:not(.active):after,
+    .header .nav-item.dropdown .dropdown-menu .dropdown-item {
+        transition: none;
+    }
+
+    .header .nav-item .nav-link:hover,
+    .header .nav-item .nav-link:focus-visible,
+    .header .nav-item:hover > a {
+        transform: none;
+    }
+
+    .header .nav-item.dropdown .dropdown-menu {
+        animation: none;
     }
 }
 

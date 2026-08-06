@@ -11,10 +11,19 @@ class PortfolioTestResubmitRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $application = PortfolioTestApplication::where('user_id', auth()->id())
-            ->find($this->route('id'));
+        $application = PortfolioTestApplication::find($this->route('id'));
 
-        return $application && $application->payment_status === 'completed';
+        if (!$application || $application->payment_status !== 'completed') {
+            return false;
+        }
+
+        if (auth()->check() && (int) $application->user_id === (int) auth()->id()) {
+            return true;
+        }
+
+        return $application->is_guest
+            && $application->isNonDot()
+            && $application->guestSessionMatches();
     }
 
     public function rules(): array
@@ -59,8 +68,16 @@ class PortfolioTestResubmitRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $application = PortfolioTestApplication::with('portfolio')
-            ->where('user_id', auth()->id())
             ->find($this->route('id'));
+
+        if ($application) {
+            $authorized = (auth()->check() && (int) $application->user_id === (int) auth()->id())
+                || ($application->is_guest && $application->isNonDot() && $application->guestSessionMatches());
+
+            if (!$authorized) {
+                $application = null;
+            }
+        }
 
         if ($application) {
             $flags = app(PortfolioTestApplicationService::class)->portfolioFlags($application->portfolio);

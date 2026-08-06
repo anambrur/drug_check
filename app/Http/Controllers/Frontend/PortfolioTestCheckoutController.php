@@ -17,6 +17,7 @@ use App\Services\QuestOrderSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Stripe\Checkout\Session as StripeSession;
 use Stripe\Stripe;
 
@@ -26,7 +27,7 @@ class PortfolioTestCheckoutController extends Controller
         private readonly PortfolioTestApplicationService $applicationService,
         private readonly QuestOrderSubmissionService $questSubmissionService
     ) {
-        $this->middleware('auth');
+        $this->middleware('auth')->only(['checkoutDot']);
     }
 
     public function checkout(PortfolioTestCheckoutRequest $request)
@@ -37,6 +38,13 @@ class PortfolioTestCheckoutController extends Controller
         $employee = null;
 
         if ($testType === 'dot') {
+            if (!Auth::check()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['You must be signed in to schedule a DOT test.'],
+                ], 403);
+            }
+
             $employee = Employee::with('clientProfile')->findOrFail((int) $validated['employee_id']);
             if (!$this->userCanSelectEmployee($employee)) {
                 return response()->json([
@@ -53,6 +61,10 @@ class PortfolioTestCheckoutController extends Controller
         }
 
         $application = PortfolioTestApplication::create($this->buildApplicationAttributes($validated, $portfolio, $amountCents));
+
+        if ($application->is_guest) {
+            PortfolioTestApplication::storeGuestSessionToken($application);
+        }
 
         if ($testType === 'dot') {
             $internal = $this->applicationService->populateInternalFields($application, $portfolio, $employee);
@@ -81,9 +93,13 @@ class PortfolioTestCheckoutController extends Controller
 
     public function success(Request $request, int $id)
     {
-        $application = PortfolioTestApplication::with('portfolio')
-            ->where('user_id', Auth::id())
-            ->findOrFail($id);
+        $application = $this->findAuthorizedApplication($id);
+
+        if (!$application) {
+            abort(403);
+        }
+
+        $application->loadMissing('portfolio');
 
         $sessionId = $request->query('session_id');
         if ($sessionId
@@ -120,9 +136,13 @@ class PortfolioTestCheckoutController extends Controller
 
     public function retry(int $id)
     {
-        $application = PortfolioTestApplication::with(['portfolio', 'employee'])
-            ->where('user_id', Auth::id())
-            ->findOrFail($id);
+        $application = $this->findAuthorizedApplication($id);
+
+        if (!$application) {
+            abort(403);
+        }
+
+        $application->load(['portfolio', 'employee']);
 
         if ($application->payment_status !== 'completed') {
             abort(403, 'Payment has not been completed.');
@@ -152,9 +172,13 @@ class PortfolioTestCheckoutController extends Controller
 
     public function resubmit(PortfolioTestResubmitRequest $request, int $id)
     {
-        $application = PortfolioTestApplication::with(['portfolio', 'employee'])
-            ->where('user_id', Auth::id())
-            ->findOrFail($id);
+        $application = $this->findAuthorizedApplication($id);
+
+        if (!$application) {
+            abort(403);
+        }
+
+        $application->load(['portfolio', 'employee']);
 
         if ($application->payment_status !== 'completed') {
             return back()->with('error', 'Payment has not been completed.');
@@ -214,18 +238,42 @@ class PortfolioTestCheckoutController extends Controller
 
     private function buildApplicationAttributes(array $validated, Portfolio $portfolio, int $amountCents): array
     {
+        $isGuest = !Auth::check() && $validated['test_type'] === 'non_dot';
+        $guestToken = $isGuest ? Str::random(64) : null;
+
         return array_merge(
             $this->applicationService->questAttributesFromValidated($validated),
             [
                 'test_type' => $validated['test_type'],
                 'portfolio_id' => $portfolio->id,
-                'user_id' => Auth::id(),
+                'user_id' => $isGuest ? null : Auth::id(),
+                'is_guest' => $isGuest,
+                'guest_access_token' => $guestToken,
                 'amount' => $amountCents,
                 'status' => 'Pending Payment',
                 'payment_status' => 'pending',
                 'quest_submission_status' => 'pending',
             ]
         );
+    }
+
+    private function findAuthorizedApplication(int $id): ?PortfolioTestApplication
+    {
+        $application = PortfolioTestApplication::find($id);
+
+        if (!$application) {
+            return null;
+        }
+
+        if (Auth::check() && (int) $application->user_id === (int) Auth::id()) {
+            return $application;
+        }
+
+        if ($application->is_guest && $application->isNonDot() && $application->guestSessionMatches()) {
+            return $application;
+        }
+
+        return null;
     }
 
     private function createStripeCheckoutSession(
@@ -244,6 +292,23 @@ class PortfolioTestCheckoutController extends Controller
         Stripe::setApiKey($stripeSecret);
 
         try {
+            $customerName = trim(implode(' ', array_filter([
+                $application->first_name,
+                $application->last_name,
+            ])));
+
+            $paymentIntentMetadata = array_filter([
+                'portfolio_test_application_id' => (string) $application->id,
+                'portfolio_id' => (string) $portfolio->id,
+                'test_type' => $application->test_type,
+                'user_id' => $application->user_id ? (string) $application->user_id : null,
+                'customer_name' => $customerName !== '' ? $customerName : null,
+                'customer_email' => $application->email ? (string) $application->email : null,
+                'customer_phone' => $application->phone ? (string) $application->phone : null,
+                'test_name' => $portfolio->title ? (string) $portfolio->title : null,
+                'country' => $application->country ? (string) $application->country : null,
+            ], static fn ($value) => $value !== null && $value !== '');
+
             $session = StripeSession::create([
                 'payment_method_types' => ['card'],
                 'line_items' => [[
@@ -258,23 +323,15 @@ class PortfolioTestCheckoutController extends Controller
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
+                'customer_email' => $application->email ?: null,
                 'payment_intent_data' => [
-                    'metadata' => [
-                        'portfolio_test_application_id' => (string) $application->id,
-                        'portfolio_id' => (string) $portfolio->id,
-                        'test_type' => $application->test_type,
-                        'user_id' => (string) $application->user_id,
-                    ],
+                    'receipt_email' => $application->email ?: null,
+                    'metadata' => $paymentIntentMetadata,
                 ],
                 'success_url' => route('frontend.portfolio-test.success', ['id' => $application->id])
                     . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('default-portfolio-detail-show', ['portfolio_slug' => $portfolio->portfolio_slug]),
-                'metadata' => [
-                    'portfolio_test_application_id' => (string) $application->id,
-                    'portfolio_id' => (string) $portfolio->id,
-                    'test_type' => $application->test_type,
-                    'user_id' => (string) $application->user_id,
-                ],
+                'metadata' => $paymentIntentMetadata,
             ]);
 
             $application->update([

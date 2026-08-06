@@ -58,7 +58,10 @@ class QuestOrderSubmissionService
             $data = $this->applicationService->buildSubmitOrderData($application);
 
             try {
-                $order = $this->submitOrderData($data, (int) $application->user_id);
+                $order = $this->submitOrderData(
+                    $data,
+                    $application->user_id !== null ? (int) $application->user_id : null
+                );
 
                 $application->update([
                     'quest_submission_status' => 'submitted',

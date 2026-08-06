@@ -48,7 +48,11 @@ class ConsortiumEnrollmentService
             }
         });
 
-        $this->sendEnrollmentNotifications($enrollment->fresh());
+        $enrollment = $enrollment->fresh();
+
+        app(AdminOrderNotificationService::class)->notifyPaidConsortium($enrollment);
+
+        $this->sendEnrollmentNotifications($enrollment);
     }
 
     /**

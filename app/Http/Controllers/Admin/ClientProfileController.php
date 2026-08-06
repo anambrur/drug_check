@@ -170,7 +170,7 @@ class ClientProfileController extends Controller
                 )
             );
 
-            toastr()->success('Company Create and Registration email sent successfully to ' . $companyUser->email, 'Email Sent');
+            toastr()->success('Company created. Registration email queued for ' . $companyUser->email, 'Email Queued');
         } catch (\Exception $e) {
             Log::error('Failed to send DER registration email: ' . $e->getMessage());
 
