@@ -55,6 +55,11 @@
                     <span class="rc-step-num">4</span>
                     <span class="rc-step-label">Register</span>
                 </div>
+                <div class="rc-step-line" aria-hidden="true"><span class="rc-step-line-fill" data-line="4"></span></div>
+                <div class="rc-step" data-step="5" data-target="#ch-enroll">
+                    <span class="rc-step-num">5</span>
+                    <span class="rc-step-label">Enroll</span>
+                </div>
             </nav>
         </div>
     </section>
@@ -137,7 +142,7 @@
                                 <div>
                                     <span class="pill">Your Partner</span>
                                     <h4>What Does a C/TPA Do?</h4>
-                                    <p>At <strong>Skyros Drug Checks Inc</strong>, we act as your designated C/TPA, managing compliance with all FMCSA Clearinghouse requirements.</p>
+                                    <p>At <strong>Drugcheckr</strong>, we act as your designated C/TPA, managing compliance with all FMCSA Clearinghouse requirements.</p>
                                 </div>
                                 <div class="pf-header-icon d-none d-sm-flex" aria-hidden="true"><i class="fas fa-handshake"></i></div>
                             </div>
@@ -238,7 +243,7 @@
             <div class="rc-section-head text-center rc-animate mb-4 mb-lg-5">
                 <p class="section-eyebrow">Step by Step</p>
                 <h2>Clearinghouse Registration</h2>
-                <p class="sub">Follow these simple steps to register in the Clearinghouse, or let Skyros Drug Checks Inc assist you in achieving seamless compliance.</p>
+                <p class="sub">Follow these simple steps to register in the Clearinghouse, or let Drugcheckr assist you in achieving seamless compliance.</p>
             </div>
 
             <div class="row g-4">
@@ -291,7 +296,7 @@
                                 <li>Log in to your Clearinghouse Employer Dashboard</li>
                                 <li>Click on <strong>"Designate C/TPA"</strong></li>
                                 <li>Search or enter our details:<br>
-                                    <span class="ch-cta-badge">Skyros Drug Checks Inc</span>
+                                    <span class="ch-cta-badge">Drugcheckr</span>
                                 </li>
                                 <li>Confirm selection</li>
                                 <li>You're now connected and compliant!</li>
@@ -305,6 +310,11 @@
             </div>
         </div>
     </section>
+
+    {{-- C/TPA Enrollment --}}
+    @isset($plans)
+        @include('frontend.clearing_house._enrollment')
+    @endisset
 
     {{-- Downloadable Resources --}}
     @if (
@@ -452,7 +462,8 @@
             { step: 1, el: document.getElementById('ch-overview') },
             { step: 2, el: document.getElementById('ch-ctpa') },
             { step: 3, el: document.getElementById('ch-queries') },
-            { step: 4, el: document.getElementById('ch-registration') }
+            { step: 4, el: document.getElementById('ch-registration') },
+            { step: 5, el: document.getElementById('ch-enroll') }
         ];
         var resources = document.getElementById('ch-resources');
         if (resources) sections.push({ step: 4, el: resources });

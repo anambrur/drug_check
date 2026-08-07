@@ -194,7 +194,9 @@ Route::get('portfolio-test/success/{id}', [\App\Http\Controllers\Frontend\Portfo
 Route::get('portfolio-test/retry/{id}', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'retry'])->name('frontend.portfolio-test.retry');
 Route::post('portfolio-test/retry/{id}/resubmit', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'resubmit'])->name('frontend.portfolio-test.resubmit');
 Route::get('dot-supervisor-training', [\App\Http\Controllers\Frontend\HomeController::class, 'dot_supervisor_training'])->name('frontend.dot-supervisor-training')->middleware('XSS');
-Route::get('clearing-house', [\App\Http\Controllers\Frontend\HomeController::class, 'clearing_house'])->name('frontend.clearing-house')->middleware('XSS');
+Route::get('clearing-house', [\App\Http\Controllers\Frontend\ClearingHouseEnrollmentController::class, 'index'])->name('frontend.clearing-house')->middleware('XSS');
+Route::post('clearing-house/enroll', [\App\Http\Controllers\Frontend\ClearingHouseEnrollmentController::class, 'enroll'])->name('frontend.clearing-house.enroll')->middleware('XSS');
+Route::get('clearing-house/success/{id}', [\App\Http\Controllers\Frontend\ClearingHouseEnrollmentController::class, 'success'])->name('frontend.clearing-house.success');
 Route::get('background-checks-services', [\App\Http\Controllers\Frontend\HomeController::class, 'background_checks_services'])->name('frontend.background-check-services')->middleware('XSS');
 Route::get('terms-and-conditions', [\App\Http\Controllers\Frontend\HomeController::class, 'terms_and_conditions'])->name('frontend.terms-and-conditions')->middleware('XSS');
 Route::get('privacy-policy', [\App\Http\Controllers\Frontend\HomeController::class, 'privacy_policy'])->name('frontend.privacy-policy')->middleware('XSS');
@@ -977,6 +979,26 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::get('clearing-house/{id}/edit', [ClearingHouseController::class, 'edit'])->name('clearing-house.edit')->middleware('permission:clearing house edit');
     Route::put('clearing-house/{id}', [ClearingHouseController::class, 'update'])->name('clearing-house.update')->middleware('permission:clearing house edit');
     Route::delete('clearing-house/{id}', [ClearingHouseController::class, 'destroy'])->name('clearing-house.destroy')->middleware('permission:clearing house delete');
+
+    // Clearing House Pricing Plans (Dynamic)
+    Route::get('clearing-house-plans', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'index'])
+        ->name('admin.clearing-house-plans.index')->middleware('permission:clearing house view');
+    Route::get('clearing-house-plans/create', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'create'])
+        ->name('admin.clearing-house-plans.create')->middleware('permission:clearing house edit');
+    Route::post('clearing-house-plans', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'store'])
+        ->name('admin.clearing-house-plans.store')->middleware('permission:clearing house edit');
+    Route::get('clearing-house-plans/trashed', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'trashed'])
+        ->name('admin.clearing-house-plans.trashed')->middleware('permission:clearing house view');
+    Route::get('clearing-house-plans/{id}/edit', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'edit'])
+        ->name('admin.clearing-house-plans.edit')->middleware('permission:clearing house edit');
+    Route::put('clearing-house-plans/{id}', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'update'])
+        ->name('admin.clearing-house-plans.update')->middleware('permission:clearing house edit');
+    Route::patch('clearing-house-plans/{id}/toggle-status', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'toggleStatus'])
+        ->name('admin.clearing-house-plans.toggle-status')->middleware('permission:clearing house edit');
+    Route::delete('clearing-house-plans/{id}', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'destroy'])
+        ->name('admin.clearing-house-plans.destroy')->middleware('permission:clearing house edit');
+    Route::patch('clearing-house-plans/{id}/restore', [\App\Http\Controllers\Admin\ClearingHousePlanController::class, 'restore'])
+        ->name('admin.clearing-house-plans.restore')->middleware('permission:clearing house edit');
 });
 
 // ------------------------------------------------------------------
@@ -1023,6 +1045,18 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
         ->name('consortium-enrollments.updateStatus')->middleware('permission:random consortium edit');
     Route::put('consortium-enrollments/{id}/notes', [OrdersAdminController::class, 'updateConsortiumNotes'])
         ->name('consortium-enrollments.updateNotes')->middleware('permission:random consortium edit');
+
+    // Clearing House Enrollments (Orders)
+    Route::get('clearing-house-enrollments', [OrdersAdminController::class, 'clearingHouse'])
+        ->name('clearing-house-enrollments.index')->middleware('permission:clearing house view');
+    Route::get('clearing-house-enrollments/data', [OrdersAdminController::class, 'clearingHouseData'])
+        ->name('clearing-house-enrollments.data')->middleware('permission:clearing house view');
+    Route::get('clearing-house-enrollments/{id}', [OrdersAdminController::class, 'showClearingHouse'])
+        ->name('clearing-house-enrollments.show')->middleware('permission:clearing house view');
+    Route::put('clearing-house-enrollments/{id}/status', [OrdersAdminController::class, 'updateClearingHouseStatus'])
+        ->name('clearing-house-enrollments.updateStatus')->middleware('permission:clearing house edit');
+    Route::put('clearing-house-enrollments/{id}/notes', [OrdersAdminController::class, 'updateClearingHouseNotes'])
+        ->name('clearing-house-enrollments.updateNotes')->middleware('permission:clearing house edit');
 });
 
 // ------------------------------------------------------------------
@@ -1113,7 +1147,7 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
         ->name('admin.orders.applications.show')->middleware('permission:quest-order view');
 
     Route::get('orders/clearing-house', [OrdersAdminController::class, 'clearingHouse'])
-        ->name('admin.orders.clearing-house');
+        ->name('admin.orders.clearing-house')->middleware('permission:clearing house view');
     Route::get('orders/dot-supervisor-training', [OrdersAdminController::class, 'dotSupervisorTraining'])
         ->name('admin.orders.dot-supervisor-training');
 });

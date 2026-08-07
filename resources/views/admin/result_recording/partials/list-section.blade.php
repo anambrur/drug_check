@@ -260,15 +260,15 @@
                 <div class="modal-body">
                     <p>The following email may be sent to the client:</p>
                     <div class="email-preview p-3 mb-3" style="background-color: #f8f9fa; border-radius: 5px;">
-                        <p><strong>Subject:</strong> You have new test results and new random selections from Skyros Drug Checks Inc</p>
+                        <p><strong>Subject:</strong> You have new test results and new random selections from Drugcheckr</p>
                         <p>Hello <span id="rr-notify-employee"></span>,</p>
-                        <p>Skyros Drug Checks Inc has added new test results to your company portal.</p>
+                        <p>Drugcheckr has added new test results to your company portal.</p>
                         <p>
                             <a href="{{ route('result-recording.index') }}">Click here</a>
                             to view all results for <strong id="rr-notify-company-1"></strong>.
                         </p>
                         <p>Also:</p>
-                        <p>Skyros Drug Checks Inc has added new random selections to your company portal.</p>
+                        <p>Drugcheckr has added new random selections to your company portal.</p>
                         <p>
                             <a href="{{ route('result-recording.index') }}">Click here</a>
                             to view all selections for <strong id="rr-notify-company-2"></strong>.

@@ -303,13 +303,14 @@
                                         href="{{ route('consortium-enrollments.index') }}">Random Consortium</a>
                                 </li>
                                 @endcan
+                                @can('clearing house view')
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('admin/orders/clearing-house') ? 'active' : '' }}"
+                                    <a class="nav-link {{ request()->is('admin/orders/clearing-house') || request()->is('admin/clearing-house-enrollments*') ? 'active' : '' }}"
                                         href="{{ route('admin.orders.clearing-house') }}">
                                         Clearing House
-                                        <span class="badge badge-secondary badge-pill ml-1" style="font-size: 9px;">Coming soon</span>
                                     </a>
                                 </li>
+                                @endcan
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('admin/orders/dot-supervisor-training') ? 'active' : '' }}"
                                         href="{{ route('admin.orders.dot-supervisor-training') }}">
@@ -1351,6 +1352,7 @@
                         request()->is('admin/random-consortium/create') ||
                         request()->is('admin/random-consortium/*/edit') ||
                         request()->is('admin/consortium-plans*') ||
+                        request()->is('admin/clearing-house-plans*') ||
                         request()->is('admin/quick-access/create')
                             ? 'active'
                             : '' }}">
@@ -1393,6 +1395,7 @@
                         request()->is('admin/random-consortium/create') ||
                         request()->is('admin/random-consortium/*/edit') ||
                         request()->is('admin/consortium-plans*') ||
+                        request()->is('admin/clearing-house-plans*') ||
                         request()->is('admin/quick-access/create')
                             ? 'show'
                             : '' }}"
@@ -1482,6 +1485,12 @@
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/consortium-plans*') ? 'active' : '' }}"
                                         href="{{ route('admin.consortium-plans.index') }}">Consortium Pricing</a>
+                                </li>
+                                @endcan
+                                @can('clearing house edit')
+                                <li class="nav-item"> <a
+                                        class="nav-link {{ request()->is('admin/clearing-house-plans*') ? 'active' : '' }}"
+                                        href="{{ route('admin.clearing-house-plans.index') }}">Clearing House Pricing</a>
                                 </li>
                                 @endcan
                                 <li class="nav-item"> <a

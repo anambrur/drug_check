@@ -7,7 +7,9 @@ use App\Models\Payment;
 use App\Models\StripeWebhookEvent;
 use App\Models\PortfolioTestApplication;
 use App\Models\ConsortiumEnrollment;
+use App\Models\ClearingHouseEnrollment;
 use App\Services\ConsortiumEnrollmentService;
+use App\Services\ClearingHouseEnrollmentService;
 use App\Services\PortfolioTestApplicationService;
 use App\Services\QuestOrderSubmissionService;
 use Illuminate\Http\Request;
@@ -266,18 +268,25 @@ class StripeWebhookController extends Controller
             $this->handlePortfolioTestCheckoutCompleted($session, (int) $portfolioApplicationId);
         }
 
-        $enrollmentId = $session->metadata->consortium_enrollment_id ?? null;
-        if (!$enrollmentId) {
-            return;
+        $consortiumEnrollmentId = $session->metadata->consortium_enrollment_id ?? null;
+        if ($consortiumEnrollmentId) {
+            $this->finalizeConsortiumEnrollment($session, (int) $consortiumEnrollmentId);
         }
 
+        $clearingHouseEnrollmentId = $session->metadata->clearing_house_enrollment_id ?? null;
+        if ($clearingHouseEnrollmentId) {
+            $this->finalizeClearingHouseEnrollment($session, (int) $clearingHouseEnrollmentId);
+        }
+    }
+
+    private function finalizeConsortiumEnrollment($session, int $enrollmentId): void
+    {
         $enrollment = ConsortiumEnrollment::find($enrollmentId);
         if (!$enrollment) {
             Log::error('Consortium enrollment not found during webhook processing.', ['id' => $enrollmentId]);
             return;
         }
 
-        // Idempotent: still ensure user/profile + emails if anything is missing
         if ($enrollment->payment_status === 'completed'
             && $enrollment->user_id
             && $enrollment->client_profile_id
@@ -293,6 +302,35 @@ class StripeWebhookController extends Controller
             );
         } catch (\Throwable $e) {
             Log::error('Failed to finalize consortium enrollment after checkout.', [
+                'enrollment_id' => $enrollmentId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function finalizeClearingHouseEnrollment($session, int $enrollmentId): void
+    {
+        $enrollment = ClearingHouseEnrollment::find($enrollmentId);
+        if (!$enrollment) {
+            Log::error('Clearing house enrollment not found during webhook processing.', ['id' => $enrollmentId]);
+            return;
+        }
+
+        if ($enrollment->payment_status === 'completed'
+            && $enrollment->user_id
+            && $enrollment->client_profile_id
+            && $enrollment->company_notified_at
+            && $enrollment->admin_notified_at) {
+            return;
+        }
+
+        try {
+            app(ClearingHouseEnrollmentService::class)->finalizePaidEnrollment(
+                $enrollment,
+                $session->payment_intent ?? null
+            );
+        } catch (\Throwable $e) {
+            Log::error('Failed to finalize clearing house enrollment after checkout.', [
                 'enrollment_id' => $enrollmentId,
                 'error' => $e->getMessage(),
             ]);

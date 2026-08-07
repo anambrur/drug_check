@@ -23,7 +23,9 @@ class ConsortiumEnrollmentController extends Controller
     {
         $language = getLanguage();
         // Load the page text content
-        $random_consortium = RandomConsortium::where('language_id', $language->id)->first();
+        $random_consortium = $language
+            ? RandomConsortium::where('language_id', $language->id)->first()
+            : null;
         if (!$random_consortium) {
             $random_consortium = RandomConsortium::first();
         }

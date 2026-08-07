@@ -6,11 +6,11 @@
 </head>
 
 <body>
-    <h2>You have new test results from Skyros Drug Checks Inc</h2>
+    <h2>You have new test results from Drugcheckr</h2>
 
     <p>Hello {{ $type === 'company' ? $data['company_name'] : $data['employee_name'] }},</p>
 
-    <p>Skyros Drug Checks Inc has added new test to your portal.</p>
+    <p>Drugcheckr has added new test to your portal.</p>
 
     @if ($type === 'company')
         <p>This is to inform you that a test has been scheduled for your employee {{ $data['employee_name'] }}.</p>
@@ -32,7 +32,7 @@
     </ul>
 
     <p>Thank you,</p>
-    <p><strong>Skyros Drug Checks Inc</strong></p>
+    <p><strong>Drugcheckr</strong></p>
     <p>
         <small>
             (This is an automated notification. Please do not reply to this email.)

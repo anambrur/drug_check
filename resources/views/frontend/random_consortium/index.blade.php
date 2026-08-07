@@ -2,6 +2,12 @@
 
 @section('content')
 
+@php
+    $rcTitle = $random_consortium?->title ?? 'Random Consortium Enrollment';
+    $rcDesc = $random_consortium?->description
+        ?? 'Join our FMCSA-compliant random drug and alcohol testing consortium. Choose a plan, enroll your drivers, and stay audit-ready.';
+@endphp
+
     {{-- Scroll progress bar --}}
     <div class="rc-scroll-progress" id="rc-scroll-progress" aria-hidden="true"><span></span></div>
 
@@ -23,8 +29,8 @@
                     <i class="fas fa-shield-alt" aria-hidden="true"></i>
                     Consortium Enrollment
                 </span>
-                <h1 class="rc-hero-title rc-hero-item rc-hero-item--2">{{ $random_consortium->title }}</h1>
-                <div class="rc-hero-desc rc-hero-item rc-hero-item--3">@php echo html_entity_decode($random_consortium->description); @endphp</div>
+                <h1 class="rc-hero-title rc-hero-item rc-hero-item--2">{{ $rcTitle }}</h1>
+                <div class="rc-hero-desc rc-hero-item rc-hero-item--3">@php echo html_entity_decode($rcDesc); @endphp</div>
             </div>
 
             {{-- Visual step indicator (no logic change) --}}

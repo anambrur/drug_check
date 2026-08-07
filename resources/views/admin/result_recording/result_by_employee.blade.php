@@ -347,12 +347,12 @@
                                                 <div class="email-preview p-3 mb-3"
                                                     style="background-color: #f8f9fa; border-radius: 5px;">
                                                     <p><strong>Subject:</strong> You have new test results and new random
-                                                        selections from Skyros Drug Checks Inc</p>
+                                                        selections from Drugcheckr</p>
 
                                                     <p>Hello {{ $result->employee->first_name }}
                                                         {{ $result->employee->last_name }},</p>
 
-                                                    <p>Skyros Drug Checks Inc has added new test results to your company
+                                                    <p>Drugcheckr has added new test results to your company
                                                         portal.
                                                     </p>
 
@@ -364,7 +364,7 @@
 
                                                     <p>Also:</p>
 
-                                                    <p>Skyros Drug Checks Inc has added new random selections to your
+                                                    <p>Drugcheckr has added new random selections to your
                                                         company
                                                         portal.</p>
 

@@ -68,10 +68,10 @@ use App\Models\Admin\GalleryImageSection;
 // Get language for create data
 function getLanguage() {
 
-    // Retrieve active language
-    $language = Language::where('status', 1)->first();
-
-    return $language;
+    // Prefer active language, then any available row (avoids null crashes if flags are unset)
+    return Language::where('status', 1)->first()
+        ?? Language::where('default_site_language', 1)->first()
+        ?? Language::first();
 
 }
 
@@ -153,16 +153,15 @@ function getSiteLanguage() {
 
         $language = Language::find($language_id_from_dropdown);
 
-        return $language;
-
-    } else {
-
-        $language = Language::where('default_site_language', 1)->first();
-
-        return $language;
-
+        if ($language) {
+            return $language;
+        }
 
     }
+
+    return Language::where('default_site_language', 1)->first()
+        ?? Language::where('status', 1)->first()
+        ?? Language::first();
 
 }
 

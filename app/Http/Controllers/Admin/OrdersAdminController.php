@@ -7,6 +7,7 @@ use App\Models\Admin\Favicon;
 use App\Models\Admin\PanelImage;
 use App\Models\Admin\QuestOrder;
 use App\Models\ConsortiumEnrollment;
+use App\Models\ClearingHouseEnrollment;
 use App\Models\PortfolioTestApplication;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -332,10 +333,141 @@ class OrdersAdminController extends Controller
 
     public function clearingHouse(): View
     {
-        return $this->comingSoon(
-            'Clearing House Orders',
-            'Clearing House order management is not available yet. It will appear here when the feature is ready.'
-        );
+        $favicon = Favicon::first();
+        $panel_image = PanelImage::first();
+        $stats = $this->clearingHouseStats();
+
+        return view('admin.orders.clearing_house.index', compact('favicon', 'panel_image', 'stats'));
+    }
+
+    public function clearingHouseData(Request $request): JsonResponse
+    {
+        $query = ClearingHouseEnrollment::query()->select('clearing_house_enrollments.*');
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($dateFrom = $request->input('date_from')) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+
+        if ($dateTo = $request->input('date_to')) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        return DataTables::eloquent($query)
+            ->addIndexColumn()
+            ->addColumn('company', function (ClearingHouseEnrollment $row) {
+                $html = '<div class="font-weight-bold">' . e($row->company_name) . '</div>';
+                if ($row->dba_name) {
+                    $html .= '<small class="text-muted">DBA: ' . e($row->dba_name) . '</small>';
+                }
+
+                return $html;
+            })
+            ->addColumn('contact', function (ClearingHouseEnrollment $row) {
+                return '<div>' . e(trim($row->first_name . ' ' . $row->last_name)) . '</div>'
+                    . '<small class="text-muted">' . e($row->email) . '</small>';
+            })
+            ->addColumn('plan', fn (ClearingHouseEnrollment $row) => e($row->selected_plan ?: '—'))
+            ->addColumn('drivers', fn (ClearingHouseEnrollment $row) => e((string) $row->driver_count))
+            ->addColumn('amount_display', fn (ClearingHouseEnrollment $row) => '<span class="font-weight-bold text-primary">' . e($row->formatted_amount) . '</span>')
+            ->addColumn('status_badge', function (ClearingHouseEnrollment $row) {
+                $map = [
+                    'Active' => 'success',
+                    'Payment Completed' => 'info',
+                    'Under Review' => 'warning',
+                    'Credentials Sent' => 'primary',
+                    'Contacted' => 'secondary',
+                    'Pending Payment' => 'danger',
+                    'Cancelled' => 'dark',
+                ];
+                $class = $map[$row->status] ?? 'secondary';
+
+                return '<span class="badge badge-pill badge-' . $class . '">' . e($row->status) . '</span>';
+            })
+            ->addColumn('created_us', fn (ClearingHouseEnrollment $row) => $row->created_at?->format('m/d/Y g:i A') ?? '—')
+            ->addColumn('action', function (ClearingHouseEnrollment $row) {
+                $url = route('clearing-house-enrollments.show', $row->id);
+
+                return '<a href="' . $url . '" class="btn btn-sm btn-primary"><i class="fa fa-eye"></i> View</a>';
+            })
+            ->filterColumn('company', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('company_name', 'like', "%{$keyword}%")
+                        ->orWhere('dba_name', 'like', "%{$keyword}%")
+                        ->orWhere('dot_number', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('contact', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('first_name', 'like', "%{$keyword}%")
+                        ->orWhere('last_name', 'like', "%{$keyword}%")
+                        ->orWhere('email', 'like', "%{$keyword}%")
+                        ->orWhere('phone', 'like', "%{$keyword}%");
+                });
+            })
+            ->rawColumns(['company', 'contact', 'amount_display', 'status_badge', 'action'])
+            ->toJson();
+    }
+
+    public function showClearingHouse(int $id): View
+    {
+        $favicon = Favicon::first();
+        $panel_image = PanelImage::first();
+        $enrollment = ClearingHouseEnrollment::findOrFail($id);
+
+        return view('admin.orders.clearing_house.show', compact('favicon', 'panel_image', 'enrollment'));
+    }
+
+    public function updateClearingHouseStatus(Request $request, int $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:Pending Payment,Payment Completed,Under Review,Contacted,Credentials Sent,Active,Cancelled',
+        ]);
+
+        if ($validator->fails()) {
+            toastr()->error($validator->errors()->first(), 'content.error');
+
+            return back();
+        }
+
+        $enrollment = ClearingHouseEnrollment::findOrFail($id);
+        $oldStatus = $enrollment->status;
+        $newStatus = $request->input('status');
+
+        $enrollment->update(['status' => $newStatus]);
+
+        $timestamp = now()->format('m/d/Y g:i A');
+        $statusLog = "\n[System - {$timestamp}]: Status updated from '{$oldStatus}' to '{$newStatus}'.";
+        $enrollment->update([
+            'internal_notes' => $enrollment->internal_notes . $statusLog,
+        ]);
+
+        toastr()->success('Enrollment status updated successfully.', 'content.success');
+
+        return back();
+    }
+
+    public function updateClearingHouseNotes(Request $request, int $id)
+    {
+        $enrollment = ClearingHouseEnrollment::findOrFail($id);
+
+        $newNote = $request->input('note');
+        if ($newNote) {
+            $timestamp = now()->format('m/d/Y g:i A');
+            $author = auth()->user()?->name ?? 'Admin';
+            $logEntry = "\n[{$author} - {$timestamp}]: {$newNote}";
+
+            $enrollment->update([
+                'internal_notes' => $enrollment->internal_notes . $logEntry,
+            ]);
+
+            toastr()->success('Note added successfully.', 'content.success');
+        }
+
+        return back();
     }
 
     public function dotSupervisorTraining(): View
@@ -387,6 +519,18 @@ class OrdersAdminController extends Controller
             'payment_completed' => ConsortiumEnrollment::where('status', 'Payment Completed')->count(),
             'under_review' => ConsortiumEnrollment::where('status', 'Under Review')->count(),
             'revenue' => ConsortiumEnrollment::where('payment_status', 'completed')->sum('amount'),
+        ];
+    }
+
+    private function clearingHouseStats(): array
+    {
+        return [
+            'total' => ClearingHouseEnrollment::count(),
+            'active' => ClearingHouseEnrollment::where('status', 'Active')->count(),
+            'pending_payment' => ClearingHouseEnrollment::where('status', 'Pending Payment')->count(),
+            'payment_completed' => ClearingHouseEnrollment::where('status', 'Payment Completed')->count(),
+            'under_review' => ClearingHouseEnrollment::where('status', 'Under Review')->count(),
+            'revenue' => ClearingHouseEnrollment::where('payment_status', 'completed')->sum('amount'),
         ];
     }
 

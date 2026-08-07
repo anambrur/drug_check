@@ -158,11 +158,11 @@
 
 <body>
     <div class="email-container">
-        <h2>You have new test results from Skyros Drug Checks Inc</h2>
+        <h2>You have new test results from Drugcheckr</h2>
 
         <p>Hello {{ $type === 'company' ? $data['company_name'] : $data['employee_name'] }},</p>
 
-        <p>Skyros Drug Checks Inc has added new test results to your portal.</p>
+        <p>Drugcheckr has added new test results to your portal.</p>
 
         @if (!empty($data['additional_text']))
             <h3>Additional Information:</h3>
@@ -307,7 +307,7 @@
 
         <div class="footer">
             <p>Thank you,</p>
-            <p><strong>Skyros Drug Checks Inc</strong></p>
+            <p><strong>Drugcheckr</strong></p>
             <p>
                 <small>
                     (This is an automated notification. Please do not reply to this email.)

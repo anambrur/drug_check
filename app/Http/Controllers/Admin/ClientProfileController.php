@@ -776,7 +776,7 @@ class ClientProfileController extends Controller
                 
                 <!-- Certificate Body -->
                 <div class="certificate-body no-page-break">
-                    Skyros Drug Checks Inc hereby certifies that the above named Company has enrolled in our consortium administrated random drug/alcohol testing program as mandated by the DOT 49 CFR Part 40
+                    Drugcheckr hereby certifies that the above named Company has enrolled in our consortium administrated random drug/alcohol testing program as mandated by the DOT 49 CFR Part 40
                 </div>
                 
                 <!-- Validity Period -->

@@ -46,6 +46,20 @@ class AdminOrderNotificationService
         );
     }
 
+    public function notifyPaidClearingHouse(\App\Models\ClearingHouseEnrollment $enrollment): ?AdminOrderNotification
+    {
+        $company = $enrollment->company_name ?: 'Company';
+        $amount = $enrollment->formatted_amount;
+
+        return $this->createOnce(
+            $enrollment,
+            'clearing_house',
+            "New clearing house enrollment — {$company}",
+            $amount,
+            'clearing-house-enrollments.index'
+        );
+    }
+
     protected function createOnce(
         Model $notifiable,
         string $type,

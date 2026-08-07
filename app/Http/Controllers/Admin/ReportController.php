@@ -168,7 +168,7 @@ class ReportController extends Controller
             'totals' => $totals,
             'testList' => $testList,
             'certifiedDate' => now()->format('m/d/Y'),
-            'ctpaName' => 'Skyros Drug Checks Inc',
+            'ctpaName' => 'Drugcheckr',
             'ctpaPhone' => '1-(800)-690-9034'
         ];
 
