@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ClearingHouseEnrollmentAdminNotification;
 use App\Models\Admin\ClearingHousePlan;
 use App\Models\Admin\ClearingHousePlanFee;
+use App\Models\ClearingHouseEnrollment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -69,5 +71,45 @@ class ClearingHousePricingTest extends TestCase
         $this->assertEquals(1, $owner->max_drivers);
         // $75 + $25 + $12.50 + $10 = $122.50 => 12250 cents
         $this->assertEquals(12250, $owner->calculateTotal(1));
+    }
+
+    public function test_admin_notification_email_renders_with_admin_panel_link(): void
+    {
+        $plan = ClearingHousePlan::create([
+            'name' => 'Owner Operator',
+            'slug' => 'owner-operator',
+            'min_drivers' => 1,
+            'max_drivers' => 1,
+            'is_active' => true,
+        ]);
+
+        $enrollment = ClearingHouseEnrollment::create([
+            'company_name' => 'Acme Trucking',
+            'dot_number' => '1234567',
+            'ein_number' => '12-3456789',
+            'company_phone' => '5551234567',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
+            'job_title' => 'DER',
+            'email' => 'jane@acme-trucking.test',
+            'phone' => '5559876543',
+            'address_line_1' => '100 Main St',
+            'city' => 'Austin',
+            'state' => 'TX',
+            'zip_code' => '73301',
+            'clearinghouse_registered' => 'yes',
+            'selected_plan' => $plan->name,
+            'driver_count' => 1,
+            'amount' => 12250,
+            'stripe_payment_intent_id' => 'pi_test_123',
+        ]);
+
+        $rendered = (new ClearingHouseEnrollmentAdminNotification($enrollment, $plan))->render();
+
+        $this->assertStringContainsString(
+            route('clearing-house-enrollments.show', ['id' => $enrollment->id]),
+            $rendered
+        );
+        $this->assertStringContainsString('Acme Trucking', $rendered);
     }
 }

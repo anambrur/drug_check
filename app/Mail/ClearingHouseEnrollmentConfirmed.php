@@ -11,6 +11,7 @@ use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ClearingHouseEnrollmentConfirmed extends Mailable implements ShouldQueue
 {
@@ -56,5 +57,23 @@ class ClearingHouseEnrollmentConfirmed extends Mailable implements ShouldQueue
     public function attachments(): array
     {
         return [];
+    }
+
+    /**
+     * The enrollment is flagged as notified as soon as this mailable is queued,
+     * so the flag has to be released again when delivery ultimately fails or the
+     * enrollment would never be retried.
+     */
+    public function failed(\Throwable $e): void
+    {
+        Log::error('Queued company clearing house enrollment confirmation email failed.', [
+            'enrollment_id' => $this->enrollment->id,
+            'error' => $e->getMessage(),
+        ]);
+
+        $this->enrollment->forceFill([
+            'company_notified_at' => null,
+            'notifications_sent_at' => null,
+        ])->save();
     }
 }

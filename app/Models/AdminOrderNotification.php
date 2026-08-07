@@ -51,6 +51,7 @@ class AdminOrderNotification extends Model
             'dot' => 'DOT Testing',
             'non_dot' => 'Non-DOT Testing',
             'consortium' => 'Random Consortium',
+            'clearing_house' => 'Clearing House',
             default => ucfirst(str_replace('_', ' ', $this->type)),
         };
     }
@@ -60,6 +61,7 @@ class AdminOrderNotification extends Model
         return match ($this->type) {
             'dot', 'non_dot' => route('admin.orders.applications.show', $this->notifiable_id),
             'consortium' => route('consortium-enrollments.show', $this->notifiable_id),
+            'clearing_house' => route('clearing-house-enrollments.show', $this->notifiable_id),
             default => null,
         };
     }

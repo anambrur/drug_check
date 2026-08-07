@@ -134,7 +134,7 @@
         </table>
 
         <div class="btn-wrapper">
-            <a href="{{ route('clearing house-enrollments.show', ['id' => $enrollment->id]) }}" class="admin-btn">
+            <a href="{{ route('clearing-house-enrollments.show', ['id' => $enrollment->id]) }}" class="admin-btn">
                 Open in Admin Panel
             </a>
         </div>
