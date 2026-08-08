@@ -204,7 +204,7 @@
                         </a>
                     @endcan
                 </div>
-                <div class="quest-order-table-wrap table-responsive">
+                <div class="quest-order-table-wrap">
                     <table id="quest-orders-datatable" class="table table-hover w-100 mb-0">
                         <thead>
                             <tr>
@@ -216,7 +216,7 @@
                                 <th>Status</th>
                                 <th>Result</th>
                                 <th>Created</th>
-                                <th class="text-center">Action</th>
+                                <th class="text-center all">Action</th>
                             </tr>
                         </thead>
                     </table>
@@ -226,7 +226,9 @@
     </div>
 </div>
 
+@include('admin.quest_order.partials.action-modals')
 @include('admin.quest_order.partials.actions-dropdown-styles')
+@include('admin.quest_order.partials.actions-scripts')
 @endsection
 
 @push('scripts')
@@ -251,6 +253,20 @@
                 d.date_to = $('#filter-to').val();
             }
         },
+        columnDefs: [
+            {
+                // Keep Actions always visible — never bury it under the + child row
+                targets: -1,
+                className: 'text-center all quest-order-actions-cell',
+                responsivePriority: 1,
+                orderable: false,
+                searchable: false
+            },
+            { responsivePriority: 2, targets: 1 },
+            { responsivePriority: 3, targets: 3 },
+            { responsivePriority: 4, targets: 7 },
+            { responsivePriority: 5, targets: 0 }
+        ],
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, width: '40px' },
             { data: 'quest_id', name: 'quest_id' },
@@ -260,7 +276,7 @@
             { data: 'status_badge', name: 'order_status', orderable: false, searchable: false },
             { data: 'result_badge', name: 'order_result', orderable: false, searchable: false },
             { data: 'created_us', name: 'created_at' },
-            { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center quest-order-actions-cell' }
+            { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         language: {
             paginate: {

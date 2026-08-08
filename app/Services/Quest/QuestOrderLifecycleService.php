@@ -85,6 +85,39 @@ class QuestOrderLifecycleService
         return $result;
     }
 
+    /**
+     * Best-effort CancelOrder before local delete.
+     * Skips when there is no Quest ID, create failed, or already cancelled.
+     */
+    public function cancelOrderIfPossible(QuestOrder $order): ?array
+    {
+        if (!$order->hasQuestIds()) {
+            return null;
+        }
+
+        $status = strtoupper((string) ($order->order_status ?? ''));
+        if (in_array($status, ['CANCELLED', 'CANCELED'], true)) {
+            return null;
+        }
+
+        try {
+            return $this->client->cancelOrder(
+                $order->reference_test_id ?? '',
+                $order->quest_order_id ?? ''
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Quest CancelOrder skipped during delete', [
+                'quest_order_id' => $order->quest_order_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'status' => 'FAILURE',
+                'error' => ['detail' => $e->getMessage()],
+            ];
+        }
+    }
+
     private function assertQuestIdsPresent(QuestOrder $order): void
     {
         if (empty($order->quest_order_id) || $order->create_response_status !== 'SUCCESS') {

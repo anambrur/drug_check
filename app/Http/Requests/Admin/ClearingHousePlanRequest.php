@@ -15,6 +15,17 @@ class ClearingHousePlanRequest extends FormRequest
     }
 
     /**
+     * Normalize blank driver limits to null before validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'min_drivers' => $this->filled('min_drivers') ? $this->input('min_drivers') : null,
+            'max_drivers' => $this->filled('max_drivers') ? $this->input('max_drivers') : null,
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      */
     public function rules(): array

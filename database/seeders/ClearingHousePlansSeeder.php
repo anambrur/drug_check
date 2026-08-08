@@ -18,10 +18,10 @@ class ClearingHousePlansSeeder extends Seeder
             [
                 'name' => 'Owner Operator',
                 'min_drivers' => 1,
-                'max_drivers' => 1,
+                'max_drivers' => null, // flexible — any driver count allowed
                 'display_order' => 1,
                 'is_active' => true,
-                'description' => 'Perfect for individual owner-operators with a single driver.',
+                'description' => 'Flexible plan for owner-operators — enter any number of drivers.',
             ],
             [
                 'name' => 'Small Fleet',

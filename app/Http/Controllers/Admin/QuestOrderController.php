@@ -330,14 +330,13 @@ class QuestOrderController extends Controller
 
     public function destroy($id)
     {
-        $questOrder = QuestOrder::find($id);
+        $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
-        if ($questOrder) {
-            $questOrder->delete();
-            toastr()->success('Quest order deleted successfully', 'Success');
-        } else {
-            toastr()->error('Quest order not found', 'Error');
-        }
+        $this->lifecycleService->cancelOrderIfPossible($questOrder);
+        $questOrder->delete();
+
+        toastr()->success('Quest order deleted successfully', 'Success');
 
         return redirect()->route('quest-order.index');
     }
@@ -354,7 +353,10 @@ class QuestOrderController extends Controller
         }
 
         foreach ($arr_checked_lists as $checkedId) {
-            QuestOrder::findOrFail($checkedId)->delete();
+            $questOrder = QuestOrder::findOrFail($checkedId);
+            $this->ensureCanAccessQuestOrder($questOrder);
+            $this->lifecycleService->cancelOrderIfPossible($questOrder);
+            $questOrder->delete();
         }
 
         toastr()->success('Selected quest orders deleted successfully', 'Success');

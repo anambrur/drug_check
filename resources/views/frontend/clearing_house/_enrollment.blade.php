@@ -534,18 +534,10 @@
                 helpText.className  = 'pf-hint';
                 driverBlock.classList.add('d-none');
                 showEnterpriseCalc();
-            } else if (plan && plan.min_drivers === 1 && plan.max_drivers === 1) {
-                countInput.value    = 1;
-                countInput.readOnly = true;
-                countInput.min      = 1;
-                countInput.max      = 1;
-                hiddenInput.value   = 1;
-                helpText.innerText  = 'Plan is fixed to exactly 1 driver.';
-                helpText.className  = 'pf-hint danger';
-                driverBlock.classList.remove('d-none');
-                showOnlineCalc();
             } else {
-                const max = plan && plan.max_drivers === null ? 9999 : maxDrivers;
+                // Owner Operator and other flexible tiers: editable driver count
+                const isUnlimited = !plan || plan.max_drivers === null;
+                const max = isUnlimited ? 9999 : maxDrivers;
                 activeMaxDrivers = max;
                 countInput.readOnly = false;
                 countInput.min      = minDrivers;
@@ -554,7 +546,9 @@
                     countInput.value = minDrivers;
                 }
                 hiddenInput.value  = countInput.value;
-                helpText.innerText = `Enter between ${minDrivers} and ${max} drivers.`;
+                helpText.innerText = isUnlimited
+                    ? `Enter ${minDrivers} or more drivers.`
+                    : `Enter between ${minDrivers} and ${max} drivers.`;
                 helpText.className = 'pf-hint';
                 driverBlock.classList.remove('d-none');
                 showOnlineCalc();

@@ -68,9 +68,11 @@ class ClearingHousePricingTest extends TestCase
         $owner = ClearingHousePlan::where('slug', 'owner-operator')->with('fees')->first();
         $this->assertNotNull($owner);
         $this->assertEquals(1, $owner->min_drivers);
-        $this->assertEquals(1, $owner->max_drivers);
+        $this->assertNull($owner->max_drivers); // flexible — any driver count
         // $75 + $25 + $12.50 + $10 = $122.50 => 12250 cents
         $this->assertEquals(12250, $owner->calculateTotal(1));
+        // $75 + $25 + $12.50 + ($10 * 3) = $142.50 => 14250 cents
+        $this->assertEquals(14250, $owner->calculateTotal(3));
     }
 
     public function test_admin_notification_email_renders_with_admin_panel_link(): void
@@ -79,7 +81,7 @@ class ClearingHousePricingTest extends TestCase
             'name' => 'Owner Operator',
             'slug' => 'owner-operator',
             'min_drivers' => 1,
-            'max_drivers' => 1,
+            'max_drivers' => null,
             'is_active' => true,
         ]);
 

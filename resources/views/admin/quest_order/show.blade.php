@@ -205,9 +205,19 @@
                             </a>
                         @endif
                         @include('admin.quest_order.partials.actions-dropdown', ['order' => $questOrder])
-                        <a href="{{ route('quest-order.edit', $questOrder->id) }}" class="btn btn-primary">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
+                        @can('quest-order edit')
+                            <a href="{{ route('quest-order.edit', $questOrder->id) }}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        @endcan
+                        @can('quest-order delete')
+                            <button type="button"
+                                class="btn btn-danger quest-order-delete-trigger"
+                                data-action="{{ route('quest-order.destroy', $questOrder->id) }}"
+                                data-label="{{ $questOrder->quest_order_id ? 'Quest Order #'.$questOrder->quest_order_id : 'Order #'.$questOrder->id }}">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        @endcan
                         <a href="{{ route('quest-order.index') }}" class="btn btn-secondary">
                             <i class="fas fa-angle-left"></i> Back
                         </a>
@@ -474,5 +484,7 @@
         </div>
     </div>
 
+    @include('admin.quest_order.partials.action-modals')
     @include('admin.quest_order.partials.actions-dropdown-styles')
+    @include('admin.quest_order.partials.actions-scripts')
 @endsection
