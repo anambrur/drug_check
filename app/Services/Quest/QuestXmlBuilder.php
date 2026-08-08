@@ -4,23 +4,57 @@ namespace App\Services\Quest;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use SimpleXMLElement;
 
 class QuestXmlBuilder
 {
-    public function buildOrderXml(array $data, ?string $clientReferenceId = null): string
-    {
-        $xml = new SimpleXMLElement('<Order/>');
+    private const TIMEZONE_MAP = [
+        1 => 'America/New_York',
+        2 => 'America/Chicago',
+        3 => 'America/Denver',
+        4 => 'America/Los_Angeles',
+        5 => 'Pacific/Honolulu',
+        6 => 'America/Anchorage',
+        7 => 'America/Puerto_Rico',
+        8 => 'Pacific/Guam',
+    ];
 
-        $eventInfo = $xml->addChild('EventInfo');
+    /**
+     * @return array{xml: string, client_reference_id: string}
+     */
+    public function buildOrderXml(array $data, ?string $clientReferenceId = null): array
+    {
+        $clientReferenceId = $this->normalizeClientReferenceId(
+            $clientReferenceId ?? $data['client_reference_id'] ?? $this->generateClientReferenceId()
+        );
+
+        $unitCodes = $this->normalizeUnitCodes($data['unit_codes'] ?? []);
+        if ($unitCodes === []) {
+            throw new \InvalidArgumentException('At least one UnitCode is required for a Quest order.');
+        }
+
+        $dotTest = (string) ($data['dot_test'] ?? '');
+        if (!in_array($dotTest, ['T', 'F'], true)) {
+            throw new \InvalidArgumentException('DOTTest must be T or F.');
+        }
+
+        if ($dotTest === 'T' && empty($data['testing_authority'])) {
+            throw new \InvalidArgumentException('TestingAuthority is required when DOTTest is T.');
+        }
+
+        if (empty($data['lab_account'])) {
+            throw new \InvalidArgumentException('LabAccount is required for a Quest order.');
+        }
+
+        $parts = ['<Order>', '<EventInfo>'];
 
         if (!empty($data['collection_site_id'])) {
-            $eventInfo->addChild('CollectionSiteID', substr($data['collection_site_id'], 0, 6));
+            $parts[] = $this->el('CollectionSiteID', substr((string) $data['collection_site_id'], 0, 6));
         }
 
         if (!empty($data['email'])) {
-            $eventInfo->addChild('EmailAuthorizationAddresses')
-                ->addChild('EmailAddress', $data['email']);
+            $parts[] = '<EmailAuthorizationAddresses>';
+            $parts[] = $this->el('EmailAddress', (string) $data['email']);
+            $parts[] = '</EmailAuthorizationAddresses>';
         }
 
         $endDateTime = $this->resolveEndDateTime(
@@ -29,102 +63,124 @@ class QuestXmlBuilder
         );
 
         if ($endDateTime !== null) {
-            $eventInfo->addChild('EndDateTime', $endDateTime->format('m/d/Y H:i:s'));
-            $eventInfo->addChild('EndDateTimeTimeZoneID', (string) $data['end_datetime_timezone_id']);
+            $parts[] = $this->el('EndDateTime', $endDateTime->format('m/d/Y H:i:s'));
+            $parts[] = $this->el('EndDateTimeTimeZoneID', (string) $data['end_datetime_timezone_id']);
         }
 
-        $donorInfo = $xml->addChild('DonorInfo');
-        $donorInfo->addChild('FirstName', $data['first_name']);
-        $donorInfo->addChild('LastName', $data['last_name']);
+        $parts[] = '</EventInfo>';
+        $parts[] = '<DonorInfo>';
+        $parts[] = $this->el('FirstName', $this->sanitizeAlpha((string) $data['first_name'], 20));
 
         if (!empty($data['middle_name'])) {
-            $donorInfo->addChild('MiddleName', $data['middle_name']);
+            $parts[] = $this->el('MiddleName', $this->sanitizeAlpha((string) $data['middle_name'], 20));
         }
 
-        $donorInfo->addChild('PrimaryID', $data['primary_id']);
+        $parts[] = $this->el('LastName', $this->sanitizeAlpha((string) $data['last_name'], 25));
+        $parts[] = $this->el('PrimaryID', substr((string) $data['primary_id'], 0, 25));
 
         if (!empty($data['primary_id_type'])) {
-            $donorInfo->addChild('PrimaryIDType', $data['primary_id_type']);
+            $parts[] = $this->el('PrimaryIDType', substr((string) $data['primary_id_type'], 0, 5));
         }
 
         if (!empty($data['dob'])) {
             try {
-                $donorInfo->addChild('DOB', Carbon::parse($data['dob'])->format('m/d/Y'));
+                $parts[] = $this->el('DOB', Carbon::parse($data['dob'])->format('m/d/Y'));
             } catch (\Throwable) {
                 Log::warning('Quest: could not reformat dob', ['value' => $data['dob']]);
             }
         }
 
-        $donorInfo->addChild('PrimaryPhone', substr($this->digitsOnly($data['primary_phone'] ?? ''), 0, 10));
+        $primaryPhone = substr($this->digitsOnly($data['primary_phone'] ?? ''), 0, 10);
+        if ($primaryPhone !== '') {
+            $parts[] = $this->el('PrimaryPhone', $primaryPhone);
+        }
 
         if (!empty($data['secondary_phone'])) {
-            $donorInfo->addChild('SecondaryPhone', substr($this->digitsOnly($data['secondary_phone']), 0, 12));
+            $parts[] = $this->el(
+                'SecondaryPhone',
+                substr($this->digitsOnly($data['secondary_phone']), 0, 12)
+            );
         }
 
         if (!empty($data['zip_code'])) {
-            $donorInfo->addChild('PostalAddress')->addChild('ZipCode', $data['zip_code']);
+            $parts[] = '<PostalAddress>';
+            $parts[] = $this->el('ZipCode', (string) $data['zip_code']);
+            $parts[] = '</PostalAddress>';
         }
 
-        $clientInfo = $xml->addChild('ClientInfo');
+        $parts[] = '</DonorInfo>';
+        $parts[] = '<ClientInfo>';
 
         if (!empty($data['contact_name'])) {
-            $clientInfo->addChild('ContactName', substr($data['contact_name'], 0, 45));
+            $parts[] = $this->el('ContactName', substr((string) $data['contact_name'], 0, 45));
         }
 
         if (!empty($data['telephone_number'])) {
-            $clientInfo->addChild('TelephoneNumber', substr($this->digitsOnly($data['telephone_number']), 0, 10));
+            $parts[] = $this->el(
+                'TelephoneNumber',
+                substr($this->digitsOnly($data['telephone_number']), 0, 10)
+            );
         }
 
-        $clientInfo->addChild('LabAccount', $data['lab_account']);
+        $parts[] = $this->el('LabAccount', (string) $data['lab_account']);
 
         if (!empty($data['csl'])) {
-            $clientInfo->addChild('CSL', $data['csl']);
+            $parts[] = $this->el('CSL', substr((string) $data['csl'], 0, 20));
         }
 
-        $testInfo = $xml->addChild('TestInfo');
-        $testInfo->addChild('ClientReferenceID', $this->normalizeClientReferenceId(
-            $clientReferenceId ?? $data['client_reference_id'] ?? $this->generateClientReferenceId()
-        ));
-        $testInfo->addChild('DOTTest', $data['dot_test']);
+        $parts[] = '</ClientInfo>';
+        $parts[] = '<TestInfo>';
+        $parts[] = $this->el('ClientReferenceID', $clientReferenceId);
+        $parts[] = $this->el('DOTTest', $dotTest);
 
-        if ($data['dot_test'] === 'T' && !empty($data['testing_authority'])) {
-            $testInfo->addChild('TestingAuthority', $data['testing_authority']);
+        if ($dotTest === 'T') {
+            $parts[] = $this->el('TestingAuthority', (string) $data['testing_authority']);
         }
 
         if (!empty($data['reason_for_test_id'])) {
-            $testInfo->addChild('ReasonForTestID', $data['reason_for_test_id']);
+            $parts[] = $this->el('ReasonForTestID', (string) $data['reason_for_test_id']);
         }
 
         if (!empty($data['physical_reason_for_test_id'])) {
-            $testInfo->addChild('PhysicalReasonForTestID', $data['physical_reason_for_test_id']);
+            $parts[] = $this->el('PhysicalReasonForTestID', (string) $data['physical_reason_for_test_id']);
         }
 
         if (!empty($data['observed_requested'])) {
-            $testInfo->addChild('ObservedRequested', $data['observed_requested']);
+            $parts[] = $this->el('ObservedRequested', (string) $data['observed_requested']);
         }
 
         if (!empty($data['split_specimen_requested'])) {
-            $testInfo->addChild('SplitSpecimenRequested', $data['split_specimen_requested']);
+            $parts[] = $this->el('SplitSpecimenRequested', (string) $data['split_specimen_requested']);
         }
-
-        $unitCodes = $this->normalizeUnitCodes($data['unit_codes'] ?? []);
-        $screenings = $testInfo->addChild('Screenings');
-        $unitCodesNode = $screenings->addChild('UnitCodes');
-        foreach ($unitCodes as $code) {
-            $unitCodesNode->addChild('UnitCode', $code);
-        }
-
-        if (!empty($data['response_url'])) {
-            $xml->addChild('ClientCustom')->addChild('ResponseURL', $data['response_url']);
-        }
-
-        $xmlString = trim(preg_replace('/<\?xml[^?]*\?>/', '', $xml->asXML()));
 
         if (!empty($data['order_comments'])) {
-            $xmlString = $this->insertOrderComments($xmlString, $data['order_comments']);
+            $comments = trim(mb_substr((string) $data['order_comments'], 0, 250));
+            if ($comments !== '') {
+                // Spec describes OrderComments as CDATA-wrapped, but Quest re-wraps the whole
+                // order XML in CDATA internally, so nested CDATA breaks deserialization.
+                $parts[] = $this->el('OrderComments', $comments);
+            }
         }
 
-        return $xmlString;
+        $parts[] = '<Screenings><UnitCodes>';
+        foreach ($unitCodes as $code) {
+            $parts[] = $this->el('UnitCode', substr($code, 0, 15));
+        }
+        $parts[] = '</UnitCodes></Screenings>';
+        $parts[] = '</TestInfo>';
+
+        if (!empty($data['response_url'])) {
+            $parts[] = '<ClientCustom>';
+            $parts[] = $this->el('ResponseURL', (string) $data['response_url']);
+            $parts[] = '</ClientCustom>';
+        }
+
+        $parts[] = '</Order>';
+
+        return [
+            'xml' => implode('', $parts),
+            'client_reference_id' => $clientReferenceId,
+        ];
     }
 
     public function buildGetDocumentXml(
@@ -136,17 +192,17 @@ class QuestXmlBuilder
     ): string {
         $parts = [
             '<GetDocument>',
-            '<QuestOrderID>' . $this->xmlEscape($questOrderId) . '</QuestOrderID>',
-            '<ReferenceTestID>' . $this->xmlEscape($referenceTestId) . '</ReferenceTestID>',
-            '<DocType>' . $this->xmlEscape($docType) . '</DocType>',
+            $this->el('QuestOrderID', $questOrderId),
+            $this->el('ReferenceTestID', $referenceTestId),
+            $this->el('DocType', $docType),
         ];
 
         if ($specimenId) {
-            $parts[] = '<SpecimenID>' . $this->xmlEscape($specimenId) . '</SpecimenID>';
+            $parts[] = $this->el('SpecimenID', $specimenId);
         }
 
         if ($accountNumber) {
-            $parts[] = '<AccountNumber>' . $this->xmlEscape($accountNumber) . '</AccountNumber>';
+            $parts[] = $this->el('AccountNumber', $accountNumber);
         }
 
         $parts[] = '</GetDocument>';
@@ -194,22 +250,29 @@ class QuestXmlBuilder
             return null;
         }
 
+        if (empty($timezoneId)) {
+            Log::warning('Quest: end_datetime dropped, no timezone id supplied', ['value' => $value]);
+
+            return null;
+        }
+
+        $timezoneName = self::TIMEZONE_MAP[(int) $timezoneId] ?? null;
+        if ($timezoneName === null) {
+            Log::warning('Quest: end_datetime dropped, invalid timezone id', ['timezone_id' => $timezoneId]);
+
+            return null;
+        }
+
         try {
-            $parsed = Carbon::createFromFormat('Y-m-d\TH:i', $value);
+            $parsed = Carbon::createFromFormat('Y-m-d\TH:i', $value, $timezoneName);
         } catch (\Throwable) {
             try {
-                $parsed = Carbon::parse($value);
+                $parsed = Carbon::parse($value, $timezoneName);
             } catch (\Throwable) {
                 Log::warning('Quest: could not reformat end_datetime', ['value' => $value]);
 
                 return null;
             }
-        }
-
-        if (empty($timezoneId)) {
-            Log::warning('Quest: end_datetime dropped, no timezone id supplied', ['value' => $value]);
-
-            return null;
         }
 
         if ($parsed->isPast()) {
@@ -222,25 +285,15 @@ class QuestXmlBuilder
     }
 
     /**
-     * Capped at 250 characters per spec 4.27. The spec describes OrderComments as CDATA
-     * wrapped, but Quest re-wraps the whole order XML in CDATA on its internal hop to
-     * CreateIntegrationOrder, so a nested section makes their deserializer fail with
-     * "Start element 'tem:xmlRequest' does not match end element 'OrderComments'".
-     * Escaped text decodes to the same value without the nesting.
+     * Spec §4: special characters (&, >, <) must not appear in non-CDATA fields.
+     * Names are alpha-oriented; we strip the forbidden characters deliberately.
      */
-    private function insertOrderComments(string $xmlString, string $comments): string
+    private function sanitizeAlpha(string $value, int $maxLength): string
     {
-        $comments = trim(mb_substr($comments, 0, 250));
+        $value = preg_replace('/[&<>]/', '', $value) ?? '';
+        $value = preg_replace('/\s+/', ' ', trim($value)) ?? '';
 
-        if ($comments === '') {
-            return $xmlString;
-        }
-
-        return str_replace(
-            '<Screenings>',
-            '<OrderComments>' . $this->xmlEscape($comments) . '</OrderComments><Screenings>',
-            $xmlString
-        );
+        return mb_substr($value, 0, $maxLength);
     }
 
     private function digitsOnly(?string $value): string
@@ -249,6 +302,11 @@ class QuestXmlBuilder
         $result = preg_replace('/[^0-9]/', '', $value);
 
         return $result === null ? '' : $result;
+    }
+
+    private function el(string $name, string $value): string
+    {
+        return '<' . $name . '>' . $this->xmlEscape($value) . '</' . $name . '>';
     }
 
     private function xmlEscape(string $value): string

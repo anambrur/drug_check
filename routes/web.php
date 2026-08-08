@@ -188,11 +188,11 @@ Route::get('background-checks-forms', [\App\Http\Controllers\Frontend\HomeContro
 Route::get('random-consortium', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'random_consortium'])->name('frontend.random-consortium')->middleware('XSS');
 Route::post('random-consortium/enroll', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'enroll'])->name('frontend.random-consortium.enroll')->middleware('XSS');
 Route::get('random-consortium/success/{id}', [\App\Http\Controllers\Frontend\ConsortiumEnrollmentController::class, 'success'])->name('frontend.random-consortium.success');
-Route::post('portfolio-test/checkout/dot', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'checkoutDot'])->name('frontend.portfolio-test.checkout.dot')->middleware('XSS');
-Route::post('portfolio-test/checkout/non-dot', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'checkoutNonDot'])->name('frontend.portfolio-test.checkout.non-dot')->middleware('XSS');
+Route::post('portfolio-test/checkout/dot', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'checkoutDot'])->name('frontend.portfolio-test.checkout.dot')->middleware(['XSS', 'throttle:10,1']);
+Route::post('portfolio-test/checkout/non-dot', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'checkoutNonDot'])->name('frontend.portfolio-test.checkout.non-dot')->middleware(['XSS', 'throttle:10,1']);
 Route::get('portfolio-test/success/{id}', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'success'])->name('frontend.portfolio-test.success');
 Route::get('portfolio-test/retry/{id}', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'retry'])->name('frontend.portfolio-test.retry');
-Route::post('portfolio-test/retry/{id}/resubmit', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'resubmit'])->name('frontend.portfolio-test.resubmit');
+Route::post('portfolio-test/retry/{id}/resubmit', [\App\Http\Controllers\Frontend\PortfolioTestCheckoutController::class, 'resubmit'])->name('frontend.portfolio-test.resubmit')->middleware('throttle:10,1');
 Route::get('dot-supervisor-training', [\App\Http\Controllers\Frontend\HomeController::class, 'dot_supervisor_training'])->name('frontend.dot-supervisor-training')->middleware('XSS');
 Route::get('clearing-house', [\App\Http\Controllers\Frontend\ClearingHouseEnrollmentController::class, 'index'])->name('frontend.clearing-house')->middleware('XSS');
 Route::post('clearing-house/enroll', [\App\Http\Controllers\Frontend\ClearingHouseEnrollmentController::class, 'enroll'])->name('frontend.clearing-house.enroll')->middleware('XSS');

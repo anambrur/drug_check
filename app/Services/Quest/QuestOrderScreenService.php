@@ -11,21 +11,47 @@ class QuestOrderScreenService
     public function applyStatus(QuestOrder $order, array $payload, string $rawXml): void
     {
         $screenType = $payload['screen_type'] ?: 'drug';
+        $existing = QuestOrderScreen::where('quest_order_id', $order->id)
+            ->where('screen_type', $screenType)
+            ->first();
+
+        $incomingAt = $payload['order_status_datetime'];
+        if (
+            $existing
+            && $existing->order_status_datetime
+            && $incomingAt
+            && $incomingAt->lt($existing->order_status_datetime)
+        ) {
+            Log::info('Quest OrderStatus skipped (out of order)', [
+                'order_id' => $order->id,
+                'quest_order_id' => $order->quest_order_id,
+                'screen_type' => $screenType,
+                'incoming' => (string) $incomingAt,
+                'stored' => (string) $existing->order_status_datetime,
+            ]);
+
+            return;
+        }
+
+        $attributes = [
+            'order_status' => $payload['order_status_id'],
+            'order_status_datetime' => $incomingAt,
+            'status_raw_xml' => $this->truncateRawXml($rawXml),
+        ];
+
+        $this->mergeNonEmpty($attributes, $existing, [
+            'specimen_id' => $payload['specimen_id'] ?: null,
+            'lab_accession_number' => $payload['lab_accession_number'] ?: null,
+            'collected_datetime' => $payload['collected_datetime'],
+            'physical_data' => $payload['physical_data'],
+        ]);
 
         QuestOrderScreen::updateOrCreate(
             [
                 'quest_order_id' => $order->id,
                 'screen_type' => $screenType,
             ],
-            [
-                'order_status' => $payload['order_status_id'],
-                'order_status_datetime' => $payload['order_status_datetime'],
-                'specimen_id' => $payload['specimen_id'] ?: null,
-                'lab_accession_number' => $payload['lab_accession_number'] ?: null,
-                'collected_datetime' => $payload['collected_datetime'],
-                'physical_data' => $payload['physical_data'],
-                'status_raw_xml' => $this->truncateRawXml($rawXml),
-            ]
+            $attributes
         );
 
         $this->syncParentSummary($order);
@@ -41,21 +67,47 @@ class QuestOrderScreenService
     public function applyResult(QuestOrder $order, array $payload, string $rawXml): void
     {
         $screenType = $payload['screen_type'] ?: 'drug';
+        $existing = QuestOrderScreen::where('quest_order_id', $order->id)
+            ->where('screen_type', $screenType)
+            ->first();
+
+        $incomingAt = $payload['order_result_datetime'];
+        if (
+            $existing
+            && $existing->order_result_datetime
+            && $incomingAt
+            && $incomingAt->lt($existing->order_result_datetime)
+        ) {
+            Log::info('Quest OrderResult skipped (out of order)', [
+                'order_id' => $order->id,
+                'quest_order_id' => $order->quest_order_id,
+                'screen_type' => $screenType,
+                'incoming' => (string) $incomingAt,
+                'stored' => (string) $existing->order_result_datetime,
+            ]);
+
+            return;
+        }
+
+        $attributes = [
+            'order_result' => $payload['order_result_id'],
+            'order_result_datetime' => $incomingAt,
+            'result_raw_xml' => $this->truncateRawXml($rawXml),
+        ];
+
+        $this->mergeNonEmpty($attributes, $existing, [
+            'specimen_id' => $payload['specimen_id'] ?: null,
+            'lab_accession_number' => $payload['lab_accession_number'] ?: null,
+            'collected_datetime' => $payload['collected_datetime'],
+            'physical_data' => $payload['physical_data'],
+        ]);
 
         QuestOrderScreen::updateOrCreate(
             [
                 'quest_order_id' => $order->id,
                 'screen_type' => $screenType,
             ],
-            [
-                'order_result' => $payload['order_result_id'],
-                'order_result_datetime' => $payload['order_result_datetime'],
-                'specimen_id' => $payload['specimen_id'] ?: null,
-                'lab_accession_number' => $payload['lab_accession_number'] ?: null,
-                'collected_datetime' => $payload['collected_datetime'],
-                'physical_data' => $payload['physical_data'],
-                'result_raw_xml' => $this->truncateRawXml($rawXml),
-            ]
+            $attributes
         );
 
         $this->syncParentSummary($order);
@@ -118,6 +170,24 @@ class QuestOrderScreenService
         return $order->screens->firstWhere('screen_type', $screenType ?? 'drug')
             ?? $order->screens->firstWhere('screen_type', 'drug')
             ?? $order->screens->first();
+    }
+
+    /**
+     * Only overwrite specimen/accession/collected/physical when the inbound message
+     * supplies a non-empty value (spec marks those fields as not always provided).
+     */
+    private function mergeNonEmpty(array &$attributes, ?QuestOrderScreen $existing, array $candidates): void
+    {
+        foreach ($candidates as $key => $value) {
+            if ($value === null || $value === '' || $value === []) {
+                if ($existing && $existing->{$key} !== null) {
+                    $attributes[$key] = $existing->{$key};
+                }
+                continue;
+            }
+
+            $attributes[$key] = $value;
+        }
     }
 
     private function truncateRawXml(string $rawXml): string

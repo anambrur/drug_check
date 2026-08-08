@@ -101,8 +101,13 @@ class QuestOrderSubmissionService
     {
         $data['unit_codes'] = $this->xmlBuilder->normalizeUnitCodes($data['unit_codes'] ?? []);
 
-        $orderXml = $this->xmlBuilder->buildOrderXml($data);
-        $result = $this->questClient->createOrder($orderXml);
+        $built = $this->xmlBuilder->buildOrderXml($data);
+        $orderXml = $built['xml'];
+        $clientReferenceId = $built['client_reference_id'];
+
+        // Paid checkout must not be blocked by the circuit breaker — the customer
+        // already paid and needs the order placed (or a clear Quest error).
+        $result = $this->questClient->createOrder($orderXml, respectCircuitBreaker: false);
 
         Log::info('Quest order submission result', ['result' => $result]);
 
@@ -112,57 +117,85 @@ class QuestOrderSubmissionService
             );
         }
 
-        return $this->storeQuestOrder($data, $result, $orderXml, $userId ?? Auth::id());
+        // Persist a minimal recovery row first so an accepted Quest order is never invisible
+        // if the full insert later fails.
+        $recovery = QuestOrder::create([
+            'user_id' => $userId ?? Auth::id(),
+            'payment_intent_id' => $data['payment_intent_id'] ?? null,
+            'quest_order_id' => $result['quest_order_id'] ?? null,
+            'reference_test_id' => $result['reference_test_id'] ?? null,
+            'client_reference_id' => $clientReferenceId,
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'primary_id' => $data['primary_id'],
+            'primary_phone' => $data['primary_phone'] ?? '',
+            'dot_test' => $data['dot_test'],
+            'lab_account' => $data['lab_account'],
+            'unit_codes' => $data['unit_codes'],
+            'request_xml' => $orderXml,
+            'create_response_xml' => $result['_raw_response'] ?? null,
+            'create_response_status' => $result['status'],
+            'create_error' => isset($result['error']) ? json_encode($result['error']) : null,
+        ]);
+
+        try {
+            return $this->hydrateQuestOrder($recovery, $data, $result, $orderXml, $clientReferenceId);
+        } catch (\Throwable $e) {
+            Log::error('Quest: failed to fully hydrate order after acceptance', [
+                'error' => $e->getMessage(),
+                'quest_order_id' => $recovery->quest_order_id,
+                'recovery_id' => $recovery->id,
+            ]);
+
+            throw new \RuntimeException(
+                'Your order was accepted by Quest but could not be fully saved. Please contact support with order ID '
+                . ($recovery->quest_order_id ?? 'unknown') . '.',
+                0,
+                $e
+            );
+        }
     }
 
-    private function storeQuestOrder(array $data, array $apiResponse, string $orderXml, ?int $userId): QuestOrder
-    {
-        try {
-            return QuestOrder::create([
-                'user_id' => $userId,
-                'payment_intent_id' => $data['payment_intent_id'] ?? null,
-                'quest_order_id' => $apiResponse['quest_order_id'] ?? null,
-                'reference_test_id' => $apiResponse['reference_test_id'] ?? null,
-                'client_reference_id' => $apiResponse['client_reference_id'] ?? $this->xmlBuilder->generateClientReferenceId(),
-                'order_status' => null,
-                'order_result' => null,
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'middle_name' => $this->nullIfEmpty($data['middle_name'] ?? null),
-                'primary_id' => $data['primary_id'],
-                'primary_id_type' => $this->nullIfEmpty($data['primary_id_type'] ?? null),
-                'dob' => !empty($data['dob']) ? Carbon::parse($data['dob'])->toDateString() : null,
-                'primary_phone' => $data['primary_phone'] ?? '',
-                'secondary_phone' => $this->nullIfEmpty($data['secondary_phone'] ?? null),
-                'email' => $this->nullIfEmpty($data['email'] ?? null),
-                'zip_code' => $this->nullIfEmpty($data['zip_code'] ?? null),
-                'portfolio_id' => !empty($data['portfolio_id']) ? (int) $data['portfolio_id'] : null,
-                'portfolio_name' => $this->nullIfEmpty($data['portfolio_name'] ?? null),
-                'unit_codes' => $this->xmlBuilder->normalizeUnitCodes($data['unit_codes'] ?? []),
-                'dot_test' => $data['dot_test'],
-                'testing_authority' => $this->nullIfEmpty($data['testing_authority'] ?? null),
-                'reason_for_test_id' => !empty($data['reason_for_test_id']) ? (int) $data['reason_for_test_id'] : null,
-                'physical_reason_for_test_id' => $this->nullIfEmpty($data['physical_reason_for_test_id'] ?? null),
-                'collection_site_id' => $this->nullIfEmpty($data['collection_site_id'] ?? null),
-                'observed_requested' => $this->nullIfEmpty($data['observed_requested'] ?? null) ?? 'N',
-                'split_specimen_requested' => $this->nullIfEmpty($data['split_specimen_requested'] ?? null) ?? 'N',
-                'order_comments' => $this->nullIfEmpty($data['order_comments'] ?? null),
-                'lab_account' => app()->isProduction() ? $data['lab_account'] : config('services.quest.lab_account'),
-                'csl' => $this->nullIfEmpty($data['csl'] ?? null),
-                'contact_name' => $this->nullIfEmpty($data['contact_name'] ?? null),
-                'telephone_number' => $this->nullIfEmpty($data['telephone_number'] ?? null),
-                'end_datetime' => !empty($data['end_datetime']) ? Carbon::parse($data['end_datetime']) : null,
-                'end_datetime_timezone_id' => !empty($data['end_datetime_timezone_id']) ? (int) $data['end_datetime_timezone_id'] : null,
-                'response_url' => $this->nullIfEmpty($data['response_url'] ?? null),
-                'request_xml' => $orderXml,
-                'create_response_xml' => $apiResponse['_raw_response'] ?? null,
-                'create_response_status' => $apiResponse['status'],
-                'create_error' => isset($apiResponse['error']) ? json_encode($apiResponse['error']) : null,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Quest: failed to store order', ['error' => $e->getMessage()]);
-            throw new \RuntimeException('Your order was accepted by Quest but could not be saved. Please contact support.', 0, $e);
-        }
+    private function hydrateQuestOrder(
+        QuestOrder $order,
+        array $data,
+        array $apiResponse,
+        string $orderXml,
+        string $clientReferenceId
+    ): QuestOrder {
+        $order->update([
+            'middle_name' => $this->nullIfEmpty($data['middle_name'] ?? null),
+            'primary_id_type' => $this->nullIfEmpty($data['primary_id_type'] ?? null),
+            'dob' => !empty($data['dob']) ? Carbon::parse($data['dob'])->toDateString() : null,
+            'primary_phone' => $data['primary_phone'] ?? '',
+            'secondary_phone' => $this->nullIfEmpty($data['secondary_phone'] ?? null),
+            'email' => $this->nullIfEmpty($data['email'] ?? null),
+            'zip_code' => $this->nullIfEmpty($data['zip_code'] ?? null),
+            'portfolio_id' => !empty($data['portfolio_id']) ? (int) $data['portfolio_id'] : null,
+            'portfolio_name' => $this->nullIfEmpty($data['portfolio_name'] ?? null),
+            'unit_codes' => $this->xmlBuilder->normalizeUnitCodes($data['unit_codes'] ?? []),
+            'testing_authority' => $this->nullIfEmpty($data['testing_authority'] ?? null),
+            'reason_for_test_id' => !empty($data['reason_for_test_id']) ? (int) $data['reason_for_test_id'] : null,
+            'physical_reason_for_test_id' => $this->nullIfEmpty($data['physical_reason_for_test_id'] ?? null),
+            'collection_site_id' => $this->nullIfEmpty($data['collection_site_id'] ?? null),
+            'observed_requested' => $this->nullIfEmpty($data['observed_requested'] ?? null) ?? 'N',
+            'split_specimen_requested' => $this->nullIfEmpty($data['split_specimen_requested'] ?? null) ?? 'N',
+            'order_comments' => $this->nullIfEmpty($data['order_comments'] ?? null),
+            'lab_account' => $data['lab_account'],
+            'csl' => $this->nullIfEmpty($data['csl'] ?? null),
+            'contact_name' => $this->nullIfEmpty($data['contact_name'] ?? null),
+            'telephone_number' => $this->nullIfEmpty($data['telephone_number'] ?? null),
+            'end_datetime' => !empty($data['end_datetime']) ? Carbon::parse($data['end_datetime']) : null,
+            'end_datetime_timezone_id' => !empty($data['end_datetime_timezone_id']) ? (int) $data['end_datetime_timezone_id'] : null,
+            'response_url' => $this->nullIfEmpty($data['response_url'] ?? null),
+            'request_xml' => $orderXml,
+            'client_reference_id' => $clientReferenceId,
+            'create_response_xml' => $apiResponse['_raw_response'] ?? null,
+            'create_response_status' => $apiResponse['status'],
+            'create_error' => isset($apiResponse['error']) ? json_encode($apiResponse['error']) : null,
+        ]);
+
+        return $order->fresh();
     }
 
     private function nullIfEmpty(mixed $value): mixed

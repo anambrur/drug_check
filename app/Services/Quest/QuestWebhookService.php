@@ -3,6 +3,7 @@
 namespace App\Services\Quest;
 
 use App\Models\Admin\QuestOrder;
+use App\Models\Admin\QuestWebhookDeadLetter;
 use Illuminate\Support\Facades\Log;
 
 class QuestWebhookService
@@ -58,11 +59,15 @@ class QuestWebhookService
 
         $order = QuestOrder::where('quest_order_id', $status['quest_order_id'])->first();
         if (!$order) {
+            $this->storeDeadLetter('OrderStatus', $status, $rawBody, $clientIp, 'unknown_quest_order_id');
+
             Log::warning('Quest webhook: OrderStatus for unknown quest_order_id', [
                 'quest_order_id' => $status['quest_order_id'],
                 'status_id' => $status['order_status_id'],
             ]);
 
+            // Acknowledge so Quest does not retry forever; the dead-letter can be replayed
+            // once the local order is reconciled.
             return 'SUCCESS';
         }
 
@@ -73,6 +78,9 @@ class QuestWebhookService
                 'error' => $e->getMessage(),
                 'quest_order_id' => $status['quest_order_id'],
             ]);
+
+            // Spec §3.1.3: a non-success response lets Quest retry the transmission.
+            return 'APPLY_ERROR';
         }
 
         return 'SUCCESS';
@@ -89,6 +97,8 @@ class QuestWebhookService
 
         $order = QuestOrder::where('quest_order_id', $result['quest_order_id'])->first();
         if (!$order) {
+            $this->storeDeadLetter('OrderResult', $result, $rawBody, $clientIp, 'unknown_quest_order_id');
+
             Log::warning('Quest webhook: OrderResult for unknown quest_order_id', [
                 'quest_order_id' => $result['quest_order_id'],
                 'result_id' => $result['order_result_id'],
@@ -104,9 +114,40 @@ class QuestWebhookService
                 'error' => $e->getMessage(),
                 'quest_order_id' => $result['quest_order_id'],
             ]);
+
+            return 'APPLY_ERROR';
         }
 
         return 'SUCCESS';
+    }
+
+    private function storeDeadLetter(
+        string $payloadType,
+        array $payload,
+        string $rawBody,
+        string $clientIp,
+        string $reason
+    ): void {
+        try {
+            QuestWebhookDeadLetter::create([
+                'payload_type' => $payloadType,
+                'quest_order_id' => $payload['quest_order_id'] ?? null,
+                'reference_test_id' => $payload['reference_test_id'] ?? null,
+                'client_reference_id' => $payload['client_reference_id'] ?? null,
+                'screen_type' => $payload['screen_type'] ?? null,
+                'status_or_result_id' => $payload['order_status_id']
+                    ?? $payload['order_result_id']
+                    ?? null,
+                'raw_body' => substr($rawBody, 0, 65535),
+                'client_ip' => $clientIp,
+                'reason' => $reason,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Quest webhook: failed to store dead letter', [
+                'error' => $e->getMessage(),
+                'quest_order_id' => $payload['quest_order_id'] ?? null,
+            ]);
+        }
     }
 
     private function logWebhookEvent(string $type, array $payload, string $clientIp, int $bytes): void

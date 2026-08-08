@@ -30,6 +30,12 @@ class QuestWebhookController extends Controller
             $status = 'ERROR';
         }
 
-        return response($status, 200, ['Content-Type' => 'text/plain']);
+        // Spec §3.1.3 / §3.2.3: a non-success response lets Quest retry. Keep SUCCESS
+        // and dead-lettered unknown orders at 200; surface apply/parse failures as 500.
+        $httpStatus = in_array($status, ['SUCCESS', 'UNKNOWN_PAYLOAD', 'PAYLOAD_TOO_LARGE'], true)
+            ? 200
+            : 500;
+
+        return response($status, $httpStatus, ['Content-Type' => 'text/plain']);
     }
 }

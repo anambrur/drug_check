@@ -152,6 +152,19 @@ class PortfolioTestApplicationService
             ? $application->end_datetime->format('Y-m-d\TH:i')
             : null;
 
+        $dotTest = $application->isDot() ? 'T' : 'F';
+        $storedDotTest = $application->dot_test ?? $dotTest;
+        if ($storedDotTest !== $dotTest) {
+            throw new \RuntimeException(
+                'DOTTest flag does not match the application test type. Refusing to submit a mismatched Quest order.'
+            );
+        }
+
+        $observed = $application->observed_requested ?? 'N';
+        if ($dotTest === 'T' && in_array((int) $application->reason_for_test_id, [6, 23], true)) {
+            $observed = 'Y';
+        }
+
         return [
             'portfolio_id' => $application->portfolio_id,
             'payment_intent_id' => $application->stripe_payment_intent_id,
@@ -162,17 +175,17 @@ class PortfolioTestApplicationService
             'primary_phone' => $application->phone,
             'secondary_phone' => $application->secondary_phone,
             'primary_id' => $application->primary_id,
-            'primary_id_type' => $application->primary_id_type,
+            'primary_id_type' => $isPhysical ? $application->primary_id_type : null,
             'dob' => $application->dob,
             'zip_code' => $application->zip_code,
-            'dot_test' => $application->dot_test ?? ($application->isDot() ? 'T' : 'F'),
+            'dot_test' => $dotTest,
             'testing_authority' => $application->testing_authority,
             'reason_for_test_id' => $isPhysical ? null : $application->reason_for_test_id,
             'physical_reason_for_test_id' => $isPhysical ? $application->physical_reason_for_test_id : null,
-            'collection_site_id' => $application->collection_site_id,
+            'collection_site_id' => $isPhysical ? null : $application->collection_site_id,
             'end_datetime' => $endDatetime,
             'end_datetime_timezone_id' => $application->end_datetime_timezone_id,
-            'observed_requested' => $application->observed_requested ?? 'N',
+            'observed_requested' => $observed,
             'split_specimen_requested' => $application->split_specimen_requested ?? 'N',
             'unit_codes' => $portfolio->code,
             'csl' => $application->csl ?? config('services.quest.default_csl'),
@@ -187,19 +200,36 @@ class PortfolioTestApplicationService
     public function resolveLabAccount(PortfolioTestApplication $application): string
     {
         if (!app()->isProduction()) {
-            return $application->isDot()
+            $account = $application->isDot()
                 ? config('services.quest.dot_lab_account')
                 : config('services.quest.lab_account');
+
+            return $this->requireLabAccount($account, $application->isDot() ? 'QUEST_DOT_LAB_ACCOUNT' : 'QUEST_LAB_ACCOUNT');
         }
 
         if ($application->isDot()) {
             $application->loadMissing('employee.clientProfile');
 
-            return $application->employee?->clientProfile?->account_no
+            $account = $application->employee?->clientProfile?->account_no
                 ?? config('services.quest.dot_lab_account');
+
+            return $this->requireLabAccount($account, 'client profile account_no / QUEST_DOT_LAB_ACCOUNT');
         }
 
-        return $application->portfolio?->lab_account ?? config('services.quest.lab_account');
+        $account = $application->portfolio?->lab_account ?? config('services.quest.lab_account');
+
+        return $this->requireLabAccount($account, 'portfolio lab_account / QUEST_LAB_ACCOUNT');
+    }
+
+    private function requireLabAccount(mixed $account, string $source): string
+    {
+        $account = trim((string) ($account ?? ''));
+
+        if ($account === '') {
+            throw new \RuntimeException("Quest LabAccount is not configured ({$source}).");
+        }
+
+        return $account;
     }
 
     public function portfolioFlags(Portfolio $portfolio): array

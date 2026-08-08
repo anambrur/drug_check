@@ -14,22 +14,35 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    const dotTestSelect = document.getElementById('dot_test');
+    const dotTestInput = document.querySelector('input[name="dot_test"]');
     const testingAuthorityField = document.getElementById('testingAuthorityField');
     const testingAuthoritySelect = document.getElementById('testing_authority');
+    const reasonSelect = document.getElementById('reason_for_test_id');
+    const observedSelect = document.getElementById('observed_requested');
 
     function toggleTestingAuthority() {
-        if (!testingAuthorityField || !dotTestSelect) return;
-        const show = dotTestSelect.value === 'T';
+        if (!testingAuthorityField || !dotTestInput) return;
+        const show = dotTestInput.value === 'T';
         testingAuthorityField.style.display = show ? 'block' : 'none';
         if (testingAuthoritySelect) {
             testingAuthoritySelect.required = show;
         }
     }
 
-    if (dotTestSelect) {
-        dotTestSelect.addEventListener('change', toggleTestingAuthority);
-        toggleTestingAuthority();
+    function forceObservedForDotReasons() {
+        if (!reasonSelect || !observedSelect || !dotTestInput) return;
+        if (dotTestInput.value !== 'T') return;
+        const reason = parseInt(reasonSelect.value, 10);
+        // 49 CFR §40.67: return-to-duty (6) and follow-up (23) require direct observation.
+        if (reason === 6 || reason === 23) {
+            observedSelect.value = 'Y';
+        }
+    }
+
+    toggleTestingAuthority();
+    if (reasonSelect) {
+        reasonSelect.addEventListener('change', forceObservedForDotReasons);
+        forceObservedForDotReasons();
     }
 
     const endDateTime = document.getElementById('end_datetime');

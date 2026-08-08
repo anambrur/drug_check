@@ -2,7 +2,9 @@
     $defaults = $questDefaults ?? [];
     $isPhysical = $questIsPhysical ?? str_contains(strtolower($portfolio->title ?? ''), 'physical');
     $isEbat = $questIsEbat ?? str_contains(strtolower($portfolio->title ?? ''), 'ebat');
-    $defaultDotTest = $isNonDot ? 'F' : 'T';
+    // DOTTest is determined by the portfolio the donor is buying, never by the donor.
+    // A DOT order placed on the non-DOT lab account is a regulated-testing violation.
+    $dotTest = $isNonDot ? 'F' : 'T';
 @endphp
 
 <input type="hidden" name="is_physical" value="{{ $isPhysical ? 'true' : 'false' }}">
@@ -83,8 +85,8 @@
                     <label class="pf-label" for="primary_id_type">Primary ID Type <span class="pf-opt">Optional</span></label>
                     <select id="primary_id_type" name="primary_id_type" class="pf-control">
                         <option value="">Select ID Type</option>
+                        {{-- Spec 4.35: the only valid value is DL; all others become OTHER in physician software. --}}
                         <option value="DL" @selected(old('primary_id_type', $defaults['primary_id_type'] ?? '') == 'DL')>Driver's License</option>
-                        <option value="OTHER" @selected(old('primary_id_type', $defaults['primary_id_type'] ?? '') == 'OTHER')>Other Government ID</option>
                     </select>
                 </div>
             @endif
@@ -130,21 +132,22 @@
     <div class="pf-section-body">
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="pf-label" for="dot_test">Test Type <span class="pf-req">*</span></label>
-                <select id="dot_test" name="dot_test" class="pf-control" required>
-                    <option value="F" @selected(old('dot_test', $defaultDotTest) == 'F')>Non-DOT Test</option>
-                    <option value="T" @selected(old('dot_test', $defaultDotTest) == 'T')>DOT Test</option>
-                </select>
+                <label class="pf-label">Test Type</label>
+                <input type="text" class="pf-control" value="{{ $dotTest === 'T' ? 'DOT Test' : 'Non-DOT Test' }}" readonly>
+                <input type="hidden" name="dot_test" value="{{ $dotTest }}">
             </div>
-            <div class="col-md-6">
-                <label class="pf-label" for="collection_site_id">Collection Site <span class="pf-opt">Optional</span></label>
-                <select name="collection_site_id" id="collection_site_id" class="pf-control select2-collection-sites">
-                    <option value="">Select a collection site…</option>
-                </select>
-            </div>
-            <div class="col-md-6" id="testingAuthorityField" style="{{ old('dot_test', $defaultDotTest) == 'T' ? '' : 'display:none;' }}">
+            @if (!$isPhysical)
+                {{-- Spec 2.1.2: CollectionSiteID is not allowed with a Physical order code. --}}
+                <div class="col-md-6">
+                    <label class="pf-label" for="collection_site_id">Collection Site <span class="pf-opt">Optional</span></label>
+                    <select name="collection_site_id" id="collection_site_id" class="pf-control select2-collection-sites">
+                        <option value="">Select a collection site…</option>
+                    </select>
+                </div>
+            @endif
+            <div class="col-md-6" id="testingAuthorityField" style="{{ $dotTest === 'T' ? '' : 'display:none;' }}">
                 <label class="pf-label" for="testing_authority">DOT Testing Authority <span class="pf-req">*</span></label>
-                <select id="testing_authority" name="testing_authority" class="pf-control">
+                <select id="testing_authority" name="testing_authority" class="pf-control" @if($dotTest === 'T') required @endif>
                     <option value="">Select Authority</option>
                     @foreach (['FMCSA', 'PHMSA', 'FAA', 'FTA', 'FRA', 'USCG'] as $authority)
                         <option value="{{ $authority }}" @selected(old('testing_authority', $defaults['testing_authority'] ?? '') == $authority)>{{ $authority }}</option>

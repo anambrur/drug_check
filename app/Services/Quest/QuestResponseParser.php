@@ -221,7 +221,9 @@ class QuestResponseParser
 
     private function decodeAndCleanInboundXml(string $xml): string
     {
-        $xml = html_entity_decode($xml, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        // Do not html_entity_decode the whole body: that turns escaped donor names
+        // (e.g. Smith &amp; Sons) into bare "&" and breaks well-formed XML, and can
+        // turn field content into structural tags. Let libxml decode entities during parse.
         $xml = str_replace(['&#xD;', "\r"], '', $xml);
         $xml = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $xml);
         $xml = trim(preg_replace('/<\?xml[^?]*\?>/', '', $xml));
@@ -350,10 +352,31 @@ class QuestResponseParser
     {
         $result = [];
         foreach ($xml->children() as $key => $child) {
-            $result[$key] = count($child->children()) > 0 ? $this->xmlToArray($child) : (string) $child;
+            $value = count($child->children()) > 0 ? $this->xmlToArray($child) : (string) $child;
+
+            if (!array_key_exists($key, $result)) {
+                $result[$key] = $value;
+                continue;
+            }
+
+            // Collect repeated siblings (PartialReason, IdValue, etc.) into arrays.
+            if (!is_array($result[$key]) || $this->isAssocArray($result[$key])) {
+                $result[$key] = [$result[$key]];
+            }
+
+            $result[$key][] = $value;
         }
 
         return $result;
+    }
+
+    private function isAssocArray(array $value): bool
+    {
+        if ($value === []) {
+            return false;
+        }
+
+        return array_keys($value) !== range(0, count($value) - 1);
     }
 
     private function cleanXml(string $xml): string

@@ -2363,6 +2363,24 @@ body.rtl-mode .web-design-process .design-process-video .design-process-video-bt
     text-decoration: none;
 }
 
+/* Flush the pricing-card CTA to the card bottom so corners match the header */
+.pf-show-pricing-card > .pf-show-scroll-cta {
+    margin: 0;
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.pf-show-pricing-card > .pf-show-scroll-cta:hover,
+.pf-show-pricing-card > .pf-show-scroll-cta:active {
+    transform: none;
+    box-shadow: none;
+}
+
+.pf-show-pricing-card > .pf-pricing-note {
+    margin-bottom: 1.35rem;
+}
+
 .pf-show-cta {
     padding: 3.5rem 0 4.5rem;
     background: linear-gradient(180deg, #f1f5fb 0%, var(--pf-surface-2) 100%);

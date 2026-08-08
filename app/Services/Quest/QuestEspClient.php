@@ -16,13 +16,17 @@ class QuestEspClient
         private readonly QuestResponseParser $parser
     ) {}
 
-    public function createOrder(string $orderXml): array
+    public function createOrder(string $orderXml, bool $respectCircuitBreaker = true): array
     {
         $soapBody = $this->buildSoapEnvelope('CreateOrder', [
             'orderXml' => $orderXml,
         ]);
 
-        $rawResponse = $this->sendCurlRequest($soapBody, $this->getSoapAction('CreateOrder'));
+        $rawResponse = $this->sendCurlRequest(
+            $soapBody,
+            $this->getSoapAction('CreateOrder'),
+            $respectCircuitBreaker
+        );
 
         return $this->parser->parseSoapResponse($rawResponse);
     }
@@ -98,9 +102,11 @@ class QuestEspClient
             . '</soap:Envelope>';
     }
 
-    private function sendCurlRequest(string $soapBody, string $soapAction): string
+    private function sendCurlRequest(string $soapBody, string $soapAction, bool $respectCircuitBreaker = true): string
     {
-        $this->checkCircuitBreaker();
+        if ($respectCircuitBreaker) {
+            $this->checkCircuitBreaker();
+        }
 
         $sslVerify = config('services.quest.ssl.verify_peer', true);
         $caBundle = config('services.quest.ssl.ca_bundle');
@@ -194,41 +200,43 @@ class QuestEspClient
 
     private function checkCircuitBreaker(): void
     {
-        $state = $this->getCircuitState();
-        if (!$state['open']) {
-            return;
-        }
-        if ((time() - $state['last_failure']) < self::CIRCUIT_RECOVERY_SECONDS) {
+        $openUntil = (int) Cache::get(self::CIRCUIT_BREAKER_KEY . ':open_until', 0);
+        if ($openUntil > 0 && $openUntil > time()) {
             throw new \RuntimeException('Quest Diagnostics is temporarily unavailable. Please try again in a moment.');
         }
-        $this->resetCircuitBreaker();
+
+        if ($openUntil > 0) {
+            $this->resetCircuitBreaker();
+        }
     }
 
     private function recordCircuitFailure(): void
     {
-        $state = $this->getCircuitState();
-        $state['failures']++;
-        $state['last_failure'] = time();
-        if ($state['failures'] >= self::CIRCUIT_FAILURE_THRESHOLD) {
-            $state['open'] = true;
-            Log::error('Quest circuit breaker opened', ['failures' => $state['failures']]);
+        $failuresKey = self::CIRCUIT_BREAKER_KEY . ':failures';
+
+        if (!Cache::has($failuresKey)) {
+            Cache::put($failuresKey, 0, now()->addHour());
         }
-        $this->saveCircuitState($state);
+
+        $failures = (int) Cache::increment($failuresKey);
+        Cache::put(self::CIRCUIT_BREAKER_KEY . ':last_failure', time(), now()->addHour());
+
+        if ($failures >= self::CIRCUIT_FAILURE_THRESHOLD) {
+            Cache::put(
+                self::CIRCUIT_BREAKER_KEY . ':open_until',
+                time() + self::CIRCUIT_RECOVERY_SECONDS,
+                now()->addHour()
+            );
+            Log::error('Quest circuit breaker opened', ['failures' => $failures]);
+        }
     }
 
     private function resetCircuitBreaker(): void
     {
-        $this->saveCircuitState(['open' => false, 'failures' => 0, 'last_failure' => 0]);
-    }
-
-    private function getCircuitState(): array
-    {
-        return Cache::get(self::CIRCUIT_BREAKER_KEY, ['open' => false, 'failures' => 0, 'last_failure' => 0]);
-    }
-
-    private function saveCircuitState(array $state): void
-    {
-        Cache::put(self::CIRCUIT_BREAKER_KEY, $state, now()->addHour());
+        Cache::forget(self::CIRCUIT_BREAKER_KEY . ':failures');
+        Cache::forget(self::CIRCUIT_BREAKER_KEY . ':last_failure');
+        Cache::forget(self::CIRCUIT_BREAKER_KEY . ':open_until');
+        Cache::forget(self::CIRCUIT_BREAKER_KEY);
     }
 
     private function redactCredentials(string $soapBody): string

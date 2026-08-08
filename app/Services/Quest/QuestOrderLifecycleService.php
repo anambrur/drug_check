@@ -47,7 +47,8 @@ class QuestOrderLifecycleService
         $this->assertQuestIdsPresent($order);
 
         $data['unit_codes'] = $this->xmlBuilder->normalizeUnitCodes($data['unit_codes'] ?? $order->unit_codes ?? []);
-        $orderXml = $this->xmlBuilder->buildOrderXml($data, $order->client_reference_id);
+        $built = $this->xmlBuilder->buildOrderXml($data, $order->client_reference_id);
+        $orderXml = $built['xml'];
 
         $result = $this->client->updateOrder(
             $order->reference_test_id ?? '',
@@ -56,7 +57,10 @@ class QuestOrderLifecycleService
         );
 
         if ($result['status'] === 'SUCCESS') {
-            $order->update($this->mapLocalFieldsFromData($data, $orderXml));
+            $order->update(array_merge(
+                $this->mapLocalFieldsFromData($data, $orderXml),
+                ['client_reference_id' => $built['client_reference_id']]
+            ));
         }
 
         return $result;
