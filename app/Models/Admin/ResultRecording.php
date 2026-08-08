@@ -38,6 +38,16 @@ class ResultRecording extends Model
         return $this->belongsTo(Employee::class);
     }
 
+    public function selectionEvent()
+    {
+        return $this->belongsTo(SelectionEvent::class);
+    }
+
+    public function selectedEmployee()
+    {
+        return $this->belongsTo(SelectedEmployee::class);
+    }
+
     public function panel()
     {
         return $this->belongsTo(Panel::class);
@@ -45,6 +55,6 @@ class ResultRecording extends Model
 
     public function resultPanel()
     {
-        return $this->hasMany(ResultPanel::class ,'result_id');
+        return $this->hasMany(ResultPanel::class, 'result_id');
     }
 }

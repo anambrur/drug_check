@@ -14,12 +14,13 @@ class SelectionEvent extends Model
         'selection_date',
         'pool_size',
         'selection_pool',
-        'status'
+        'status',
+        'trigger',
     ];
 
     protected $casts = [
         'selection_pool' => 'array',
-        'selection_date' => 'datetime'
+        'selection_date' => 'datetime',
     ];
 
     public function protocol()

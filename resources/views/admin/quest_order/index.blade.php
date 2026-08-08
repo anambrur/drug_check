@@ -2,38 +2,6 @@
 
 @section('content')
 <style>
-    .orders-stat-card .card-body { min-height: 92px; }
-    .orders-filter-card .form-label { font-size: 12px; color: #6c757d; margin-bottom: 4px; }
-    .orders-filter-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        gap: 0.5rem;
-    }
-    .orders-filter-field { min-width: 0; }
-    .orders-filter-search { flex: 1 1 180px; }
-    .orders-filter-select { flex: 0 1 140px; min-width: 120px; }
-    .orders-filter-date { flex: 0 1 150px; min-width: 135px; }
-    .orders-filter-btn { flex: 0 0 100px; }
-    @media (min-width: 1200px) {
-        .orders-filter-row { flex-wrap: nowrap; }
-        .orders-filter-search { flex: 1 1 auto; }
-        .orders-filter-select { flex: 0 1 130px; }
-        .orders-filter-date { flex: 0 1 145px; }
-        .orders-filter-btn { flex: 0 0 96px; }
-    }
-    @media (max-width: 1199.98px) {
-        .orders-filter-search,
-        .orders-filter-select,
-        .orders-filter-date { flex: 1 1 calc(50% - 0.5rem); }
-        .orders-filter-btn { flex: 1 1 calc(50% - 0.5rem); }
-    }
-    @media (max-width: 575.98px) {
-        .orders-filter-search,
-        .orders-filter-select,
-        .orders-filter-date,
-        .orders-filter-btn { flex: 1 1 100%; }
-    }
     #quest-orders-datatable_wrapper .dataTables_filter { display: none; }
     #quest-orders-datatable td { vertical-align: middle; }
     #quest-orders-datatable thead th {
@@ -47,12 +15,13 @@
     .orders-table-card .card-title { font-size: 1rem; }
 </style>
 
+<div class="orders-page">
 {{-- Stats --}}
 <div class="row">
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-list fa-2x text-primary"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--blue mr-2"><i class="fas fa-list"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Total Orders</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['total']) }}</h4>
@@ -63,7 +32,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-truck fa-2x text-info"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--cyan mr-2"><i class="fas fa-truck"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">DOT</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['dot']) }}</h4>
@@ -74,7 +43,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-flask fa-2x text-secondary"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--gray mr-2"><i class="fas fa-flask"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Non-DOT</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['non_dot']) }}</h4>
@@ -85,7 +54,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-file-medical fa-2x text-success"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--green mr-2"><i class="fas fa-file-medical"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">With Result</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['with_result']) }}</h4>
@@ -96,7 +65,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-check-circle fa-2x text-success"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--green mr-2"><i class="fas fa-check-circle"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Quest Success</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['success']) }}</h4>
@@ -107,7 +76,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-exclamation-triangle fa-2x text-danger"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--red mr-2"><i class="fas fa-exclamation-triangle"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Quest Failed</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['failed']) }}</h4>
@@ -229,6 +198,7 @@
 @include('admin.quest_order.partials.action-modals')
 @include('admin.quest_order.partials.actions-dropdown-styles')
 @include('admin.quest_order.partials.actions-scripts')
+</div>
 @endsection
 
 @push('scripts')

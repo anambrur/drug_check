@@ -7,6 +7,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Models\Admin\Favicon;
 use App\Models\Admin\DotAgency;
+use App\Models\Admin\Employee;
 use App\Models\Admin\PanelImage;
 use Illuminate\Support\Facades\DB;
 use App\Models\Admin\ClientProfile;
@@ -27,22 +28,122 @@ class ClientProfileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Retrieving models
-        $language = getLanguage();
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
-        $query = ClientProfile::orderBy('id', 'desc');
 
+        $baseQuery = ClientProfile::query();
         if (!Auth::user()->hasPermissionTo('client profile view_all')) {
-            $query->where('user_id', Auth::id());
+            $baseQuery->where('user_id', Auth::id());
         }
 
-        $clientProfiles = $query->get();
+        $filters = [
+            'search' => trim((string) $request->input('search', '')),
+            'status' => (string) $request->input('status', ''),
+            'state' => (string) $request->input('state', ''),
+            'dot_agency_id' => (string) $request->input('dot_agency_id', ''),
+            'drivers' => (string) $request->input('drivers', ''),
+        ];
 
+        $filteredQuery = $this->applyClientProfileFilters(clone $baseQuery, $filters);
+        $filteredIdQuery = (clone $filteredQuery)->select('client_profiles.id');
 
-        return view('admin.client_profile.index', compact('favicon', 'panel_image', 'clientProfiles'));
+        $stats = [
+            'total_clients' => (clone $filteredQuery)->count(),
+            'active_clients' => (clone $filteredQuery)->where('status', 'active')->count(),
+            'inactive_clients' => (clone $filteredQuery)->where('status', '!=', 'active')->count(),
+            'total_drivers' => Employee::whereIn('client_profile_id', clone $filteredIdQuery)->count(),
+            'active_drivers' => Employee::whereIn('client_profile_id', clone $filteredIdQuery)
+                ->where('status', 'active')
+                ->count(),
+            'clients_without_drivers' => (clone $filteredQuery)
+                ->whereDoesntHave('employees')
+                ->count(),
+        ];
+
+        $clientProfiles = (clone $filteredQuery)
+            ->with(['dotAgency:id,dot_agency_name,full_name'])
+            ->withCount([
+                'employees',
+                'employees as active_employees_count' => fn ($q) => $q->where('status', 'active'),
+            ])
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString();
+
+        $states = (clone $baseQuery)
+            ->whereNotNull('state')
+            ->where('state', '!=', '')
+            ->distinct()
+            ->orderBy('state')
+            ->pluck('state');
+
+        $dotAgencies = DotAgency::query()
+            ->orderBy('dot_agency_name')
+            ->get(['id', 'dot_agency_name', 'full_name']);
+
+        $hasActiveFilters = collect($filters)->filter(fn ($value) => filled($value))->isNotEmpty();
+
+        return view('admin.client_profile.index', compact(
+            'favicon',
+            'panel_image',
+            'clientProfiles',
+            'stats',
+            'filters',
+            'states',
+            'dotAgencies',
+            'hasActiveFilters'
+        ));
+    }
+
+    /**
+     * @param  array{search:string,status:string,state:string,dot_agency_id:string,drivers:string}  $filters
+     */
+    protected function applyClientProfileFilters($query, array $filters)
+    {
+        if ($filters['search'] !== '') {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('company_name', 'like', "%{$search}%")
+                    ->orWhere('account_no', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('state', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('der_contact_name', 'like', "%{$search}%")
+                    ->orWhere('der_contact_email', 'like', "%{$search}%")
+                    ->orWhere('der_contact_phone', 'like', "%{$search}%")
+                    ->orWhere('billing_contact_name', 'like', "%{$search}%")
+                    ->orWhere('billing_contact_email', 'like', "%{$search}%")
+                    ->orWhereHas('employees', function ($employeeQuery) use ($search) {
+                        $employeeQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('employee_id', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('cdl_number', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if (in_array($filters['status'], ['active', 'inactive'], true)) {
+            $query->where('status', $filters['status']);
+        }
+
+        if ($filters['state'] !== '') {
+            $query->where('state', $filters['state']);
+        }
+
+        if ($filters['dot_agency_id'] !== '') {
+            $query->where('dot_agency_id', $filters['dot_agency_id']);
+        }
+
+        if ($filters['drivers'] === 'with') {
+            $query->has('employees');
+        } elseif ($filters['drivers'] === 'without') {
+            $query->doesntHave('employees');
+        }
+
+        return $query;
     }
 
     /**

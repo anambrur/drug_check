@@ -2,38 +2,6 @@
 
 @section('content')
 <style>
-    .orders-stat-card .card-body { min-height: 92px; }
-    .orders-filter-card .form-label { font-size: 12px; color: #6c757d; margin-bottom: 4px; }
-    .orders-filter-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        gap: 0.5rem;
-    }
-    .orders-filter-field { min-width: 0; }
-    .orders-filter-search { flex: 1 1 180px; }
-    .orders-filter-select { flex: 0 1 140px; min-width: 120px; }
-    .orders-filter-date { flex: 0 1 150px; min-width: 135px; }
-    .orders-filter-btn { flex: 0 0 100px; }
-    @media (min-width: 992px) {
-        .orders-filter-row { flex-wrap: nowrap; }
-        .orders-filter-search { flex: 1 1 auto; }
-        .orders-filter-select { flex: 0 1 130px; }
-        .orders-filter-date { flex: 0 1 145px; }
-        .orders-filter-btn { flex: 0 0 96px; }
-    }
-    @media (max-width: 991.98px) {
-        .orders-filter-search,
-        .orders-filter-select,
-        .orders-filter-date { flex: 1 1 calc(50% - 0.5rem); }
-        .orders-filter-btn { flex: 1 1 calc(50% - 0.5rem); }
-    }
-    @media (max-width: 575.98px) {
-        .orders-filter-search,
-        .orders-filter-select,
-        .orders-filter-date,
-        .orders-filter-btn { flex: 1 1 100%; }
-    }
     #orders-datatable_wrapper .dataTables_filter { display: none; }
     #orders-datatable td { vertical-align: middle; }
     #orders-datatable thead th {
@@ -47,12 +15,13 @@
     .orders-table-card .card-title { font-size: 1rem; }
 </style>
 
+<div class="orders-page">
 {{-- Stats --}}
 <div class="row">
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-list fa-2x text-primary"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--blue mr-2"><i class="fas fa-list"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Total Orders</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['total']) }}</h4>
@@ -63,7 +32,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-check-circle fa-2x text-success"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--green mr-2"><i class="fas fa-check-circle"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Paid</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['paid']) }}</h4>
@@ -74,7 +43,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-clock fa-2x text-warning"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--amber mr-2"><i class="fas fa-clock"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Pending Pay</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['pending_payment']) }}</h4>
@@ -85,7 +54,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-flask fa-2x text-info"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--cyan mr-2"><i class="fas fa-flask"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Quest Submitted</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['quest_submitted']) }}</h4>
@@ -96,7 +65,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-exclamation-triangle fa-2x text-danger"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--red mr-2"><i class="fas fa-exclamation-triangle"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Quest Failed</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['quest_failed']) }}</h4>
@@ -107,7 +76,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-dollar-sign fa-2x text-success"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--green mr-2"><i class="fas fa-dollar-sign"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Paid Revenue</p>
                     <h4 class="mb-0 font-weight-bold">${{ number_format($stats['revenue'] / 100, 2) }}</h4>
@@ -197,6 +166,7 @@
         </div>
     </div>
 </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -226,9 +196,9 @@
             { data: 'company', name: 'company' },
             { data: 'test_name', name: 'test_name' },
             { data: 'amount_display', name: 'amount' },
-            { data: 'payment_badge', name: 'payment_status', orderable: true, searchable: false },
-            { data: 'quest_badge', name: 'quest_submission_status', orderable: true, searchable: false },
-            { data: 'guest_label', name: 'is_guest', orderable: false, searchable: false },
+            { data: 'payment_badge', name: 'payment_status', searchable: false },
+            { data: 'quest_badge', name: 'quest_submission_status', searchable: false },
+            { data: 'guest_label', name: 'is_guest', searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-center' }
         ],
         language: {

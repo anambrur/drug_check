@@ -16,14 +16,19 @@ class SelectedEmployee extends Model
         'selection_protocol_id',
         'selection_type',
         'random_number',
+        'status',
+        'notification_sent',
+        'notification_sent_at',
         'is_excused',
         'is_refused',
-        'alternate_replaces_id'
+        'alternate_replaces_id',
     ];
 
     protected $casts = [
         'is_excused' => 'boolean',
-        'is_refused' => 'boolean'
+        'is_refused' => 'boolean',
+        'notification_sent' => 'boolean',
+        'notification_sent_at' => 'datetime',
     ];
 
     public function selectionEvent()
@@ -56,8 +61,13 @@ class SelectedEmployee extends Model
         return $this->hasOne(SelectedEmployee::class, 'alternate_replaces_id');
     }
 
+    public function resultRecording()
+    {
+        return $this->hasOne(ResultRecording::class, 'selected_employee_id');
+    }
+
     public function resultRecordings()
-{
-    return $this->hasMany(ResultRecording::class, 'employee_id', 'employee_id');
-}
+    {
+        return $this->hasMany(ResultRecording::class, 'selected_employee_id');
+    }
 }

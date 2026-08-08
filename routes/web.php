@@ -1253,14 +1253,12 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::get('random-selection', [RandomSelectionController::class, 'index'])->name('random-selection.index')->middleware('permission:random selection view');
     Route::get('random-selection/create', [RandomSelectionController::class, 'create'])->name('random-selection.create')->middleware('permission:random selection create');
     Route::post('random-selection', [RandomSelectionController::class, 'store'])->name('random-selection.store')->middleware('permission:random selection create');
-    Route::get('random-selection/{id}', [RandomSelectionController::class, 'show'])->name('random-selection.show')->middleware('permission:random selection view');
+    Route::get('random-selection/executions/{protocol}', [RandomSelectionController::class, 'executions'])->name('random-selection.executions')->middleware('permission:random selection view');
+    Route::get('random-selection/results/{event}', [RandomSelectionController::class, 'viewResults'])->name('random-selection.results.view')->middleware('permission:random selection view');
+    Route::post('random-selection/execute/{protocol}', [RandomSelectionController::class, 'execute'])->name('random-selection.execute')->middleware('permission:random selection create');
     Route::get('random-selection/{id}/edit', [RandomSelectionController::class, 'edit'])->name('random-selection.edit')->middleware('permission:random selection edit');
     Route::put('random-selection/{id}', [RandomSelectionController::class, 'update'])->name('random-selection.update')->middleware('permission:random selection edit');
     Route::delete('random-selection/{id}', [RandomSelectionController::class, 'destroy'])->name('random-selection.destroy')->middleware('permission:random selection delete');
-    Route::delete('random-selection', [RandomSelectionController::class, 'destroy_checked'])->name('random-selection.destroy_checked')->middleware('permission:random selection delete');
-    Route::post('random-selection/execute/{protocol}', [RandomSelectionController::class, 'execute'])->name('random-selection.execute')->middleware('permission:random selection create');
-    Route::get('random-selection/executions/{protocol}', [RandomSelectionController::class, 'executions'])->name('random-selection.executions')->middleware('permission:random selection view');
-    Route::get('random-selection/results/{event}', [RandomSelectionController::class, 'viewResults'])->name('random-selection.results.view')->middleware('permission:random selection view');
 });
 
 // ------------------------------------------------------------------

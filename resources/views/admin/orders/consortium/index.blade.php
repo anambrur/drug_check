@@ -2,38 +2,6 @@
 
 @section('content')
 <style>
-    .orders-stat-card .card-body { min-height: 92px; }
-    .orders-filter-card .form-label { font-size: 12px; color: #6c757d; margin-bottom: 4px; }
-    .orders-filter-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        gap: 0.5rem;
-    }
-    .orders-filter-field { min-width: 0; }
-    .orders-filter-search { flex: 1 1 180px; }
-    .orders-filter-select { flex: 0 1 160px; min-width: 140px; }
-    .orders-filter-date { flex: 0 1 150px; min-width: 135px; }
-    .orders-filter-btn { flex: 0 0 100px; }
-    @media (min-width: 992px) {
-        .orders-filter-row { flex-wrap: nowrap; }
-        .orders-filter-search { flex: 1 1 auto; }
-        .orders-filter-select { flex: 0 1 160px; }
-        .orders-filter-date { flex: 0 1 145px; }
-        .orders-filter-btn { flex: 0 0 96px; }
-    }
-    @media (max-width: 991.98px) {
-        .orders-filter-search,
-        .orders-filter-select,
-        .orders-filter-date { flex: 1 1 calc(50% - 0.5rem); }
-        .orders-filter-btn { flex: 1 1 calc(50% - 0.5rem); }
-    }
-    @media (max-width: 575.98px) {
-        .orders-filter-search,
-        .orders-filter-select,
-        .orders-filter-date,
-        .orders-filter-btn { flex: 1 1 100%; }
-    }
     #consortium-orders-datatable_wrapper .dataTables_filter { display: none; }
     #consortium-orders-datatable td { vertical-align: middle; }
     #consortium-orders-datatable thead th {
@@ -46,11 +14,12 @@
     }
 </style>
 
+<div class="orders-page">
 <div class="row">
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-list fa-2x text-primary"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--blue mr-2"><i class="fas fa-list"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Total</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['total']) }}</h4>
@@ -61,7 +30,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-check-circle fa-2x text-success"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--green mr-2"><i class="fas fa-check-circle"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Active</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['active']) }}</h4>
@@ -72,7 +41,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-clock fa-2x text-warning"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--amber mr-2"><i class="fas fa-clock"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Pending Pay</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['pending_payment']) }}</h4>
@@ -83,7 +52,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-credit-card fa-2x text-info"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--cyan mr-2"><i class="fas fa-credit-card"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Paid</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['payment_completed']) }}</h4>
@@ -94,7 +63,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-search fa-2x text-secondary"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--gray mr-2"><i class="fas fa-search"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Under Review</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['under_review']) }}</h4>
@@ -105,7 +74,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-dollar-sign fa-2x text-success"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--green mr-2"><i class="fas fa-dollar-sign"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Revenue</p>
                     <h4 class="mb-0 font-weight-bold">${{ number_format($stats['revenue'] / 100, 2) }}</h4>
@@ -188,6 +157,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 @endsection
 

@@ -1,36 +1,4 @@
 <style>
-    .orders-stat-card .card-body { min-height: 92px; }
-    .orders-filter-card .form-label { font-size: 12px; color: #6c757d; margin-bottom: 4px; }
-    .orders-filter-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        gap: 0.5rem;
-    }
-    .orders-filter-field { min-width: 0; }
-    .orders-filter-search { flex: 1 1 180px; }
-    .orders-filter-select { flex: 0 1 150px; min-width: 130px; }
-    .orders-filter-date { flex: 0 1 150px; min-width: 135px; }
-    .orders-filter-btn { flex: 0 0 100px; }
-    @media (min-width: 1200px) {
-        .orders-filter-row { flex-wrap: nowrap; }
-        .orders-filter-search { flex: 1 1 auto; }
-        .orders-filter-select { flex: 0 1 145px; }
-        .orders-filter-date { flex: 0 1 145px; }
-        .orders-filter-btn { flex: 0 0 96px; }
-    }
-    @media (max-width: 1199.98px) {
-        .orders-filter-search,
-        .orders-filter-select,
-        .orders-filter-date { flex: 1 1 calc(50% - 0.5rem); }
-        .orders-filter-btn { flex: 1 1 calc(50% - 0.5rem); }
-    }
-    @media (max-width: 575.98px) {
-        .orders-filter-search,
-        .orders-filter-select,
-        .orders-filter-date,
-        .orders-filter-btn { flex: 1 1 100%; }
-    }
     #result-recording-datatable_wrapper .dataTables_filter { display: none; }
     #result-recording-datatable td { vertical-align: middle; }
     #result-recording-datatable thead th {
@@ -45,12 +13,13 @@
     .rr-actions a { text-decoration: none; }
 </style>
 
+<div class="orders-page">
 {{-- Stats --}}
 <div class="row">
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-list fa-2x text-primary"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--blue mr-2"><i class="fas fa-list"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Total Results</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['total']) }}</h4>
@@ -61,7 +30,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-check-circle fa-2x text-success"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--green mr-2"><i class="fas fa-check-circle"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Negative</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['negative']) }}</h4>
@@ -72,7 +41,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-exclamation-circle fa-2x text-danger"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--red mr-2"><i class="fas fa-exclamation-circle"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Positive</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['positive']) }}</h4>
@@ -83,7 +52,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-clock fa-2x text-info"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--cyan mr-2"><i class="fas fa-clock"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Pending</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['pending']) }}</h4>
@@ -94,7 +63,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-save fa-2x text-primary"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--blue mr-2"><i class="fas fa-save"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Saved</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['saved']) }}</h4>
@@ -105,7 +74,7 @@
     <div class="col-xl-2 col-md-4 col-sm-6 box-margin">
         <div class="card orders-stat-card h-100 border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
-                <div class="mr-3"><i class="fas fa-ellipsis-h fa-2x text-secondary"></i></div>
+                <div class="cp-stat-icon cp-stat-icon--gray mr-2"><i class="fas fa-ellipsis-h"></i></div>
                 <div>
                     <p class="mb-0 text-muted font-12">Other</p>
                     <h4 class="mb-0 font-weight-bold">{{ number_format($stats['other']) }}</h4>
@@ -309,4 +278,5 @@
             </form>
         </div>
     </div>
+</div>
 </div>

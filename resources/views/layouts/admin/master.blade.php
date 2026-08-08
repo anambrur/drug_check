@@ -442,7 +442,7 @@
                         request()->is('admin/random-selection/*/edit') ||
                         request()->is('admin/random-selection/*/show') ||
                         request()->is('admin/random-selection/results/*') ||
-                        request()->is('admin/admin/random-selection/execute/*') ||
+                        request()->is('admin/random-selection/execute/*') ||
                         request()->is('admin/random-selection/executions/*') 
                             ? 'active'
                             : '' }}">
@@ -457,7 +457,7 @@
                         request()->is('admin/random-selection/*/edit') ||
                         request()->is('admin/random-selection/*/show') ||
                         request()->is('admin/random-selection/results/*') ||
-                        request()->is('admin/admin/random-selection/execute/*') ||
+                        request()->is('admin/random-selection/execute/*') ||
                         request()->is('admin/random-selection/executions/*') 
                             ? 'show'
                             : '' }}"

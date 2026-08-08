@@ -15,6 +15,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('quest:retry-failed-submissions')
             ->everyFiveMinutes()
             ->withoutOverlapping();
+
+        if (config('random_selection.enabled', true)) {
+            $schedule->command('random-selection:run-due')
+                ->dailyAt(config('random_selection.run_at', '01:00'))
+                ->withoutOverlapping();
+        }
     }
 
     /**

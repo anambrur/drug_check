@@ -1,91 +1,111 @@
-<div class="card card-outline card-primary">
-    <div class="card-header">
-        <h3 class="card-title">Selected Employees</h3>
-    </div>
-    <div class="card-body table-responsive p-0">
-        <table class="table table-hover text-nowrap">
-            <thead>
-                <tr class="bg-gray">
-                    <th>#</th>
-                    <th>Employee ID</th>
-                    <th>Name</th>
-                    <th>Company</th>
-                    <th>Department</th>
-                    <th>Shift</th>
-                    <th>Test Type</th>
-                    <th>Selection Type</th>
-                    <th>Random #</th>
+@php
+    $allSelections = collect()
+        ->merge($primary ?? [])
+        ->merge($extra ?? [])
+        ->merge($sub ?? [])
+        ->merge($alternates ?? []);
+@endphp
+
+<ul class="nav rs-filter-pills no-print" id="selection-type-filter">
+    <li class="nav-item">
+        <a class="nav-link active" href="#" data-filter="all">All ({{ $allSelections->count() }})</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" data-filter="PRIMARY">Primary ({{ ($primary ?? collect())->count() }})</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" data-filter="EXTRA">Extra ({{ ($extra ?? collect())->count() }})</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" data-filter="SUB">Sub ({{ ($sub ?? collect())->count() }})</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#" data-filter="ALTERNATE">Alternates ({{ ($alternates ?? collect())->count() }})</a>
+    </li>
+</ul>
+
+<div class="table-responsive">
+    <table class="table rs-runs-table mb-0" id="selected-employees-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Company</th>
+                <th>Department</th>
+                <th>Shift</th>
+                <th>Test</th>
+                <th>Type</th>
+                <th>
+                    Pool index
+                    <i class="fas fa-info-circle text-muted no-print"
+                        title="Random index chosen from 0 to pool size − 1 for audit trail"></i>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($allSelections as $selection)
+                @php
+                    $employee = $selection->employee;
+                    $type = $selection->selection_type;
+                    $tagClass = match ($type) {
+                        'PRIMARY' => 'rs-tag--primary',
+                        'EXTRA' => 'rs-tag--extra',
+                        'SUB' => 'rs-tag--sub',
+                        'ALTERNATE' => 'rs-tag--alternate',
+                        default => 'rs-tag--manual',
+                    };
+                    $label = match ($type) {
+                        'PRIMARY' => 'Primary',
+                        'EXTRA' => 'Extra',
+                        'SUB' => 'Sub',
+                        'ALTERNATE' => 'Alternate',
+                        default => $type,
+                    };
+                @endphp
+                <tr data-selection-type="{{ $type }}">
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $employee->employee_id ?? 'N/A' }}</td>
+                    <td class="rs-runs-table__strong">
+                        {{ trim(($employee->first_name ?? '') . ' ' . ($employee->last_name ?? '')) ?: 'N/A' }}
+                    </td>
+                    <td>{{ $employee->clientProfile->company_name ?? 'N/A' }}</td>
+                    <td>{{ $employee->department ?? 'N/A' }}</td>
+                    <td>{{ $employee->shift ?? 'N/A' }}</td>
+                    <td>{{ $selection->test->test_name ?? 'N/A' }}</td>
+                    <td><span class="rs-tag {{ $tagClass }}">{{ $label }}</span></td>
+                    <td>{{ $selection->random_number }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @php $counter = 1; @endphp
-
-                @foreach ($primary as $selection)
-                    <tr>
-                        <td>{{ $counter++ }}</td>
-                        <td>{{ $selection->employee->employee_id ?? 'N/A' }}
-                        </td>
-                        <td>{{ $selection->employee->first_name . ' ' . $selection->employee->last_name ?? 'N/A' }}</td>
-                        <td>{{ $selection->employee->clientProfile->company_name ?? 'N/A' }}</td>
-                        <td>{{ $selection->employee->department ?? 'N/A' }}</td>
-                        <td>{{ $selection->employee->shift ?? 'N/A' }}</td>
-                        <td>{{ $selection->test->test_name ?? 'Primary Test' }}</td>
-                        <td><span class="badge badge-primary">Primary</span></td>
-                        <td>{{ $selection->random_number }}</td>
-                    </tr>
-                @endforeach
-
-                <!-- Extra Tests -->
-                @foreach ($extra as $selection)
-                    <tr>
-                        <td>{{ $counter++ }}</td>
-                        <td>{{ $selection->employee ? str_pad($selection->employee->id, 6, '0', STR_PAD_LEFT) : 'N/A' }}
-                        </td>
-                        <td>{{ $selection->employee->first_name . ' ' . $selection->employee->last_name ?? 'N/A' }}
-                        </td>
-                        <td>{{ $selection->employee->department ?? 'N/A' }}</td>
-                        <td>{{ $selection->employee->shift ?? 'N/A' }}</td>
-                        <td>{{ $selection->test->test_name ?? 'Extra Test' }}</td>
-                        <td><span class="badge badge-info">Extra</span></td>
-                        <td>{{ $selection->random_number }}</td>
-                    </tr>
-                @endforeach
-
-                <!-- Sub Selections -->
-                @foreach ($sub as $selection)
-                    <tr>
-                        <td>{{ $counter++ }}</td>
-                        <td>{{ $selection->employee ? str_pad($selection->employee->id, 6, '0', STR_PAD_LEFT) : 'N/A' }}
-                        </td>
-                        <td>{{ $selection->employee->first_name . ' ' . $selection->employee->last_name ?? 'N/A' }}
-                        </td>
-                        <td>{{ $selection->employee->department ?? 'N/A' }}</td>
-                        <td>{{ $selection->employee->shift ?? 'N/A' }}</td>
-                        <td>{{ $selection->test->test_name ?? 'Sub Test' }}</td>
-                        <td><span class="badge badge-warning">Sub</span></td>
-                        <td>{{ $selection->random_number }}</td>
-                    </tr>
-                @endforeach
-
-
-                <!-- Alternates -->
-                @foreach ($alternates as $selection)
-                    <tr>
-                        <td>{{ $counter++ }}</td>
-                        <td>{{ $selection->employee ? str_pad($selection->employee->id, 6, '0', STR_PAD_LEFT) : 'N/A' }}
-                        </td>
-                        <td>{{ $selection->employee->first_name . ' ' . $selection->employee->last_name ?? 'N/A' }}
-                        </td>
-                        <td>{{ $selection->employee->department ?? 'N/A' }}</td>
-                        <td>{{ $selection->employee->shift ?? 'N/A' }}</td>
-                        <td>{{ $selection->test->test_name ?? 'Primary Test' }}</td>
-                        <td><span class="badge badge-secondary">Alternate</span></td>
-                        <td>{{ $selection->random_number }}</td>
-                    </tr>
-                @endforeach
-
-                <!-- Repeat for extra, sub, and alternates -->
-            </tbody>
-        </table>
-    </div>
+            @empty
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">No employees were selected in this run.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 </div>
+
+@push('scripts')
+    <script>
+        (function() {
+            var filter = document.getElementById('selection-type-filter');
+            if (!filter) return;
+
+            filter.addEventListener('click', function(e) {
+                var link = e.target.closest('[data-filter]');
+                if (!link) return;
+                e.preventDefault();
+
+                filter.querySelectorAll('.nav-link').forEach(function(el) {
+                    el.classList.remove('active');
+                });
+                link.classList.add('active');
+
+                var value = link.getAttribute('data-filter');
+                document.querySelectorAll('#selected-employees-table tbody tr[data-selection-type]').forEach(function(row) {
+                    row.style.display = (value === 'all' || row.getAttribute('data-selection-type') === value) ? '' : 'none';
+                });
+            });
+        })();
+    </script>
+@endpush
