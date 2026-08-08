@@ -719,7 +719,7 @@ button:focus {
   -webkit-box-shadow: 0 0 13px 0 rgba(82, 63, 105, 0.1);
   box-shadow: 0 0 13px 0 rgba(82, 63, 105, 0.1);
   border: none;
-  border-radius: 3px; }
+  border-radius: 10px; }
 
 .box-shadow {
   -webkit-box-shadow: 0 0 13px 0 rgba(82, 63, 105, 0.1);

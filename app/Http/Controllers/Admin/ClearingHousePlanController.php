@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\DeniesCompanyAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ClearingHousePlanRequest;
 use App\Models\Admin\ClearingHousePlan;
@@ -12,6 +13,17 @@ use Illuminate\Support\Str;
 
 class ClearingHousePlanController extends Controller
 {
+    use DeniesCompanyAccess;
+
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $this->denyCompanyUsers();
+
+            return $next($request);
+        });
+    }
+
     /**
      * Display a listing of all clearing house plans.
      */

@@ -1090,10 +1090,10 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::delete('client-profile', [ClientProfileController::class, 'destroy_checked'])->name('client-profile.destroy_checked')->middleware('permission:client profile delete|client profile delete_all');
 
     // Employee sub-routes (reuse client profile permissions)
-    Route::post('add-employee', [EmployeeController::class, 'store'])->name('client-profile.employee_store')->middleware('permission:client profile create|client profile create_all');
+    Route::post('add-employee', [EmployeeController::class, 'store'])->name('client-profile.employee_store')->middleware('permission:client profile create|client profile create_all|client profile edit|client profile edit_all');
     Route::get('employee/{id}/edit', [EmployeeController::class, 'edit'])->name('client-profile.employee_edit')->middleware('permission:client profile edit|client profile edit_all');
     Route::put('employee/{id}', [EmployeeController::class, 'update'])->name('client-profile.employee_update')->middleware('permission:client profile edit|client profile edit_all');
-    Route::delete('employee/{id}', [EmployeeController::class, 'destroy'])->name('client-profile.employee_destroy')->middleware('permission:client profile delete|client profile delete_all');
+    Route::delete('employee/{id}', [EmployeeController::class, 'destroy'])->name('client-profile.employee_destroy')->middleware('permission:client profile delete|client profile delete_all|client profile edit|client profile edit_all');
 });
 
 // ------------------------------------------------------------------

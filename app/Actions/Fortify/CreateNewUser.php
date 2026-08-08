@@ -45,13 +45,16 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, $rules)->validate();
 
         if (!$isDot) {
-            return User::create([
+            $user = User::create([
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'password' => Hash::make($input['password']),
                 'type' => 2,
                 'status' => 1,
             ]);
+            $user->assignRole('company');
+
+            return $user;
         }
 
         return DB::transaction(function () use ($input) {

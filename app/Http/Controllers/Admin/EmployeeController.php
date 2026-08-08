@@ -14,6 +14,7 @@ use App\Models\Admin\ClientProfile;
 use Illuminate\Support\Facades\Log;
 use Mews\Purifier\Facades\Purifier;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class EmployeeController extends Controller
@@ -55,6 +56,8 @@ class EmployeeController extends Controller
                 toastr()->error($validator->errors()->first(), 'content.error');
                 return back()->withInput();
             }
+
+            $this->ensureCanManageClientProfile((int) $request->input('client_profile_id'));
 
             DB::beginTransaction();
 
@@ -112,6 +115,7 @@ class EmployeeController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $employee = Employee::findOrFail($id);
+        $this->ensureCanManageClientProfile((int) $employee->client_profile_id);
 
         return view('admin.client_profile.employee_edit', compact('favicon', 'panel_image', 'employee'));
     }
@@ -123,6 +127,7 @@ class EmployeeController extends Controller
     {
         try {
             $employee = Employee::findOrFail($id);
+            $this->ensureCanManageClientProfile((int) $employee->client_profile_id);
 
             $validator = $this->validateEmployeeRequest($request, $employee);
 
@@ -130,6 +135,8 @@ class EmployeeController extends Controller
                 toastr()->error($validator->errors()->first(), 'content.error');
                 return back()->withInput();
             }
+
+            $this->ensureCanManageClientProfile((int) $request->input('client_profile_id', $employee->client_profile_id));
 
             DB::beginTransaction();
 
@@ -257,6 +264,7 @@ class EmployeeController extends Controller
     {
         try {
             $employee = Employee::findOrFail($id);
+            $this->ensureCanManageClientProfile((int) $employee->client_profile_id);
 
             DB::beginTransaction();
             $employee->delete();
@@ -270,5 +278,23 @@ class EmployeeController extends Controller
             toastr()->error('An error occurred while deleting the employee.', 'content.error');
             return redirect()->back();
         }
+    }
+
+    /**
+     * Company users may only manage employees on their own client profile.
+     */
+    protected function ensureCanManageClientProfile(int $clientProfileId): void
+    {
+        $user = Auth::user();
+
+        if ($user->hasPermissionTo('client profile edit_all') || $user->hasPermissionTo('client profile create_all')) {
+            return;
+        }
+
+        $ownsProfile = ClientProfile::where('id', $clientProfileId)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        abort_unless($ownsProfile, 403);
     }
 }

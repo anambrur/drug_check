@@ -7,18 +7,21 @@ use App\Models\Admin\Favicon;
 use App\Models\Admin\PanelImage;
 use App\Models\Admin\ClearingHouse;
 use Mews\Purifier\Facades\Purifier;
+use App\Http\Controllers\Admin\Concerns\DeniesCompanyAccess;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Admin\DotSupervisorTraining;
 
 class DotSupervisorTrainingController extends Controller
 {
+    use DeniesCompanyAccess;
 
     /**
      * Show the form for creating a new resource.
      */
     public function create($style = 'style1')
     {
+        $this->denyCompanyUsers();
         $language = getLanguage();
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();

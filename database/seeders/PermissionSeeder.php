@@ -119,7 +119,6 @@ class PermissionSeeder extends Seeder
         $roleSuperAdmin = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
         $roleAdmin      = Role::firstOrCreate(['name' => 'admin',       'guard_name' => 'web']);
         $roleCompany    = Role::firstOrCreate(['name' => 'company',     'guard_name' => 'web']);
-        $roleEmployee   = Role::firstOrCreate(['name' => 'employee',    'guard_name' => 'web']);
 
         // Super Admin gets everything
         $roleSuperAdmin->syncPermissions(Permission::all());
@@ -136,18 +135,16 @@ class PermissionSeeder extends Seeder
         })->get();
         $roleAdmin->syncPermissions($adminPermissions);
 
-        // Company: own client profile + results
-        $companyPermissions = Permission::where(function ($q) {
-            $q->where('name', 'like', 'client profile%')
-                ->orWhere('name', 'like', 'result recording%');
-        })->get();
-        $roleCompany->syncPermissions($companyPermissions);
-
-        // Employee: read-only result access
-        $employeePermissions = Permission::whereIn('name', [
+        // Company: own-scoped access only (no *_all, no CMS create/edit)
+        $companyPermissions = Permission::whereIn('name', [
+            'client profile view',
+            'client profile edit',
             'result recording view',
+            'quest-order view',
+            'random consortium view',
+            'clearing house view',
         ])->get();
-        $roleEmployee->syncPermissions($employeePermissions);
+        $roleCompany->syncPermissions($companyPermissions);
 
         // ----------------------------------------------------------------
         // 6. Demo / seed users
@@ -155,7 +152,6 @@ class PermissionSeeder extends Seeder
         $this->seedUser('superadmin@gmail.com', 'Super-Admin User', 0, $roleSuperAdmin);
         $this->seedUser('admin@gmail.com',      'Admin User',       1, $roleAdmin);
         $this->seedUser('company@gmail.com',    'Company User',     2, $roleCompany);
-        $this->seedUser('employee@gmail.com',   'Employee User',    3, $roleEmployee);
 
         // ----------------------------------------------------------------
         // 7. Optional: remove orphaned permissions no longer in the list

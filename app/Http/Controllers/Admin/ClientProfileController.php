@@ -192,6 +192,7 @@ class ClientProfileController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $clientProfile = ClientProfile::findOrFail($id);
+        $this->ensureCanAccessClientProfile($clientProfile, true);
         $dotAgencies = DotAgency::where('status', 'active')->get();
 
         return view('admin.client_profile.edit', compact('favicon', 'panel_image', 'clientProfile', 'dotAgencies'));
@@ -250,6 +251,8 @@ class ClientProfileController extends Controller
                 return back();
             }
 
+            $this->ensureCanAccessClientProfile($clientProfile, true);
+
             DB::beginTransaction(); // Start transaction
 
             // Prepare input
@@ -279,8 +282,25 @@ class ClientProfileController extends Controller
     {
         $clientProfile = ClientProfile::with(['employees' => function ($query) {
             $query->withCount('resultRecordings');
-        }])->where('id', $id)->first();
+        }])->where('id', $id)->firstOrFail();
+        $this->ensureCanAccessClientProfile($clientProfile);
+
         return view('admin.client_profile.show', compact('clientProfile'));
+    }
+
+    /**
+     * Own-profile scoping: allow *_all admins, otherwise only the company's own row.
+     */
+    protected function ensureCanAccessClientProfile(ClientProfile $clientProfile, bool $forEdit = false): void
+    {
+        $user = Auth::user();
+        $allPermission = $forEdit ? 'client profile edit_all' : 'client profile view_all';
+
+        if ($user->hasPermissionTo($allPermission)) {
+            return;
+        }
+
+        abort_unless((int) $clientProfile->user_id === (int) $user->id, 403);
     }
 
     /**
@@ -352,6 +372,7 @@ class ClientProfileController extends Controller
     public function view_certificate($id)
     {
         $clientProfile = ClientProfile::findOrFail($id);
+        $this->ensureCanAccessClientProfile($clientProfile);
 
         // Generate certificate if not exists or force regenerate
         $pdfContent = $this->generateCertificatePdf($clientProfile);
@@ -368,6 +389,7 @@ class ClientProfileController extends Controller
     public function download_certificate($id)
     {
         $clientProfile = ClientProfile::findOrFail($id);
+        $this->ensureCanAccessClientProfile($clientProfile);
 
         // Generate certificate
         $pdfContent = $this->generateCertificatePdf($clientProfile);
@@ -389,6 +411,7 @@ class ClientProfileController extends Controller
     public function generate_certificate($id)
     {
         $clientProfile = ClientProfile::findOrFail($id);
+        $this->ensureCanAccessClientProfile($clientProfile, true);
 
         // Generate certificate
         $pdfContent = $this->generateCertificatePdf($clientProfile);

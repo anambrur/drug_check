@@ -275,28 +275,30 @@
                 </li>
                 
 
-                @if(auth()->user()->can('quest-order view') || auth()->user()->can('random consortium view'))
+                @if(auth()->user()->can('quest-order view') || auth()->user()->can('random consortium view') || auth()->user()->can('clearing house view'))
                     <li
-                        class="nav-item {{ request()->is('admin/orders*') || request()->is('admin/consortium-enrollments*') ? 'active' : '' }}">
+                        class="nav-item {{ request()->is('admin/orders*') || request()->is('admin/consortium-enrollments*') || request()->is('admin/clearing-house-enrollments*') ? 'active' : '' }}">
                         <a class="nav-link" data-toggle="collapse" href="#customer-orders" aria-expanded="false"
                             aria-controls="customer-orders">
                             <i class="fas fa-shopping-bag menu-icon"></i>
                             <span class="menu-title">Orders</span>
                             <i class="ti-angle-right"></i>
                         </a>
-                        <div class="collapse {{ request()->is('admin/orders*') || request()->is('admin/consortium-enrollments*') ? 'show' : '' }}"
+                        <div class="collapse {{ request()->is('admin/orders*') || request()->is('admin/consortium-enrollments*') || request()->is('admin/clearing-house-enrollments*') ? 'show' : '' }}"
                             id="customer-orders">
                             <ul class="nav flex-column sub-menu">
-                                @can('quest-order view')
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('admin/orders/dot-testing') || (($ordersActiveType ?? null) === 'dot') ? 'active' : '' }}"
-                                        href="{{ route('admin.orders.dot-testing') }}">DOT Testing</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('admin/orders/non-dot-testing') || (($ordersActiveType ?? null) === 'non_dot') ? 'active' : '' }}"
-                                        href="{{ route('admin.orders.non-dot-testing') }}">Non-DOT Testing</a>
-                                </li>
-                                @endcan
+                                @unlessrole('company')
+                                    @can('quest-order view')
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->is('admin/orders/dot-testing') || (($ordersActiveType ?? null) === 'dot') ? 'active' : '' }}"
+                                            href="{{ route('admin.orders.dot-testing') }}">DOT Testing</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->is('admin/orders/non-dot-testing') || (($ordersActiveType ?? null) === 'non_dot') ? 'active' : '' }}"
+                                            href="{{ route('admin.orders.non-dot-testing') }}">Non-DOT Testing</a>
+                                    </li>
+                                    @endcan
+                                @endunlessrole
                                 @can('random consortium view')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('admin/consortium-enrollments*') ? 'active' : '' }}"
@@ -311,6 +313,7 @@
                                     </a>
                                 </li>
                                 @endcan
+                                @unlessrole('company')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('admin/orders/dot-supervisor-training') ? 'active' : '' }}"
                                         href="{{ route('admin.orders.dot-supervisor-training') }}">
@@ -318,6 +321,7 @@
                                         <span class="badge badge-secondary badge-pill ml-1" style="font-size: 9px;">Coming soon</span>
                                     </a>
                                 </li>
+                                @endunlessrole
                             </ul>
                         </div>
                     </li>
@@ -345,12 +349,14 @@
                                         href="{{ url('admin/quest-order') }}">Quest Order List
                                     </a>
                                 </li>
+                                @can('quest-order create')
                                 <li class="nav-item"> 
                                     <a
                                         class="nav-link {{ request()->is('admin/quest-order/create') ? 'active' : '' }}"
                                         href="{{ url('admin/quest-order/create') }}">Create Order
                                     </a>
                                 </li>
+                                @endcan
                                 
                             </ul>
                         </div>
@@ -473,7 +479,7 @@
                     </li>
                 @endcan
 
-                @can('test view')
+                @can('portfolio view')
                     <li
                         class="nav-item {{ request()->is('admin/portfolio/style1') ||
                         request()->is('admin/portfolio-content/*/create') ||
@@ -667,6 +673,74 @@
                     </li>
                 @endcan
 
+                @if(
+                    auth()->user()->can('clearing house create') || auth()->user()->can('clearing house edit')
+                    || auth()->user()->can('random consortium create') || auth()->user()->can('random consortium edit')
+                    || auth()->user()->can('dot supervisor training create') || auth()->user()->can('dot supervisor training edit')
+                )
+                    <li
+                        class="nav-item {{ request()->is('admin/clearing-house/create') ||
+                        request()->is('admin/clearing-house/*/edit') ||
+                        request()->is('admin/dot-supervisor-training/create') ||
+                        request()->is('admin/dot-supervisor-training/*/edit') ||
+                        request()->is('admin/random-consortium/create') ||
+                        request()->is('admin/random-consortium/*/edit') ||
+                        request()->is('admin/consortium-plans*') ||
+                        request()->is('admin/clearing-house-plans*')
+                            ? 'active'
+                            : '' }}">
+                        <a class="nav-link" data-toggle="collapse" href="#programs" aria-expanded="false"
+                            aria-controls="programs">
+                            <i class="fas fa-briefcase menu-icon"></i>
+                            <span class="menu-title">Programs</span>
+                            <i class="ti-angle-right"></i>
+                        </a>
+                        <div class="collapse {{ request()->is('admin/clearing-house/create') ||
+                        request()->is('admin/clearing-house/*/edit') ||
+                        request()->is('admin/dot-supervisor-training/create') ||
+                        request()->is('admin/dot-supervisor-training/*/edit') ||
+                        request()->is('admin/random-consortium/create') ||
+                        request()->is('admin/random-consortium/*/edit') ||
+                        request()->is('admin/consortium-plans*') ||
+                        request()->is('admin/clearing-house-plans*')
+                            ? 'show'
+                            : '' }}"
+                            id="programs">
+                            <ul class="nav flex-column sub-menu">
+                                @can('clearing house create')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/clearing-house/create') || request()->is('admin/clearing-house/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/clearing-house/create') }}">Clearing House</a>
+                                </li>
+                                @endcan
+                                @can('dot supervisor training create')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/dot-supervisor-training/create') || request()->is('admin/dot-supervisor-training/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/dot-supervisor-training/create') }}">Dot Supervisor Training</a>
+                                </li>
+                                @endcan
+                                @can('random consortium create')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/random-consortium/create') || request()->is('admin/random-consortium/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/random-consortium/create') }}">Random Consortium Content</a>
+                                </li>
+                                @endcan
+                                @can('random consortium edit')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/consortium-plans*') ? 'active' : '' }}"
+                                        href="{{ route('admin.consortium-plans.index') }}">Consortium Pricing</a>
+                                </li>
+                                @endcan
+                                @can('clearing house edit')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('admin/clearing-house-plans*') ? 'active' : '' }}"
+                                        href="{{ route('admin.clearing-house-plans.index') }}">Clearing House Pricing</a>
+                                </li>
+                                @endcan
+                            </ul>
+                        </div>
+                    </li>
+                @endif
 
                 @can('report view')
                     <li
@@ -1345,14 +1419,6 @@
                         request()->is('admin/font/create') ||
                         request()->is('admin/draft-view/create') ||
                         request()->is('admin/tawk-to/create') ||
-                        request()->is('admin/clearing-house/create') ||
-                        request()->is('admin/clearing-house/*/edit') ||
-                        request()->is('admin/dot-supervisor-training/create') ||
-                        request()->is('admin/dot-supervisor-training/*/edit') ||
-                        request()->is('admin/random-consortium/create') ||
-                        request()->is('admin/random-consortium/*/edit') ||
-                        request()->is('admin/consortium-plans*') ||
-                        request()->is('admin/clearing-house-plans*') ||
                         request()->is('admin/quick-access/create')
                             ? 'active'
                             : '' }}">
@@ -1388,14 +1454,6 @@
                         request()->is('admin/font/create') ||
                         request()->is('admin/draft-view/create') ||
                         request()->is('admin/tawk-to/create') ||
-                        request()->is('admin/clearing-house/create') ||
-                        request()->is('admin/clearing-house/*/edit') ||
-                        request()->is('admin/dot-supervisor-training/create') ||
-                        request()->is('admin/dot-supervisor-training/*/edit') ||
-                        request()->is('admin/random-consortium/create') ||
-                        request()->is('admin/random-consortium/*/edit') ||
-                        request()->is('admin/consortium-plans*') ||
-                        request()->is('admin/clearing-house-plans*') ||
                         request()->is('admin/quick-access/create')
                             ? 'show'
                             : '' }}"
@@ -1469,30 +1527,6 @@
                                         class="nav-link {{ request()->is('admin/seo/create') ? 'active' : '' }}"
                                         href="{{ url('admin/seo/create') }}">{{ __('content.seo') }}</a>
                                 </li>
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/clearing-house/create') ? 'active' : '' }}"
-                                        href="{{ url('admin/clearing-house/create') }}">Clearing House</a>
-                                </li>
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/dot-supervisor-training/create') ? 'active' : '' }}"
-                                        href="{{ url('admin/dot-supervisor-training/create') }}">Dot Supervisor Training</a>
-                                </li>
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/random-consortium/create') ? 'active' : '' }}"
-                                        href="{{ url('admin/random-consortium/create') }}">Random Consortium Text</a>
-                                </li>
-                                @can('random consortium edit')
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/consortium-plans*') ? 'active' : '' }}"
-                                        href="{{ route('admin.consortium-plans.index') }}">Consortium Pricing</a>
-                                </li>
-                                @endcan
-                                @can('clearing house edit')
-                                <li class="nav-item"> <a
-                                        class="nav-link {{ request()->is('admin/clearing-house-plans*') ? 'active' : '' }}"
-                                        href="{{ route('admin.clearing-house-plans.index') }}">Clearing House Pricing</a>
-                                </li>
-                                @endcan
                                 <li class="nav-item"> <a
                                         class="nav-link {{ request()->is('admin/terms-and-conditions/create') ? 'active' : '' }}"
                                         href="{{ url('admin/terms-and-conditions/create') }}">Terms & Conditions</a>

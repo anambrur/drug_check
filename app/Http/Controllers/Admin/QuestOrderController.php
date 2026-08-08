@@ -53,6 +53,8 @@ class QuestOrderController extends Controller
             ->with(['screens', 'user:id,name'])
             ->select('quest_orders.*');
 
+        $this->scopeQuestOrdersForCompany($query);
+
         if ($testType = $request->input('test_type')) {
             if ($testType === 'dot') {
                 $query->where('dot_test', 'T');
@@ -210,6 +212,7 @@ class QuestOrderController extends Controller
     private function questOrderStats(): array
     {
         $base = QuestOrder::query();
+        $this->scopeQuestOrdersForCompany($base);
 
         return [
             'total' => (clone $base)->count(),
@@ -224,6 +227,20 @@ class QuestOrderController extends Controller
             'success' => (clone $base)->where('create_response_status', 'SUCCESS')->count(),
             'failed' => (clone $base)->where('create_response_status', 'FAILURE')->count(),
         ];
+    }
+
+    private function scopeQuestOrdersForCompany($query): void
+    {
+        if (Auth::user()?->hasRole('company')) {
+            $query->where('user_id', Auth::id());
+        }
+    }
+
+    private function ensureCanAccessQuestOrder(QuestOrder $questOrder): void
+    {
+        if (Auth::user()?->hasRole('company')) {
+            abort_unless((int) $questOrder->user_id === (int) Auth::id(), 403);
+        }
     }
 
     public function create()
@@ -266,6 +283,7 @@ class QuestOrderController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
         return view('admin.quest_order.edit', array_merge(
             compact('favicon', 'panel_image', 'questOrder'),
@@ -276,6 +294,7 @@ class QuestOrderController extends Controller
     public function update(Request $request, $id)
     {
         $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
         $validator = $this->makeValidator($request, $questOrder->id);
 
         if ($validator->fails()) {
@@ -348,6 +367,7 @@ class QuestOrderController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $questOrder = QuestOrder::with(['screens', 'documents'])->findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
         return view('admin.quest_order.show', compact('favicon', 'panel_image', 'questOrder'));
     }
@@ -355,6 +375,7 @@ class QuestOrderController extends Controller
     public function cancel($id)
     {
         $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
         try {
             $result = $this->lifecycleService->cancelOrder($questOrder);
@@ -374,6 +395,7 @@ class QuestOrderController extends Controller
     public function portal($id)
     {
         $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
         try {
             $result = $this->lifecycleService->getOrderDetails($questOrder);
@@ -399,6 +421,7 @@ class QuestOrderController extends Controller
         }
 
         $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
         try {
             return $this->documentService->downloadDocument($questOrder, QuestDocType::from($docType));
@@ -417,6 +440,7 @@ class QuestOrderController extends Controller
     public function downloadResult($id, ?string $screenType = 'drug')
     {
         $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
         try {
             return $this->documentService->downloadForScreen($questOrder, $screenType ?? 'drug');
@@ -430,6 +454,7 @@ class QuestOrderController extends Controller
     public function downloadMroLetter($id)
     {
         $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
         try {
             return $this->documentService->downloadMroLetter($questOrder);
@@ -443,6 +468,7 @@ class QuestOrderController extends Controller
     public function refreshResult($id)
     {
         $questOrder = QuestOrder::findOrFail($id);
+        $this->ensureCanAccessQuestOrder($questOrder);
 
         try {
             return $this->documentService->downloadForScreen($questOrder, 'drug', true);

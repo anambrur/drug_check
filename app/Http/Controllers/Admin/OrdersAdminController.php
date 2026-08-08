@@ -13,6 +13,7 @@ use App\Services\QuestOrderSubmissionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
@@ -247,6 +248,7 @@ class OrdersAdminController extends Controller
     public function consortiumData(Request $request): JsonResponse
     {
         $query = ConsortiumEnrollment::query()->select('consortium_enrollments.*');
+        $this->scopeEnrollmentsForCompany($query);
 
         if ($status = $request->input('status')) {
             $query->where('status', $status);
@@ -321,6 +323,7 @@ class OrdersAdminController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $enrollment = ConsortiumEnrollment::findOrFail($id);
+        $this->ensureCanAccessEnrollment($enrollment);
 
         return view('admin.orders.consortium.show', compact('favicon', 'panel_image', 'enrollment'));
     }
@@ -338,6 +341,7 @@ class OrdersAdminController extends Controller
         }
 
         $enrollment = ConsortiumEnrollment::findOrFail($id);
+        $this->ensureCanAccessEnrollment($enrollment);
         $oldStatus = $enrollment->status;
         $newStatus = $request->input('status');
 
@@ -357,6 +361,7 @@ class OrdersAdminController extends Controller
     public function updateConsortiumNotes(Request $request, int $id)
     {
         $enrollment = ConsortiumEnrollment::findOrFail($id);
+        $this->ensureCanAccessEnrollment($enrollment);
 
         $newNote = $request->input('note');
         if ($newNote) {
@@ -386,6 +391,7 @@ class OrdersAdminController extends Controller
     public function clearingHouseData(Request $request): JsonResponse
     {
         $query = ClearingHouseEnrollment::query()->select('clearing_house_enrollments.*');
+        $this->scopeEnrollmentsForCompany($query);
 
         if ($status = $request->input('status')) {
             $query->where('status', $status);
@@ -460,6 +466,7 @@ class OrdersAdminController extends Controller
         $favicon = Favicon::first();
         $panel_image = PanelImage::first();
         $enrollment = ClearingHouseEnrollment::findOrFail($id);
+        $this->ensureCanAccessEnrollment($enrollment);
 
         return view('admin.orders.clearing_house.show', compact('favicon', 'panel_image', 'enrollment'));
     }
@@ -477,6 +484,7 @@ class OrdersAdminController extends Controller
         }
 
         $enrollment = ClearingHouseEnrollment::findOrFail($id);
+        $this->ensureCanAccessEnrollment($enrollment);
         $oldStatus = $enrollment->status;
         $newStatus = $request->input('status');
 
@@ -496,6 +504,7 @@ class OrdersAdminController extends Controller
     public function updateClearingHouseNotes(Request $request, int $id)
     {
         $enrollment = ClearingHouseEnrollment::findOrFail($id);
+        $this->ensureCanAccessEnrollment($enrollment);
 
         $newNote = $request->input('note');
         if ($newNote) {
@@ -519,6 +528,20 @@ class OrdersAdminController extends Controller
             'DOT Supervisor Training Orders',
             'DOT Supervisor Training order management is not available yet. It will appear here when the feature is ready.'
         );
+    }
+
+    private function scopeEnrollmentsForCompany($query): void
+    {
+        if (Auth::user()?->hasRole('company')) {
+            $query->where('user_id', Auth::id());
+        }
+    }
+
+    private function ensureCanAccessEnrollment(ConsortiumEnrollment|ClearingHouseEnrollment $enrollment): void
+    {
+        if (Auth::user()?->hasRole('company')) {
+            abort_unless((int) $enrollment->user_id === (int) Auth::id(), 403);
+        }
     }
 
     private function applicationsIndex(string $testType, string $pageTitle, string $indexRoute): View
@@ -555,25 +578,31 @@ class OrdersAdminController extends Controller
 
     private function consortiumStats(): array
     {
+        $base = ConsortiumEnrollment::query();
+        $this->scopeEnrollmentsForCompany($base);
+
         return [
-            'total' => ConsortiumEnrollment::count(),
-            'active' => ConsortiumEnrollment::where('status', 'Active')->count(),
-            'pending_payment' => ConsortiumEnrollment::where('status', 'Pending Payment')->count(),
-            'payment_completed' => ConsortiumEnrollment::where('status', 'Payment Completed')->count(),
-            'under_review' => ConsortiumEnrollment::where('status', 'Under Review')->count(),
-            'revenue' => ConsortiumEnrollment::where('payment_status', 'completed')->sum('amount'),
+            'total' => (clone $base)->count(),
+            'active' => (clone $base)->where('status', 'Active')->count(),
+            'pending_payment' => (clone $base)->where('status', 'Pending Payment')->count(),
+            'payment_completed' => (clone $base)->where('status', 'Payment Completed')->count(),
+            'under_review' => (clone $base)->where('status', 'Under Review')->count(),
+            'revenue' => (clone $base)->where('payment_status', 'completed')->sum('amount'),
         ];
     }
 
     private function clearingHouseStats(): array
     {
+        $base = ClearingHouseEnrollment::query();
+        $this->scopeEnrollmentsForCompany($base);
+
         return [
-            'total' => ClearingHouseEnrollment::count(),
-            'active' => ClearingHouseEnrollment::where('status', 'Active')->count(),
-            'pending_payment' => ClearingHouseEnrollment::where('status', 'Pending Payment')->count(),
-            'payment_completed' => ClearingHouseEnrollment::where('status', 'Payment Completed')->count(),
-            'under_review' => ClearingHouseEnrollment::where('status', 'Under Review')->count(),
-            'revenue' => ClearingHouseEnrollment::where('payment_status', 'completed')->sum('amount'),
+            'total' => (clone $base)->count(),
+            'active' => (clone $base)->where('status', 'Active')->count(),
+            'pending_payment' => (clone $base)->where('status', 'Pending Payment')->count(),
+            'payment_completed' => (clone $base)->where('status', 'Payment Completed')->count(),
+            'under_review' => (clone $base)->where('status', 'Under Review')->count(),
+            'revenue' => (clone $base)->where('payment_status', 'completed')->sum('amount'),
         ];
     }
 
