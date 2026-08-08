@@ -163,10 +163,10 @@
                             </div>
                             @guest
                                 @if ($isNonDot)
-                                    <button type="button" class="pf-btn-submit pf-show-scroll-cta" data-reveal-choice="true">
+                                    <a href="#application-form" class="pf-btn-submit pf-show-scroll-cta">
                                         <i class="fas fa-arrow-down"></i>
                                         Continue to Checkout
-                                    </button>
+                                    </a>
                                 @else
                                     <button type="button" class="pf-btn-submit pf-show-scroll-cta" data-reveal-login="true">
                                         <i class="fas fa-arrow-down"></i>
@@ -196,7 +196,7 @@
                             <p class="sub">
                                 @guest
                                     @if ($isNonDot)
-                                        Review the service details and pricing above, then continue as a guest or sign in to proceed.
+                                        Choose how you want to check out below — continue as a guest or sign in. You can switch at any time without losing what you have entered.
                                     @else
                                         Review the service details and pricing above, then sign in when you are ready to proceed.
                                     @endif
@@ -209,27 +209,28 @@
                         @guest
                             @if ($isNonDot)
                                 {{-- Non-DOT: guest checkout or sign in --}}
-                                <div id="pf-choice-teaser" class="pf-card pf-show-teaser rc-animate {{ $revealLoginPanel ? 'd-none' : '' }}">
-                                    <div class="pf-body text-center py-4 px-3">
-                                        <div class="pf-show-teaser-icon mx-auto mb-3" aria-hidden="true">
-                                            <i class="fas fa-clipboard-check"></i>
-                                        </div>
-                                        <h3 class="pf-show-teaser-title">Ready to schedule this test?</h3>
-                                        <p class="pf-show-teaser-text">Continue as a guest to complete checkout now, or sign in to track your order under your account.</p>
-                                        <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center mt-3">
-                                            <button type="button" class="pf-btn-submit" data-reveal-guest="true">
-                                                <i class="fas fa-user"></i>
-                                                Continue as Guest
-                                            </button>
-                                            <button type="button" class="pf-btn-submit pf-btn-outline" data-reveal-login="true">
-                                                <i class="fas fa-sign-in-alt"></i>
-                                                Sign In
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="pf-choice-tabs rc-animate" id="pf-choice-tabs" role="tablist" aria-label="Checkout method">
+                                    <button type="button" role="tab" id="pf-tab-guest" data-choice-tab="guest"
+                                        class="pf-choice-tab {{ $revealLoginPanel ? '' : 'is-active' }}"
+                                        aria-controls="pf-guest-checkout-panel"
+                                        aria-selected="{{ $revealLoginPanel ? 'false' : 'true' }}"
+                                        tabindex="{{ $revealLoginPanel ? '-1' : '0' }}">
+                                        <i class="fas fa-user" aria-hidden="true"></i>
+                                        Continue as Guest
+                                    </button>
+                                    <button type="button" role="tab" id="pf-tab-login" data-choice-tab="login"
+                                        class="pf-choice-tab {{ $revealLoginPanel ? 'is-active' : '' }}"
+                                        aria-controls="pf-login-panel"
+                                        aria-selected="{{ $revealLoginPanel ? 'true' : 'false' }}"
+                                        tabindex="{{ $revealLoginPanel ? '0' : '-1' }}">
+                                        <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                                        Sign In
+                                    </button>
                                 </div>
+                                <p class="pf-choice-hint rc-animate">Guest checkout needs no account. Sign in to track this order under your account — you can switch between the two at any time.</p>
 
-                                <div id="pf-guest-checkout-panel" class="pf-show-login-panel">
+                                <div id="pf-guest-checkout-panel" class="pf-show-login-panel {{ $revealLoginPanel ? '' : 'is-visible' }}"
+                                    role="tabpanel" aria-labelledby="pf-tab-guest">
                                     @include('frontend.portfolio.partials.checkout-form-card')
                                 </div>
                             @else
@@ -249,7 +250,8 @@
                                 </div>
                             @endif
 
-                            <div id="pf-login-panel" class="pf-show-login-panel {{ $revealLoginPanel ? 'is-visible' : '' }}">
+                            <div id="pf-login-panel" class="pf-show-login-panel {{ $revealLoginPanel ? 'is-visible' : '' }}"
+                                @if ($isNonDot) role="tabpanel" aria-labelledby="pf-tab-login" @endif>
                             <div class="pf-card rc-animate">
                                 <div class="pf-header">
                                     <div class="d-flex align-items-start justify-content-between gap-3">
@@ -442,15 +444,84 @@
                 }, { passive: true });
             }
 
+            function scrollToApplication() {
+                var cta = document.getElementById('application-form');
+                if (cta) cta.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // Returns false when the tablist is absent (DOT pages), so callers can fall back.
+            function activateChoice(which, options) {
+                var tabs = document.getElementById('pf-choice-tabs');
+                if (!tabs) return false;
+
+                var opts = options || {};
+                var panels = {
+                    guest: document.getElementById('pf-guest-checkout-panel'),
+                    login: document.getElementById('pf-login-panel'),
+                };
+
+                tabs.querySelectorAll('.pf-choice-tab').forEach(function (tab) {
+                    var isActive = tab.getAttribute('data-choice-tab') === which;
+                    tab.classList.toggle('is-active', isActive);
+                    tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    tab.tabIndex = isActive ? 0 : -1;
+                });
+
+                Object.keys(panels).forEach(function (key) {
+                    if (panels[key]) panels[key].classList.toggle('is-visible', key === which);
+                });
+
+                if (opts.scroll) scrollToApplication();
+
+                if (opts.focusTab) {
+                    var activeTab = tabs.querySelector('.pf-choice-tab.is-active');
+                    if (activeTab) activeTab.focus();
+                } else if (opts.focusField) {
+                    window.setTimeout(function () {
+                        var field = document.getElementById(which === 'login' ? 'login_email' : 'first_name');
+                        if (field) field.focus();
+                    }, 450);
+                }
+
+                return true;
+            }
+
+            function initChoiceTabs() {
+                var tabs = document.getElementById('pf-choice-tabs');
+                if (!tabs) return;
+
+                var list = Array.prototype.slice.call(tabs.querySelectorAll('.pf-choice-tab'));
+
+                list.forEach(function (tab, index) {
+                    tab.addEventListener('click', function () {
+                        activateChoice(tab.getAttribute('data-choice-tab'), { focusTab: true });
+                    });
+
+                    tab.addEventListener('keydown', function (e) {
+                        var next = null;
+                        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                            next = list[(index + 1) % list.length];
+                        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                            next = list[(index - 1 + list.length) % list.length];
+                        } else if (e.key === 'Home') {
+                            next = list[0];
+                        } else if (e.key === 'End') {
+                            next = list[list.length - 1];
+                        }
+                        if (!next) return;
+                        e.preventDefault();
+                        activateChoice(next.getAttribute('data-choice-tab'), { focusTab: true });
+                    });
+                });
+            }
+
             function revealLoginPanel() {
-                var choiceTeaser = document.getElementById('pf-choice-teaser');
+                if (activateChoice('login', { scroll: true, focusField: true })) return;
+
                 var teaser = document.getElementById('pf-login-teaser');
                 var panel = document.getElementById('pf-login-panel');
-                var guestPanel = document.getElementById('pf-guest-checkout-panel');
                 var cta = document.getElementById('application-form');
-                if (choiceTeaser) choiceTeaser.classList.add('d-none');
                 if (teaser) teaser.classList.add('d-none');
-                if (guestPanel) guestPanel.classList.remove('is-visible');
                 if (panel) panel.classList.add('is-visible');
                 if (cta) {
                     cta.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -459,30 +530,6 @@
                         if (email) email.focus();
                     }, 450);
                 }
-            }
-
-            function revealGuestPanel() {
-                var choiceTeaser = document.getElementById('pf-choice-teaser');
-                var panel = document.getElementById('pf-guest-checkout-panel');
-                var loginPanel = document.getElementById('pf-login-panel');
-                var cta = document.getElementById('application-form');
-                if (choiceTeaser) choiceTeaser.classList.add('d-none');
-                if (loginPanel) loginPanel.classList.remove('is-visible');
-                if (panel) panel.classList.add('is-visible');
-                if (cta) {
-                    cta.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    window.setTimeout(function () {
-                        var firstName = document.getElementById('first_name');
-                        if (firstName) firstName.focus();
-                    }, 450);
-                }
-            }
-
-            function revealChoicePanel() {
-                var choiceTeaser = document.getElementById('pf-choice-teaser');
-                var cta = document.getElementById('application-form');
-                if (choiceTeaser) choiceTeaser.classList.remove('d-none');
-                if (cta) cta.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
             function updateStepper(activeStep) {
@@ -514,11 +561,6 @@
                 function goToStep(n) {
                     var selector = targets[n];
                     var el = selector ? document.querySelector(selector) : null;
-                    if (n === 3 && document.getElementById('pf-choice-teaser')) {
-                        revealChoicePanel();
-                        updateStepper(3);
-                        return;
-                    }
                     if (n === 3 && document.getElementById('pf-login-teaser')) {
                         revealLoginPanel();
                         updateStepper(3);
@@ -577,6 +619,7 @@
             initScrollProgress();
             initStepperClicks();
             initStepperOnScroll();
+            initChoiceTabs();
             updateStepper(1);
 
             document.querySelectorAll('[data-reveal-login="true"]').forEach(function (btn) {
@@ -586,34 +629,18 @@
                 });
             });
 
-            document.querySelectorAll('[data-reveal-guest="true"]').forEach(function (btn) {
-                btn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    revealGuestPanel();
-                });
-            });
-
-            document.querySelectorAll('[data-reveal-choice="true"]').forEach(function (btn) {
-                btn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    revealChoicePanel();
-                    updateStepper(3);
-                });
-            });
-
             document.querySelectorAll('a.pf-show-scroll-cta').forEach(function (link) {
                 link.addEventListener('click', function (e) {
                     e.preventDefault();
-                    var target = document.getElementById('application-form');
-                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    scrollToApplication();
                 });
             });
 
             if (window.location.hash === '#sign-in') {
                 revealLoginPanel();
             } else if (window.location.hash === '#application-form') {
-                if (document.getElementById('pf-choice-teaser')) {
-                    revealChoicePanel();
+                if (document.getElementById('pf-choice-tabs')) {
+                    scrollToApplication();
                 } else {
                     revealLoginPanel();
                 }

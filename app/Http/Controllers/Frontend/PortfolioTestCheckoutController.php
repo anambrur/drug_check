@@ -5,9 +5,6 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PortfolioTestCheckoutRequest;
 use App\Http\Requests\PortfolioTestResubmitRequest;
-use App\Mail\DotApplicationReceived;
-use App\Mail\PaymentConfirmation;
-use App\Models\Admin\ContactInfoWidget;
 use App\Models\Admin\Employee;
 use App\Models\Admin\Portfolio;
 use App\Models\Admin\QuestOrder;
@@ -16,7 +13,6 @@ use App\Services\PortfolioTestApplicationService;
 use App\Services\QuestOrderSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Stripe\Checkout\Session as StripeSession;
 use Stripe\Stripe;
@@ -102,27 +98,29 @@ class PortfolioTestCheckoutController extends Controller
         $application->loadMissing('portfolio');
 
         $sessionId = $request->query('session_id');
-        if ($sessionId
-            && $application->stripe_checkout_session_id === $sessionId
-            && $application->payment_status === 'pending'
-        ) {
+        if ($sessionId && $application->stripe_checkout_session_id === $sessionId) {
             try {
                 Stripe::setApiKey(config('services.stripe.secret'));
                 $session = StripeSession::retrieve($sessionId);
                 if ($session->payment_status === 'paid') {
-                    $this->applicationService->markPaymentCompleted(
+                    // Idempotent: marks payment if needed and sends any missing emails.
+                    $this->applicationService->finalizePaidApplication(
                         $application,
                         $session->payment_intent ?? null
                     );
                     $application->refresh();
-
-                    if ($application->isNonDot()) {
-                        $this->sendNonDotConfirmationEmails($application);
-                    }
                 }
             } catch (\Exception $e) {
                 // Webhook will reconcile if this check fails.
             }
+        }
+
+        // If webhook already completed payment but emails are still pending, finish them.
+        if ($application->payment_status === 'completed'
+            && (!$application->customer_notified_at || !$application->admin_notified_at)
+        ) {
+            $this->applicationService->finalizePaidApplication($application);
+            $application->refresh();
         }
 
         if ($application->payment_status !== 'completed') {
@@ -361,57 +359,5 @@ class PortfolioTestCheckoutController extends Controller
                 && (int) $employee->clientProfile?->user_id === (int) $user->id,
             default => false,
         };
-    }
-
-    private function sendNonDotConfirmationEmails(PortfolioTestApplication $application): void
-    {
-        $portfolio = $application->portfolio;
-        $price = number_format($application->amount / 100, 2, '.', '');
-
-        $mailData = [
-            'portfolio_id' => $application->portfolio_id,
-            'first_name' => $application->first_name,
-            'last_name' => $application->last_name,
-            'email' => $application->email,
-            'phone' => $application->phone,
-            'address' => $application->address,
-            'date' => $application->date,
-            'gender' => $application->gender,
-            'preferred_location' => $application->preferred_location,
-            'employee_name' => $application->employee_name,
-            'company_name' => $application->company_name,
-            'accounting_email' => $application->accounting_email,
-            'reason_for_testing' => $application->reason_for_testing,
-            'payment_intent_id' => $application->stripe_payment_intent_id,
-            'test_name' => $portfolio->title ?? 'Test',
-            'code' => $portfolio->code,
-            'lab_account' => $portfolio->lab_account,
-            'country' => $application->country,
-            'price' => '$' . $price,
-        ];
-
-        try {
-            $adminEmail = ContactInfoWidget::pluck('email')->first();
-            if ($adminEmail) {
-                Mail::to($adminEmail)->send(new DotApplicationReceived(
-                    $mailData,
-                    $application->reason_for_testing ?? 'No message provided.'
-                ));
-            }
-        } catch (\Exception $e) {
-            // Non-blocking — payment already succeeded.
-        }
-
-        try {
-            if ($application->email) {
-                Mail::to($application->email)->send(new PaymentConfirmation(
-                    $mailData,
-                    $portfolio->title ?? 'Test',
-                    $price
-                ));
-            }
-        } catch (\Exception $e) {
-            // Non-blocking.
-        }
     }
 }

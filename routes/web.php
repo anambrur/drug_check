@@ -1145,6 +1145,8 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
         ->name('admin.orders.applications.data')->middleware('permission:quest-order view');
     Route::get('orders/applications/{id}', [OrdersAdminController::class, 'showApplication'])
         ->name('admin.orders.applications.show')->middleware('permission:quest-order view');
+    Route::post('orders/applications/{id}/resubmit', [OrdersAdminController::class, 'resubmitApplication'])
+        ->name('admin.orders.applications.resubmit')->middleware('permission:quest-order edit');
 
     Route::get('orders/clearing-house', [OrdersAdminController::class, 'clearingHouse'])
         ->name('admin.orders.clearing-house')->middleware('permission:clearing house view');

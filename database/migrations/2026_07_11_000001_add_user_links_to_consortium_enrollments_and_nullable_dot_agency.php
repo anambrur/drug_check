@@ -13,7 +13,13 @@ return new class extends Migration
     public function up(): void
     {
         // Production schema has an index named like a FK but no actual foreign key constraint.
-        DB::statement('ALTER TABLE client_profiles MODIFY dot_agency_id BIGINT UNSIGNED NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE client_profiles MODIFY dot_agency_id BIGINT UNSIGNED NULL');
+        } else {
+            Schema::table('client_profiles', function (Blueprint $table) {
+                $table->unsignedBigInteger('dot_agency_id')->nullable()->change();
+            });
+        }
 
         Schema::table('consortium_enrollments', function (Blueprint $table) {
             $table->foreignId('user_id')->nullable()->after('id')->constrained('users')->nullOnDelete();

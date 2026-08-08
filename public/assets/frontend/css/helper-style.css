@@ -2078,6 +2078,67 @@ body.rtl-mode .web-design-process .design-process-video .design-process-video-bt
     color: var(--main-color) !important;
 }
 
+.pf-choice-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .35rem;
+    padding: .35rem;
+    background: var(--pf-surface-2);
+    border: 1px solid var(--pf-border);
+    border-radius: var(--pf-radius);
+    box-shadow: var(--pf-shadow-sm);
+}
+
+.pf-choice-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .8rem 1rem;
+    border: 0;
+    border-radius: var(--pf-radius-sm);
+    background: transparent;
+    color: var(--pf-muted);
+    font-family: var(--pf-font-head);
+    font-weight: 600;
+    font-size: .92rem;
+    line-height: 1.3;
+    text-align: center;
+    cursor: pointer;
+    transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+}
+
+.pf-choice-tab:hover {
+    color: var(--main-color);
+    background: var(--pf-primary-light);
+}
+
+.pf-choice-tab:focus-visible {
+    outline: 2px solid var(--main-color);
+    outline-offset: 2px;
+}
+
+.pf-choice-tab.is-active {
+    background: var(--pf-surface);
+    color: var(--main-color);
+    box-shadow: var(--pf-shadow-sm);
+}
+
+.pf-choice-hint {
+    color: var(--pf-muted);
+    font-size: .85rem;
+    line-height: 1.6;
+    text-align: center;
+    margin: .85rem auto 1.25rem;
+    max-width: 460px;
+}
+
+@media (max-width: 575.98px) {
+    .pf-choice-tabs {
+        grid-template-columns: 1fr;
+    }
+}
+
 .pf-show-teaser {
     border: 1.5px dashed color-mix(in srgb, var(--main-color) 28%, var(--pf-border));
     box-shadow: var(--pf-shadow-md);
@@ -2189,6 +2250,7 @@ body.rtl-mode .web-design-process .design-process-video .design-process-video-bt
 .pf-show-action-col > .summary-card,
 .pf-show-action-col > .pf-card,
 .pf-show-action-col > .pf-show-teaser,
+.pf-show-action-col > .pf-choice-tabs,
 .pf-show-action-col > .pf-show-login-panel {
     width: 100%;
 }

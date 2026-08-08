@@ -9,7 +9,9 @@ use App\Models\Admin\QuestOrder;
 use App\Models\ConsortiumEnrollment;
 use App\Models\ClearingHouseEnrollment;
 use App\Models\PortfolioTestApplication;
+use App\Services\QuestOrderSubmissionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
@@ -17,6 +19,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class OrdersAdminController extends Controller
 {
+    public function __construct(
+        private readonly QuestOrderSubmissionService $questSubmissionService
+    ) {}
+
     public function dotTesting(): View
     {
         return $this->applicationsIndex('dot', 'DOT Testing Orders', 'admin.orders.dot-testing');
@@ -190,6 +196,43 @@ class OrdersAdminController extends Controller
             'questOrder',
             'listRoute'
         ));
+    }
+
+    public function resubmitApplication(int $id): RedirectResponse
+    {
+        $application = PortfolioTestApplication::findOrFail($id);
+        $redirect = redirect()->route('admin.orders.applications.show', $id);
+
+        if ($application->payment_status !== 'completed') {
+            toastr()->warning('Payment has not been completed for this order.', 'content.error');
+
+            return $redirect;
+        }
+
+        if ($application->isQuestSubmitted()) {
+            toastr()->info('This order has already been submitted to Quest.', 'Info');
+
+            return $redirect;
+        }
+
+        $application->update([
+            'quest_submission_status' => 'pending',
+            'quest_submission_error' => null,
+        ]);
+
+        try {
+            $result = $this->questSubmissionService->submitFromApplication($application->fresh());
+
+            if ($result['success']) {
+                toastr()->success('Order submitted to Quest. Quest Order ID: ' . $result['quest_order_id'], 'Success');
+            } else {
+                toastr()->error('Quest submission failed: ' . ($result['error'] ?? 'Unknown error.'), 'content.error');
+            }
+        } catch (\Throwable $e) {
+            toastr()->error($e->getMessage(), 'content.error');
+        }
+
+        return $redirect;
     }
 
     public function consortium(): View

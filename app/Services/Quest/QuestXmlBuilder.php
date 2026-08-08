@@ -23,22 +23,14 @@ class QuestXmlBuilder
                 ->addChild('EmailAddress', $data['email']);
         }
 
-        if (!empty($data['end_datetime'])) {
-            try {
-                $eventInfo->addChild(
-                    'EndDateTime',
-                    Carbon::createFromFormat('Y-m-d\TH:i', $data['end_datetime'])->format('m/d/Y H:i:s')
-                );
-            } catch (\Throwable) {
-                try {
-                    $eventInfo->addChild('EndDateTime', Carbon::parse($data['end_datetime'])->format('m/d/Y H:i:s'));
-                } catch (\Throwable) {
-                    Log::warning('Quest: could not reformat end_datetime', ['value' => $data['end_datetime']]);
-                }
-            }
-            if (!empty($data['end_datetime_timezone_id'])) {
-                $eventInfo->addChild('EndDateTimeTimeZoneID', $data['end_datetime_timezone_id']);
-            }
+        $endDateTime = $this->resolveEndDateTime(
+            $data['end_datetime'] ?? null,
+            $data['end_datetime_timezone_id'] ?? null
+        );
+
+        if ($endDateTime !== null) {
+            $eventInfo->addChild('EndDateTime', $endDateTime->format('m/d/Y H:i:s'));
+            $eventInfo->addChild('EndDateTimeTimeZoneID', (string) $data['end_datetime_timezone_id']);
         }
 
         $donorInfo = $xml->addChild('DonorInfo');
@@ -63,10 +55,10 @@ class QuestXmlBuilder
             }
         }
 
-        $donorInfo->addChild('PrimaryPhone', $this->digitsOnly($data['primary_phone'] ?? ''));
+        $donorInfo->addChild('PrimaryPhone', substr($this->digitsOnly($data['primary_phone'] ?? ''), 0, 10));
 
         if (!empty($data['secondary_phone'])) {
-            $donorInfo->addChild('SecondaryPhone', $this->digitsOnly($data['secondary_phone']));
+            $donorInfo->addChild('SecondaryPhone', substr($this->digitsOnly($data['secondary_phone']), 0, 12));
         }
 
         if (!empty($data['zip_code'])) {
@@ -129,7 +121,7 @@ class QuestXmlBuilder
         $xmlString = trim(preg_replace('/<\?xml[^?]*\?>/', '', $xml->asXML()));
 
         if (!empty($data['order_comments'])) {
-            $xmlString = $this->wrapOrderCommentsInCdata($xmlString, $data['order_comments']);
+            $xmlString = $this->insertOrderComments($xmlString, $data['order_comments']);
         }
 
         return $xmlString;
@@ -191,22 +183,62 @@ class QuestXmlBuilder
         return substr(trim($value), 0, 36);
     }
 
-    private function wrapOrderCommentsInCdata(string $xmlString, string $comments): string
+    /**
+     * EndDateTimeTimeZoneID is required whenever EndDateTime is sent (spec 2.1.2), and an
+     * already-expired order cannot be honoured. When either condition fails both elements
+     * are omitted so Quest applies the account default expiry (spec 4.16).
+     */
+    private function resolveEndDateTime(?string $value, mixed $timezoneId): ?Carbon
     {
-        $escaped = htmlspecialchars($comments, ENT_XML1, 'UTF-8');
-        $pattern = '/<OrderComments>' . preg_quote($escaped, '/') . '<\/OrderComments>/';
+        if (empty($value)) {
+            return null;
+        }
 
-        if (preg_match($pattern, $xmlString)) {
-            return preg_replace(
-                $pattern,
-                '<OrderComments><![CDATA[' . $comments . ']]></OrderComments>',
-                $xmlString
-            );
+        try {
+            $parsed = Carbon::createFromFormat('Y-m-d\TH:i', $value);
+        } catch (\Throwable) {
+            try {
+                $parsed = Carbon::parse($value);
+            } catch (\Throwable) {
+                Log::warning('Quest: could not reformat end_datetime', ['value' => $value]);
+
+                return null;
+            }
+        }
+
+        if (empty($timezoneId)) {
+            Log::warning('Quest: end_datetime dropped, no timezone id supplied', ['value' => $value]);
+
+            return null;
+        }
+
+        if ($parsed->isPast()) {
+            Log::warning('Quest: end_datetime dropped, already in the past', ['value' => $value]);
+
+            return null;
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * Capped at 250 characters per spec 4.27. The spec describes OrderComments as CDATA
+     * wrapped, but Quest re-wraps the whole order XML in CDATA on its internal hop to
+     * CreateIntegrationOrder, so a nested section makes their deserializer fail with
+     * "Start element 'tem:xmlRequest' does not match end element 'OrderComments'".
+     * Escaped text decodes to the same value without the nesting.
+     */
+    private function insertOrderComments(string $xmlString, string $comments): string
+    {
+        $comments = trim(mb_substr($comments, 0, 250));
+
+        if ($comments === '') {
+            return $xmlString;
         }
 
         return str_replace(
             '<Screenings>',
-            '<OrderComments><![CDATA[' . $comments . ']]></OrderComments><Screenings>',
+            '<OrderComments>' . $this->xmlEscape($comments) . '</OrderComments><Screenings>',
             $xmlString
         );
     }

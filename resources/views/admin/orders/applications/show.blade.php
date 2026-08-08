@@ -146,6 +146,18 @@
                 <small class="text-danger d-block font-weight-bold">Quest Error</small>
                 <p class="font-12 text-danger mb-0">{{ $application->quest_submission_error }}</p>
             @endif
+
+            @if($application->payment_status === 'completed' && !$application->isQuestSubmitted())
+                <hr>
+                <form method="POST" action="{{ route('admin.orders.applications.resubmit', $application->id) }}"
+                      onsubmit="return confirm('Resubmit this order to Quest? No new payment is taken.');">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-danger btn-block">
+                        <i class="fa fa-redo mr-1"></i> Resubmit to Quest
+                    </button>
+                </form>
+                <small class="text-muted d-block mt-1">Submits the saved order details again. No additional payment is taken.</small>
+            @endif
         </div>
     </div>
 </div>

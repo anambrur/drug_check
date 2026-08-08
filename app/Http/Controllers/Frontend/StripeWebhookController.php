@@ -345,7 +345,7 @@ class StripeWebhookController extends Controller
             return;
         }
 
-        app(PortfolioTestApplicationService::class)->markPaymentCompleted(
+        app(PortfolioTestApplicationService::class)->finalizePaidApplication(
             $application,
             $session->payment_intent ?? null
         );

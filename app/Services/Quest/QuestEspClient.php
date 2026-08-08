@@ -81,12 +81,10 @@ class QuestEspClient
             . '<wss:username>' . $this->xmlEscape($this->getUsername()) . '</wss:username>'
             . '<wss:password>' . $this->xmlEscape($this->getPassword()) . '</wss:password>';
 
+        // Payload XML is escaped rather than CDATA-wrapped. Escaping decodes to the same
+        // string server-side and cannot be terminated early by a "]]>" inside a field.
         foreach ($params as $key => $value) {
-            if ($key === 'orderXml' || $key === 'DocXml') {
-                $body .= '<wss:' . $key . '><![CDATA[' . $value . ']]></wss:' . $key . '>';
-            } else {
-                $body .= '<wss:' . $key . '>' . $this->xmlEscape((string) $value) . '</wss:' . $key . '>';
-            }
+            $body .= '<wss:' . $key . '>' . $this->xmlEscape((string) $value) . '</wss:' . $key . '>';
         }
 
         $body .= '</wss:' . $method . '>';
@@ -151,6 +149,7 @@ class QuestEspClient
                 'action' => $soapAction,
                 'status' => $httpCode,
                 'body' => substr((string) $response, 0, 400),
+                'request' => $this->redactCredentials($soapBody),
             ]);
             throw new \RuntimeException("Quest Diagnostics returned HTTP {$httpCode}.");
         }
@@ -230,6 +229,15 @@ class QuestEspClient
     private function saveCircuitState(array $state): void
     {
         Cache::put(self::CIRCUIT_BREAKER_KEY, $state, now()->addHour());
+    }
+
+    private function redactCredentials(string $soapBody): string
+    {
+        return (string) preg_replace(
+            '#<wss:(username|password)>.*?</wss:\1>#s',
+            '<wss:$1>***</wss:$1>',
+            $soapBody
+        );
     }
 
     private function xmlEscape(string $value): string

@@ -63,7 +63,7 @@
                             <div class="pf-alert pf-alert-success mb-4">
                                 <i class="fas fa-info-circle mt-1"></i>
                                 <div>
-                                    If Quest reported that the <strong>collection site cannot support this order</strong>, clear the collection site field or search for a different location before resubmitting. No additional payment is required.
+                                    Review the details below and resubmit. If Quest reported that the <strong>collection site cannot support this order</strong>, clear or change the collection site first. No additional payment is required.
                                 </div>
                             </div>
 

@@ -2,14 +2,21 @@
 
 namespace App\Services;
 
+use App\Mail\DotTestAdminNotification;
+use App\Mail\DotTestPaymentConfirmation;
+use App\Mail\NonDotTestAdminNotification;
+use App\Mail\NonDotTestPaymentConfirmation;
 use App\Models\Admin\ClientProfile;
 use App\Models\Admin\CollectionSite;
 use App\Models\Admin\Employee;
+use App\Models\Admin\HeaderInfo;
 use App\Models\Admin\Portfolio;
 use App\Models\PortfolioTestApplication;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
 
@@ -329,9 +336,26 @@ class PortfolioTestApplicationService
         ];
     }
 
+    /**
+     * Mark payment complete (idempotent), create in-app admin toast, then send
+     * customer + admin emails. Safe to call from both success page and webhook.
+     */
+    public function finalizePaidApplication(PortfolioTestApplication $application, ?string $paymentIntentId = null): void
+    {
+        $this->markPaymentCompleted($application, $paymentIntentId);
+        $application->refresh();
+        $this->sendApplicationNotifications($application);
+    }
+
     public function markPaymentCompleted(PortfolioTestApplication $application, ?string $paymentIntentId = null): void
     {
         if ($application->payment_status === 'completed') {
+            if ($paymentIntentId && !$application->stripe_payment_intent_id) {
+                $application->update([
+                    'stripe_payment_intent_id' => $paymentIntentId,
+                ]);
+            }
+
             return;
         }
 
@@ -344,6 +368,59 @@ class PortfolioTestApplicationService
         $application->refresh();
 
         app(AdminOrderNotificationService::class)->notifyPaidApplication($application);
+    }
+
+    protected function sendApplicationNotifications(PortfolioTestApplication $application): void
+    {
+        $application->loadMissing('portfolio');
+
+        $customerEmail = trim((string) $application->email);
+
+        if (!$application->customer_notified_at) {
+            if ($customerEmail !== '' && filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    $customerMail = $application->isDot()
+                        ? new DotTestPaymentConfirmation($application)
+                        : new NonDotTestPaymentConfirmation($application);
+
+                    Mail::to($customerEmail)->send($customerMail);
+                    $application->update(['customer_notified_at' => now()]);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to send portfolio test customer payment confirmation email.', [
+                        'application_id' => $application->id,
+                        'test_type' => $application->test_type,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        if (!$application->admin_notified_at) {
+            try {
+                $adminEmail = trim((string) (optional(HeaderInfo::first())->email ?? ''));
+
+                if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                    $adminMail = $application->isDot()
+                        ? new DotTestAdminNotification($application)
+                        : new NonDotTestAdminNotification($application);
+
+                    Mail::to($adminEmail)->send($adminMail);
+                    $application->update(['admin_notified_at' => now()]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to send portfolio test admin notification email.', [
+                    'application_id' => $application->id,
+                    'test_type' => $application->test_type,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $application->refresh();
+
+        if ($application->customer_notified_at && $application->admin_notified_at && !$application->notifications_sent_at) {
+            $application->update(['notifications_sent_at' => now()]);
+        }
     }
 
     private function reasonLabel(?int $reasonId): string

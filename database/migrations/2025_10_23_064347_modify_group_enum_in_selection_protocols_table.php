@@ -12,14 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Method 1: Using raw SQL (recommended for enum modifications)
-        DB::statement("ALTER TABLE selection_protocols MODIFY COLUMN `group` ENUM('DOT', 'NON_DOT', 'DOT_AGENCY', 'ALL', 'FMCSA', 'FRA', 'FTA', 'FAA', 'PHMSA', 'RSPA', 'USCG') NOT NULL");
+        if (DB::getDriverName() !== 'mysql') {
+            Schema::table('selection_protocols', function (Blueprint $table) {
+                $table->enum('group', ['DOT', 'NON_DOT', 'DOT_AGENCY', 'ALL', 'FMCSA', 'FRA', 'FTA', 'FAA', 'PHMSA', 'RSPA', 'USCG'])
+                    ->nullable(false)
+                    ->change();
+            });
 
-        // Alternative Method 2: If you prefer Schema builder (may not work on all database systems)
-        // Schema::table('selection_protocols', function (Blueprint $table) {
-        //     $table->enum('group', ['DOT', 'NON_DOT', 'DOT_AGENCY', 'ALL', 'FMCSA', 'FRA', 'FTA', 'FAA', 'PHMSA', 'RSPA', 'USCG'])
-        //           ->change();
-        // });
+            return;
+        }
+
+        DB::statement("ALTER TABLE selection_protocols MODIFY COLUMN `group` ENUM('DOT', 'NON_DOT', 'DOT_AGENCY', 'ALL', 'FMCSA', 'FRA', 'FTA', 'FAA', 'PHMSA', 'RSPA', 'USCG') NOT NULL");
     }
 
     /**

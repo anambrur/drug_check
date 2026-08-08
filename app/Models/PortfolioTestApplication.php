@@ -61,6 +61,9 @@ class PortfolioTestApplication extends Model
         'quest_submission_status',
         'quest_submission_error',
         'quest_order_id',
+        'customer_notified_at',
+        'admin_notified_at',
+        'notifications_sent_at',
     ];
 
     protected $casts = [
@@ -68,6 +71,9 @@ class PortfolioTestApplication extends Model
         'reason_for_test_id' => 'integer',
         'end_datetime_timezone_id' => 'integer',
         'is_guest' => 'boolean',
+        'customer_notified_at' => 'datetime',
+        'admin_notified_at' => 'datetime',
+        'notifications_sent_at' => 'datetime',
     ];
 
     public function portfolio(): BelongsTo
