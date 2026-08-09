@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Services\RandomSelectionService;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -37,11 +38,16 @@ class SelectionProtocolRequest extends FormRequest
 
         $this->merge([
             'exclude_previously_selected' => $this->boolean('exclude_previously_selected'),
+            'randomize_alternate_print_order' => $this->boolean('randomize_alternate_print_order'),
             'automatic' => $this->boolean('automatic'),
             'calculate_pool_average' => $this->boolean('calculate_pool_average'),
             'is_active' => $this->boolean('is_active'),
             'is_email_send' => $this->boolean('is_email_send'),
             'manual_dates' => $manualDates,
+            'alternate_mode' => $this->input(
+                'alternate_mode',
+                RandomSelectionService::ALTERNATE_MODE_IMMEDIATE
+            ),
         ]);
     }
 
@@ -63,8 +69,10 @@ class SelectionProtocolRequest extends FormRequest
             'monthly_selection_day' => 'required_if:selection_period,MONTHLY|nullable|integer|min:1|max:28',
             'manual_dates' => 'required_if:selection_period,MANUAL|nullable|array|min:1',
             'manual_dates.*' => 'nullable|date',
+            'alternate_mode' => 'required|in:immediate,on_demand,offline_list',
             'alternates_type' => 'nullable|in:NUMBER,PERCENTAGE',
             'alternates_value' => 'nullable|integer|min:0',
+            'randomize_alternate_print_order' => 'boolean',
             'automatic' => 'boolean',
             'calculate_pool_average' => 'boolean',
             'is_active' => 'boolean',
@@ -80,7 +88,12 @@ class SelectionProtocolRequest extends FormRequest
 
     public function protocolAttributes(): array
     {
+        $mode = $this->input('alternate_mode', RandomSelectionService::ALTERNATE_MODE_IMMEDIATE);
         $alternatesValue = (int) $this->input('alternates_value', 0);
+
+        if ($mode !== RandomSelectionService::ALTERNATE_MODE_IMMEDIATE) {
+            $alternatesValue = 0;
+        }
 
         return [
             'name' => $this->input('name'),
@@ -100,8 +113,10 @@ class SelectionProtocolRequest extends FormRequest
             'manual_dates' => $this->input('selection_period') === 'MANUAL'
                 ? array_values(array_filter((array) $this->input('manual_dates', [])))
                 : null,
+            'alternate_mode' => $mode,
             'alternates_type' => $alternatesValue > 0 ? $this->input('alternates_type') : null,
             'alternates_value' => $alternatesValue > 0 ? $alternatesValue : 0,
+            'randomize_alternate_print_order' => $this->boolean('randomize_alternate_print_order'),
             'automatic' => $this->boolean('automatic'),
             'calculate_pool_average' => $this->boolean('calculate_pool_average'),
             'is_active' => $this->boolean('is_active'),

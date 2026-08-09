@@ -3,6 +3,8 @@
     $extraCount = $counts['extra'] ?? count($extra);
     $subCount = $counts['sub'] ?? count($sub);
     $altCount = $counts['alternate'] ?? count($alternates);
+    $alternateMode = $alternateMode ?? ($protocol->alternate_mode ?? 'immediate');
+    $offlineList = $offlineList ?? $event->offlineList;
 @endphp
 
 <style>
@@ -26,12 +28,20 @@
             <h3 class="rs-page__title">Selection run</h3>
             <p class="rs-page__subtitle">
                 {{ $protocol->name }} · {{ $event->selection_date->format('M j, Y g:i A') }}
+                · Alternate mode:
+                {{ str_replace('_', ' ', $alternateMode) }}
             </p>
         </div>
         <div class="rs-page__actions">
             <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-print mr-1"></i> Print
             </button>
+            @if ($alternateMode === 'offline_list' && $offlineList)
+                <a href="{{ route('random-selection.offline-list.print', $event) }}"
+                    class="btn btn-outline-primary btn-sm" target="_blank">
+                    <i class="fas fa-list mr-1"></i> Print offline list
+                </a>
+            @endif
             <a href="{{ route('random-selection.executions', $protocol) }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-history mr-1"></i> History
             </a>
@@ -133,11 +143,53 @@
         </div>
     </div>
 
+    @if ($alternateMode === 'offline_list' && $offlineList)
+        <div class="card rs-history__runs mb-3 no-print">
+            <div class="card-header rs-history__runs-header">
+                <div>
+                    <h5 class="mb-0">Offline shuffled list</h5>
+                    <span class="text-muted small">
+                        Single-use randomly sorted full pool for on-site use without internet.
+                        {{ $offlineList->remainingCount() }} remaining of {{ count($offlineList->shuffled_donor_ids ?? []) }}.
+                        @if ($offlineList->printed_at)
+                            Printed {{ $offlineList->printed_at->format('M j, Y g:i A') }}.
+                        @endif
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('random-selection.offline-list.consume', $offlineList) }}"
+                    class="form-inline"
+                    onsubmit="return confirm('Consume the next unused DonorID from the offline list?');">
+                    @csrf
+                    <div class="form-group mr-2 mb-2">
+                        <label class="mr-2 mb-0" for="replaces_selected_employee_id">Optional replace primary</label>
+                        <select name="replaces_selected_employee_id" id="replaces_selected_employee_id" class="form-control form-control-sm">
+                            <option value="">None — add as alternate</option>
+                            @foreach ($primary ?? [] as $primarySelection)
+                                @if (!$primarySelection->replacementAlternate)
+                                    <option value="{{ $primarySelection->id }}">
+                                        {{ $primarySelection->donor_id ?: optional($primarySelection->employee)->employee_id }}
+                                        —
+                                        {{ trim((optional($primarySelection->employee)->first_name ?? '') . ' ' . (optional($primarySelection->employee)->last_name ?? '')) }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm mb-2">
+                        Use next from offline list
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <div class="card rs-history__runs">
         <div class="card-header rs-history__runs-header">
             <div>
                 <h5 class="mb-0">Selected employees</h5>
-                <span class="text-muted small">Filter by selection type, then print or review the list</span>
+                <span class="text-muted small">Filter by selection type, then print or review the list. Open Audit to see the DonorID pool for each pick.</span>
             </div>
         </div>
         <div class="card-body">

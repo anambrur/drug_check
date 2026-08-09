@@ -8,6 +8,7 @@ use App\Models\Admin\Employee;
 use App\Models\Admin\ResultRecording;
 use App\Models\Admin\SelectedEmployee;
 use App\Models\Admin\SelectionEvent;
+use App\Models\Admin\SelectionOfflineList;
 use App\Models\Admin\SelectionProtocol;
 use App\Models\Admin\TestAdmin;
 use App\Models\User;
@@ -22,7 +23,7 @@ class RandomSelectionExecuteTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function createProtocolContext(int $employeeCount = 5): array
+    protected function createProtocolContext(int $employeeCount = 5, array $protocolOverrides = []): array
     {
         $user = User::factory()->create();
         $agency = DotAgency::create([
@@ -61,7 +62,7 @@ class RandomSelectionExecuteTest extends TestCase
             ]);
         }
 
-        $protocol = SelectionProtocol::create([
+        $protocol = SelectionProtocol::create(array_merge([
             'name' => 'DOT Monthly',
             'client_id' => $client->id,
             'test_id' => $test->id,
@@ -74,11 +75,13 @@ class RandomSelectionExecuteTest extends TestCase
             'monthly_selection_day' => 8,
             'alternates_value' => 1,
             'alternates_type' => 'NUMBER',
+            'alternate_mode' => RandomSelectionService::ALTERNATE_MODE_IMMEDIATE,
+            'randomize_alternate_print_order' => true,
             'automatic' => true,
             'calculate_pool_average' => false,
             'is_active' => true,
             'is_email_send' => false,
-        ]);
+        ], $protocolOverrides));
 
         $protocol->clients()->attach([$client->id]);
 
@@ -110,6 +113,161 @@ class RandomSelectionExecuteTest extends TestCase
         $this->assertNotNull($recording->selection_event_id);
         $this->assertNotNull($recording->selected_employee_id);
         $this->assertSame('Random Selection', $recording->reason_for_test);
+    }
+
+    public function test_execute_stores_donor_id_audit_pool_on_each_selection(): void
+    {
+        $context = $this->createProtocolContext(5);
+        $protocol = $context['protocol'];
+
+        $results = app(RandomSelectionService::class)->executeProtocol(
+            $protocol->fresh(['clients', 'extraTests', 'subSelections', 'test']),
+            'manual'
+        );
+
+        $event = $results['event'];
+        $this->assertNotEmpty($event->selection_pool);
+        $this->assertContainsOnly('string', $event->selection_pool);
+
+        foreach ($event->selectedEmployees as $selection) {
+            $this->assertNotEmpty($selection->donor_id);
+            $this->assertIsArray($selection->draw_pool);
+            $this->assertNotEmpty($selection->draw_pool);
+            $this->assertSame(count($selection->draw_pool) - 1, $selection->pool_range_max);
+            $this->assertArrayHasKey($selection->random_number, $selection->draw_pool);
+            $this->assertSame(
+                $selection->donor_id,
+                (string) $selection->draw_pool[$selection->random_number]
+            );
+        }
+
+        $alternate = $results['alternates']->first();
+        $this->assertNotNull($alternate->print_order);
+    }
+
+    public function test_duplicate_donor_ids_fail_before_draw(): void
+    {
+        $context = $this->createProtocolContext(2);
+        $protocol = $context['protocol'];
+
+        Employee::create([
+            'client_profile_id' => $context['client']->id,
+            'first_name' => 'Dup',
+            'last_name' => 'Driver',
+            'employee_id' => 'E0001',
+            'email' => 'dup@acme.test',
+            'status' => 'active',
+            'dot' => 'yes',
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Duplicate DonorIDs');
+
+        app(RandomSelectionService::class)->executeProtocol(
+            $protocol->fresh(['clients']),
+            'manual'
+        );
+    }
+
+    public function test_on_demand_alternate_prefers_same_company(): void
+    {
+        $context = $this->createProtocolContext(3, [
+            'alternates_value' => 0,
+            'alternate_mode' => RandomSelectionService::ALTERNATE_MODE_ON_DEMAND,
+        ]);
+
+        $user2 = User::factory()->create();
+        $client2 = ClientProfile::create([
+            'user_id' => $user2->id,
+            'company_name' => 'Other Co',
+            'address' => '2 Main St',
+            'city' => 'Dallas',
+            'state' => 'TX',
+            'zip' => '75201',
+            'dot_agency_id' => $context['agency']->id,
+            'der_contact_name' => 'Der Two',
+            'der_contact_email' => 'der2@other.test',
+            'status' => 'active',
+        ]);
+
+        Employee::create([
+            'client_profile_id' => $client2->id,
+            'first_name' => 'Other',
+            'last_name' => 'Driver',
+            'employee_id' => 'E0099',
+            'email' => 'other@other.test',
+            'status' => 'active',
+            'dot' => 'yes',
+        ]);
+
+        $protocol = $context['protocol'];
+        $protocol->clients()->attach([$client2->id]);
+
+        $service = app(RandomSelectionService::class);
+        $results = $service->executeProtocol(
+            $protocol->fresh(['clients', 'extraTests', 'subSelections', 'test']),
+            'manual'
+        );
+
+        $this->assertSame(0, $results['alternates']->count());
+        $this->assertNull($results['offline_list']);
+
+        $primary = $results['primary']->first();
+        $alternate = $service->markExcusedOrRefused($primary->fresh(['employee', 'selectionEvent.protocol.clients']), 'excused');
+
+        $this->assertSame('ALTERNATE', $alternate->selection_type);
+        $this->assertSame($primary->id, $alternate->alternate_replaces_id);
+        $this->assertSame('excused', $alternate->replacement_reason);
+        $this->assertTrue($primary->fresh()->is_excused);
+        $this->assertSame(
+            $primary->employee->client_profile_id,
+            $alternate->employee->client_profile_id
+        );
+    }
+
+    public function test_offline_list_is_permutation_and_consumable(): void
+    {
+        $context = $this->createProtocolContext(4, [
+            'alternates_value' => 0,
+            'alternate_mode' => RandomSelectionService::ALTERNATE_MODE_OFFLINE_LIST,
+            'selection_requirement_value' => 1,
+        ]);
+
+        $service = app(RandomSelectionService::class);
+        $results = $service->executeProtocol(
+            $context['protocol']->fresh(['clients', 'extraTests', 'subSelections', 'test']),
+            'manual'
+        );
+
+        /** @var SelectionOfflineList $list */
+        $list = $results['offline_list'];
+        $this->assertNotNull($list);
+        $this->assertCount(4, $list->shuffled_donor_ids);
+
+        $expected = Employee::query()
+            ->where('client_profile_id', $context['client']->id)
+            ->pluck('employee_id')
+            ->map(fn ($id) => (string) $id)
+            ->sort()
+            ->values()
+            ->all();
+
+        $actual = collect($list->shuffled_donor_ids)->map(fn ($id) => (string) $id)->sort()->values()->all();
+        $this->assertSame($expected, $actual);
+
+        $primary = $results['primary']->first();
+        $consumed = $service->consumeNextFromOfflineList($list->fresh(), $primary->fresh());
+
+        $this->assertSame('ALTERNATE', $consumed->selection_type);
+        $this->assertSame($primary->id, $consumed->alternate_replaces_id);
+        $this->assertSame($consumed->random_number + 1, $list->fresh()->cursor);
+        $this->assertNotSame($primary->employee_id, $consumed->employee_id);
+        $this->assertDatabaseHas('selection_offline_list_consumptions', [
+            'selection_offline_list_id' => $list->id,
+            'selected_employee_id' => $consumed->id,
+            'donor_id' => $consumed->donor_id,
+            'list_index' => $consumed->random_number,
+        ]);
     }
 
     public function test_inactive_protocol_cannot_execute(): void
@@ -150,7 +308,7 @@ class RandomSelectionExecuteTest extends TestCase
             'selection_protocol_id' => $protocol->id,
             'selection_date' => $date->copy()->setTime(9, 0),
             'pool_size' => 3,
-            'selection_pool' => [1, 2, 3],
+            'selection_pool' => ['E0001', 'E0002', 'E0003'],
             'status' => 'COMPLETED',
             'trigger' => 'manual',
         ]);

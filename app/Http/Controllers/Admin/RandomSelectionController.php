@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SelectionProtocolRequest;
 use App\Models\Admin\DotAgency;
+use App\Models\Admin\SelectedEmployee;
 use App\Models\Admin\SelectionEvent;
+use App\Models\Admin\SelectionOfflineList;
 use App\Models\Admin\SelectionProtocol;
 use App\Models\Admin\TestAdmin;
 use App\Models\Admin\ClientProfile;
 use App\Services\RandomSelectionService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -142,11 +145,15 @@ class RandomSelectionController extends Controller
             'protocol.test',
             'selectedEmployees.employee.clientProfile',
             'selectedEmployees.test',
+            'selectedEmployees.replacementAlternate.employee',
+            'selectedEmployees.alternateReplaces.employee',
+            'offlineList.consumptions',
         ]);
 
         $groups = $this->selectionService->groupSelectionsByType($event);
         $counts = $this->selectionService->selectionTypeCounts($event);
         $emailsSent = $event->selectedEmployees->where('notification_sent', true)->count();
+        $alternateMode = $this->selectionService->resolveAlternateMode($event->protocol);
 
         return view('admin.random_selection.execution_results', [
             'event' => $event,
@@ -157,8 +164,99 @@ class RandomSelectionController extends Controller
             'alternates' => $groups['alternates'],
             'counts' => $counts,
             'emailsSent' => $emailsSent,
+            'offlineList' => $event->offlineList,
+            'alternateMode' => $alternateMode,
             'warning' => null,
         ]);
+    }
+
+    public function markExcusedOrRefused(Request $request, SelectedEmployee $selection)
+    {
+        $request->validate([
+            'reason' => 'required|in:excused,refused',
+        ]);
+
+        try {
+            $alternate = $this->selectionService->markExcusedOrRefused($selection, $request->input('reason'));
+            toastr()->success(
+                'Selection marked ' . $request->input('reason') . '. Alternate DonorID ' .
+                ($alternate->donor_id ?: $alternate->employee?->employee_id) . ' was selected.',
+                'Success'
+            );
+
+            return redirect()->route('random-selection.results.view', $selection->selection_event_id);
+        } catch (\Throwable $e) {
+            Log::error('On-demand alternate error: ' . $e->getMessage());
+            toastr()->error($e->getMessage(), 'Error');
+
+            return back();
+        }
+    }
+
+    public function printOfflineList(SelectionEvent $event)
+    {
+        $event->load(['protocol', 'offlineList']);
+        $list = $event->offlineList;
+
+        if (!$list) {
+            toastr()->error('No offline list exists for this selection run.', 'Error');
+
+            return back();
+        }
+
+        $this->selectionService->markOfflineListPrinted($list);
+        $list->load('consumptions');
+
+        $employeesByDonor = \App\Models\Admin\Employee::query()
+            ->with('clientProfile')
+            ->whereIn('employee_id', $list->shuffled_donor_ids ?? [])
+            ->get()
+            ->keyBy(fn ($employee) => (string) $employee->employee_id);
+
+        return view('admin.random_selection.offline_list_print', [
+            'event' => $event,
+            'protocol' => $event->protocol,
+            'list' => $list->fresh(),
+            'employeesByDonor' => $employeesByDonor,
+        ]);
+    }
+
+    public function consumeOfflineList(Request $request, SelectionOfflineList $list)
+    {
+        $request->validate([
+            'replaces_selected_employee_id' => 'nullable|exists:selected_employees,id',
+        ]);
+
+        try {
+            $replaces = null;
+            if ($request->filled('replaces_selected_employee_id')) {
+                $replaces = SelectedEmployee::findOrFail($request->input('replaces_selected_employee_id'));
+                if ((int) $replaces->selection_event_id !== (int) $list->selection_event_id) {
+                    throw new \RuntimeException('Replacement selection must belong to the same run.');
+                }
+                if (!$replaces->is_excused && !$replaces->is_refused) {
+                    $replaces->update([
+                        'is_excused' => true,
+                        'status' => 'excused',
+                        'replacement_reason' => 'excused',
+                    ]);
+                }
+            }
+
+            $selection = $this->selectionService->consumeNextFromOfflineList($list, $replaces);
+            toastr()->success(
+                'Consumed offline list index ' . $selection->random_number .
+                ' (DonorID ' . $selection->donor_id . ').',
+                'Success'
+            );
+
+            return redirect()->route('random-selection.results.view', $list->selection_event_id);
+        } catch (\Throwable $e) {
+            Log::error('Offline list consume error: ' . $e->getMessage());
+            toastr()->error($e->getMessage(), 'Error');
+
+            return back();
+        }
     }
 
     public function edit($id)

@@ -346,12 +346,6 @@
                             : '' }}"
                             id="quest-orders">
                             <ul class="nav flex-column sub-menu">
-                                <li class="nav-item"> 
-                                    <a
-                                        class="nav-link {{ request()->is('admin/quest-order') && !request()->is('admin/quest-order/create') && !request()->is('admin/quest-order/*/edit') ? 'active' : '' }}"
-                                        href="{{ url('admin/quest-order') }}">Quest Order List
-                                    </a>
-                                </li>
                                 @can('quest-order create')
                                 <li class="nav-item"> 
                                     <a
@@ -360,7 +354,12 @@
                                     </a>
                                 </li>
                                 @endcan
-                                
+                                <li class="nav-item"> 
+                                    <a
+                                        class="nav-link {{ request()->is('admin/quest-order') && !request()->is('admin/quest-order/create') && !request()->is('admin/quest-order/*/edit') ? 'active' : '' }}"
+                                        href="{{ url('admin/quest-order') }}">Quest Order List
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     </li>

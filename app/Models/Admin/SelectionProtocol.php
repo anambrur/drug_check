@@ -25,6 +25,8 @@ class SelectionProtocol extends Model
         'manual_dates',
         'alternates_type',
         'alternates_value',
+        'alternate_mode',
+        'randomize_alternate_print_order',
         'automatic',
         'calculate_pool_average',
         'is_active',
@@ -34,6 +36,7 @@ class SelectionProtocol extends Model
     protected $casts = [
         'manual_dates' => 'array',
         'exclude_previously_selected' => 'boolean',
+        'randomize_alternate_print_order' => 'boolean',
         'automatic' => 'boolean',
         'calculate_pool_average' => 'boolean',
         'is_active' => 'boolean',
@@ -68,6 +71,11 @@ class SelectionProtocol extends Model
     public function selectionEvents()
     {
         return $this->hasMany(SelectionEvent::class);
+    }
+
+    public function offlineLists()
+    {
+        return $this->hasMany(SelectionOfflineList::class);
     }
 
     public function dotAgency()

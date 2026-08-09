@@ -175,26 +175,61 @@
     </div>
 </div>
 
+@php
+    $alternateMode = old('alternate_mode', $isEdit ? ($protocol->alternate_mode ?: 'immediate') : 'immediate');
+@endphp
+
 <div class="rs-section">
     <div class="rs-section__header">
         <div>
             <h5>Alternates & scheduling</h5>
-            <p>Backup picks and whether the daily scheduler should run this protocol.</p>
+            <p>Backup picks (TestChecks alternate modes) and whether the daily scheduler should run this protocol.</p>
         </div>
     </div>
     <div class="rs-section__body">
         <div class="form-row">
-            <div class="col-md-3 form-group">
+            <div class="col-md-4 form-group">
+                <label for="alternate_mode">Alternate mode</label>
+                <select class="form-control" name="alternate_mode" id="alternate_mode" required>
+                    <option value="immediate" {{ $alternateMode === 'immediate' ? 'selected' : '' }}>
+                        Immediate — select N alternates with the primary draw
+                    </option>
+                    <option value="on_demand" {{ $alternateMode === 'on_demand' ? 'selected' : '' }}>
+                        On demand — pick an alternate when excused/refused
+                    </option>
+                    <option value="offline_list" {{ $alternateMode === 'offline_list' ? 'selected' : '' }}>
+                        Offline list — single-use randomly sorted full employee list
+                    </option>
+                </select>
+                <small class="form-text text-muted">
+                    Matches TestChecks alternate options (a)/(b)/(c).
+                </small>
+            </div>
+            <div class="col-md-2 form-group" id="alternates-value-group">
                 <label>Alternates</label>
-                <input type="number" class="form-control" name="alternates_value" min="0"
+                <input type="number" class="form-control" name="alternates_value" id="alternates_value" min="0"
                     value="{{ old('alternates_value', $isEdit ? $protocol->alternates_value : 0) }}">
             </div>
-            <div class="col-md-3 form-group">
+            <div class="col-md-3 form-group" id="alternates-type-group">
                 <label>Alternate type</label>
-                <select class="form-control" name="alternates_type">
+                <select class="form-control" name="alternates_type" id="alternates_type">
                     <option value="NUMBER" {{ old('alternates_type', $isEdit ? $protocol->alternates_type : 'NUMBER') === 'NUMBER' ? 'selected' : '' }}># of alternates</option>
                     <option value="PERCENTAGE" {{ old('alternates_type', $isEdit ? $protocol->alternates_type : '') === 'PERCENTAGE' ? 'selected' : '' }}>% of pool</option>
                 </select>
+            </div>
+        </div>
+
+        <div class="rs-check-grid mt-2" id="randomize-print-order-group">
+            <div class="rs-check-card">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="randomize_alternate_print_order"
+                        name="randomize_alternate_print_order"
+                        {{ $check('randomize_alternate_print_order', $isEdit ? ($protocol->randomize_alternate_print_order ?? true) : true) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="randomize_alternate_print_order">Randomize alternate print order</label>
+                    <small class="form-text text-muted">
+                        Shuffle how immediate alternates appear on printed lists (audit indexes stay unchanged).
+                    </small>
+                </div>
             </div>
         </div>
 

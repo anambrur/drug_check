@@ -1256,6 +1256,9 @@ Route::middleware($adminBase)->prefix('admin')->group(function () {
     Route::get('random-selection/executions/{protocol}', [RandomSelectionController::class, 'executions'])->name('random-selection.executions')->middleware('permission:random selection view');
     Route::get('random-selection/results/{event}', [RandomSelectionController::class, 'viewResults'])->name('random-selection.results.view')->middleware('permission:random selection view');
     Route::post('random-selection/execute/{protocol}', [RandomSelectionController::class, 'execute'])->name('random-selection.execute')->middleware('permission:random selection create');
+    Route::post('random-selection/selections/{selection}/replace', [RandomSelectionController::class, 'markExcusedOrRefused'])->name('random-selection.selections.replace')->middleware('permission:random selection create');
+    Route::get('random-selection/results/{event}/offline-list', [RandomSelectionController::class, 'printOfflineList'])->name('random-selection.offline-list.print')->middleware('permission:random selection view');
+    Route::post('random-selection/offline-lists/{list}/consume', [RandomSelectionController::class, 'consumeOfflineList'])->name('random-selection.offline-list.consume')->middleware('permission:random selection create');
     Route::get('random-selection/{id}/edit', [RandomSelectionController::class, 'edit'])->name('random-selection.edit')->middleware('permission:random selection edit');
     Route::put('random-selection/{id}', [RandomSelectionController::class, 'update'])->name('random-selection.update')->middleware('permission:random selection edit');
     Route::delete('random-selection/{id}', [RandomSelectionController::class, 'destroy'])->name('random-selection.destroy')->middleware('permission:random selection delete');

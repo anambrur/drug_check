@@ -32,5 +32,10 @@ class SelectionEvent extends Model
     {
         return $this->hasMany(SelectedEmployee::class);
     }
+
+    public function offlineList()
+    {
+        return $this->hasOne(SelectionOfflineList::class);
+    }
 }
 

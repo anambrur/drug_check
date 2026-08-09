@@ -15,6 +15,28 @@
             syncPeriodFields();
         }
 
+        var alternateModeSelect = document.getElementById('alternate_mode');
+        var alternatesValueGroup = document.getElementById('alternates-value-group');
+        var alternatesTypeGroup = document.getElementById('alternates-type-group');
+        var randomizePrintGroup = document.getElementById('randomize-print-order-group');
+
+        function syncAlternateModeFields() {
+            if (!alternateModeSelect) return;
+            var isImmediate = alternateModeSelect.value === 'immediate';
+            if (alternatesValueGroup) alternatesValueGroup.style.display = isImmediate ? '' : 'none';
+            if (alternatesTypeGroup) alternatesTypeGroup.style.display = isImmediate ? '' : 'none';
+            if (randomizePrintGroup) randomizePrintGroup.style.display = isImmediate ? '' : 'none';
+            if (!isImmediate) {
+                var valueInput = document.getElementById('alternates_value');
+                if (valueInput) valueInput.value = 0;
+            }
+        }
+
+        if (alternateModeSelect) {
+            alternateModeSelect.addEventListener('change', syncAlternateModeFields);
+            syncAlternateModeFields();
+        }
+
         var extraEmpty = document.getElementById('extra-tests-empty');
         var subEmpty = document.getElementById('sub-selections-empty');
         var subSelectionCounter = {{ isset($protocol) ? count($protocol->subSelections) : 0 }};

@@ -12,19 +12,25 @@ class SelectedEmployee extends Model
     protected $fillable = [
         'selection_event_id',
         'employee_id',
+        'donor_id',
         'test_id',
         'selection_protocol_id',
         'selection_type',
         'random_number',
+        'draw_pool',
+        'pool_range_max',
+        'print_order',
         'status',
         'notification_sent',
         'notification_sent_at',
         'is_excused',
         'is_refused',
         'alternate_replaces_id',
+        'replacement_reason',
     ];
 
     protected $casts = [
+        'draw_pool' => 'array',
         'is_excused' => 'boolean',
         'is_refused' => 'boolean',
         'notification_sent' => 'boolean',
