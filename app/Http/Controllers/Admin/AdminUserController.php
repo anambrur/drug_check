@@ -104,7 +104,7 @@ class AdminUserController extends Controller
             $input['profile_photo_path'] = null;
         }
 
-        $user = User::factory()->create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),

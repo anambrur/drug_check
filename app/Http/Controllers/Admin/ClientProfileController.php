@@ -210,7 +210,7 @@ class ClientProfileController extends Controller
             $random_password = chr(rand(65, 90)) . rand(1000, 9999) . chr(rand(65, 90)) . rand(100, 999);
 
             // Create company user
-            $companyUser = User::factory()->create([
+            $companyUser = User::create([
                 'name' => $input['company_name'],
                 'email' => $input['der_contact_email'],
                 'password' => Hash::make($random_password),

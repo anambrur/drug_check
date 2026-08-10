@@ -76,7 +76,7 @@ class ClearingHouseEnrollmentService
 
         $randomPassword = chr(rand(65, 90)) . rand(1000, 9999) . chr(rand(65, 90)) . rand(100, 999);
 
-        $companyUser = User::factory()->create([
+        $companyUser = User::create([
             'name' => $enrollment->company_name,
             'email' => $enrollment->email,
             'password' => Hash::make($randomPassword),
