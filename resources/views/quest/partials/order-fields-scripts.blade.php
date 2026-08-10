@@ -79,6 +79,41 @@ document.addEventListener('DOMContentLoaded', function () {
     const employeeData = @json($employeePrefillData);
 
     const employeeSelect = document.getElementById('employee_id');
+    const clientProfileSelect = document.getElementById('client_profile_id');
+
+    function filterEmployeesByClient() {
+        if (!employeeSelect || !clientProfileSelect) {
+            return;
+        }
+
+        const clientId = clientProfileSelect.value;
+        const currentValue = employeeSelect.value;
+
+        employeeSelect.disabled = !clientId;
+
+        Array.from(employeeSelect.options).forEach(function (option, index) {
+            if (index === 0) {
+                option.hidden = false;
+                return;
+            }
+
+            const matches = !!clientId && option.dataset.clientProfileId === clientId;
+            option.hidden = !matches;
+        });
+
+        const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+        if (!clientId || (selectedOption && selectedOption.hidden)) {
+            employeeSelect.value = '';
+        } else if (currentValue) {
+            employeeSelect.value = currentValue;
+        }
+    }
+
+    if (clientProfileSelect) {
+        clientProfileSelect.addEventListener('change', filterEmployeesByClient);
+        filterEmployeesByClient();
+    }
+
     if (employeeSelect) {
         employeeSelect.addEventListener('change', function () {
             const data = employeeData[this.value];

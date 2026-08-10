@@ -23,19 +23,55 @@
                     <div>No active employees are available for your account. Please contact your administrator.</div>
                 </div>
             @else
-                <label class="pf-label" for="employee_id">Employee <span class="pf-req">*</span></label>
-                <div class="pf-icon-wrap">
-                    <i class="fas fa-user pf-icon"></i>
-                    <select id="employee_id" name="employee_id" class="pf-control" required>
-                        <option value="" disabled @selected(!old('employee_id', $defaults['employee_id'] ?? ''))>Choose an employee…</option>
-                        @foreach ($employees as $employee)
-                            <option value="{{ $employee->id }}" @selected(old('employee_id', $defaults['employee_id'] ?? '') == $employee->id)>
-                                {{ $employee->first_name }} {{ $employee->last_name }}
-                            </option>
-                        @endforeach
-                    </select>
+                @php
+                    $selectedEmployeeId = old('employee_id', $defaults['employee_id'] ?? '');
+                    $selectedClientProfileId = old('client_profile_id');
+                    if (!$selectedClientProfileId && $selectedEmployeeId) {
+                        $selectedClientProfileId = ($employees ?? collect())
+                            ->firstWhere('id', (int) $selectedEmployeeId)
+                            ?->client_profile_id;
+                    }
+                    $showClientFilter = ($clientProfiles ?? collect())->isNotEmpty();
+                @endphp
+                <div class="row g-3">
+                    @if ($showClientFilter)
+                        <div class="col-md-6">
+                            <label class="pf-label" for="client_profile_id">Client <span class="pf-req">*</span></label>
+                            <div class="pf-icon-wrap">
+                                <i class="fas fa-building pf-icon"></i>
+                                <select id="client_profile_id" class="pf-control" required>
+                                    <option value="" disabled @selected(!$selectedClientProfileId)>Choose a client…</option>
+                                    @foreach ($clientProfiles as $profile)
+                                        <option value="{{ $profile->id }}" @selected((string) $selectedClientProfileId === (string) $profile->id)>
+                                            {{ $profile->company_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <p class="pf-hint mt-2"><i class="fas fa-info-circle"></i> Select a client first to load that company’s employees.</p>
+                        </div>
+                    @endif
+                    <div class="{{ $showClientFilter ? 'col-md-6' : 'col-12' }}">
+                        <label class="pf-label" for="employee_id">Employee <span class="pf-req">*</span></label>
+                        <div class="pf-icon-wrap">
+                            <i class="fas fa-user pf-icon"></i>
+                            <select id="employee_id" name="employee_id" class="pf-control" required @if($showClientFilter && !$selectedClientProfileId) disabled @endif>
+                                <option value="" disabled @selected(!$selectedEmployeeId)>Choose an employee…</option>
+                                @foreach ($employees as $employee)
+                                    <option value="{{ $employee->id }}"
+                                        data-client-profile-id="{{ $employee->client_profile_id }}"
+                                        @selected((string) $selectedEmployeeId === (string) $employee->id)>
+                                        {{ $employee->first_name }} {{ $employee->last_name }}
+                                        @if ($showClientFilter && $employee->clientProfile?->company_name)
+                                            — {{ $employee->clientProfile->company_name }}
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <p class="pf-hint mt-2"><i class="fas fa-info-circle"></i> Select the employee who will take this DOT test.</p>
+                    </div>
                 </div>
-                <p class="pf-hint mt-2"><i class="fas fa-info-circle"></i> Select the employee who will take this DOT test.</p>
             @endif
         </div>
     </div>

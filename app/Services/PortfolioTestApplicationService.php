@@ -330,6 +330,29 @@ class PortfolioTestApplicationService
     }
 
     /**
+     * Client profiles for super-admin DOT checkout filtering (clients with active employees).
+     */
+    public function clientProfilesForUser(?User $user = null): Collection
+    {
+        $user = $user ?? Auth::user();
+        if (!$user) {
+            return collect();
+        }
+
+        $role = $user->roles()->first();
+
+        if ($role?->name !== 'super-admin') {
+            return collect();
+        }
+
+        return ClientProfile::query()
+            ->where('status', 'active')
+            ->whereHas('employees', fn ($query) => $query->where('status', 'active'))
+            ->orderBy('company_name')
+            ->get();
+    }
+
+    /**
      * Map validated Quest form input to portfolio_test_applications columns.
      *
      * @return array<string, mixed>

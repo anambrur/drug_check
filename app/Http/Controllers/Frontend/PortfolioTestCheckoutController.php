@@ -162,6 +162,7 @@ class PortfolioTestCheckoutController extends Controller
             'isNonDot' => $application->isNonDot(),
             'questDefaults' => $this->applicationService->questDefaultsFromApplication($application),
             'employees' => $application->isDot() ? $this->applicationService->employeesForUser() : collect(),
+            'clientProfiles' => $application->isDot() ? $this->applicationService->clientProfilesForUser() : collect(),
             'questIsPhysical' => $flags['is_physical'],
             'questIsEbat' => $flags['is_ebat'],
             'initialCollectionSite' => $this->applicationService->collectionSiteSelectOption($application),

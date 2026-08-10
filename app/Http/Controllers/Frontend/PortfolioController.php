@@ -22,12 +22,16 @@ use App\Models\Admin\PortfolioSection;
 use App\Models\Admin\ContactInfoWidget;
 use App\Models\Admin\PortfolioCategory;
 use App\Models\Admin\PortfolioDetailSection;
-use App\Models\Admin\ClientProfile;
-use App\Models\Admin\Employee;
+use App\Services\PortfolioTestApplicationService;
 use Illuminate\Support\Facades\Auth;
 
 class PortfolioController extends Controller
 {
+    public function __construct(
+        private readonly PortfolioTestApplicationService $applicationService
+    ) {
+    }
+
     /**
      * Display the specified resource.
      *
@@ -80,17 +84,10 @@ class PortfolioController extends Controller
 
         $isNonDot = ($portfolio->category_name ?? '') === 'Non DOT Testing';
         $employees = collect();
+        $clientProfiles = collect();
         if (!$isNonDot && Auth::check()) {
-            $authUser = Auth::user();
-            $role = $authUser->roles()->first();
-            $employees = match ($role?->name) {
-                'super-admin' => Employee::with('clientProfile')->where('status', 'active')->get(),
-                'company' => Employee::with('clientProfile')
-                    ->where('status', 'active')
-                    ->where('client_profile_id', ClientProfile::where('user_id', $authUser->id)->value('id'))
-                    ->get(),
-                default => collect(),
-            };
+            $employees = $this->applicationService->employeesForUser();
+            $clientProfiles = $this->applicationService->clientProfilesForUser();
         }
         $portfolio_count_categories = Portfolio::select(DB::raw('count(*) as category_count, category_id'))
             ->where('language_id', $language->id)
@@ -151,7 +148,8 @@ class PortfolioController extends Controller
             'footer_categories',
             'page_builder',
             'isNonDot',
-            'employees'
+            'employees',
+            'clientProfiles'
         ));
     }
 

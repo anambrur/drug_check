@@ -734,6 +734,50 @@
         .pf-hint { font-size: .74rem; color: var(--pf-muted); margin-top: .32rem; }
         .pf-hint.danger { color: var(--pf-danger) !important; }
 
+        /* Match Select2 Collection Site to .pf-control height/look */
+        .pf-section .select2-container {
+            width: 100% !important;
+            display: block;
+        }
+        .pf-section .select2-container--default .select2-selection--single {
+            height: auto;
+            min-height: calc(1.36rem + 1.32rem + 3px);
+            border: 1.5px solid var(--pf-border);
+            border-radius: var(--pf-radius-sm);
+            background: #fafbfe;
+            padding: .68rem 2.25rem .68rem 1rem;
+            box-shadow: inset 0 1px 2px rgba(15,23,42,.03);
+            transition: border-color .2s, box-shadow .2s, background .2s;
+            outline: none;
+        }
+        .pf-section .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--pf-text);
+            font-size: .88rem;
+            font-family: var(--pf-font-body);
+            line-height: 1.5;
+            padding: 0;
+            margin: 0;
+        }
+        .pf-section .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: var(--pf-light);
+        }
+        .pf-section .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 100%;
+            top: 0;
+            right: .65rem;
+            width: 1.25rem;
+        }
+        .pf-section .select2-container--default.select2-container--open .select2-selection--single,
+        .pf-section .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: var(--pf-primary);
+            box-shadow: 0 0 0 3.5px var(--pf-primary-glow), inset 0 1px 2px rgba(15,23,42,.02);
+            background: #fff;
+        }
+        .pf-section .select2-container--default .select2-selection--single:hover {
+            border-color: #cbd5e1;
+            background: #fff;
+        }
+
         /* ─── Summary sidebar ─── */
         .summary-card {
             background: var(--pf-surface);
